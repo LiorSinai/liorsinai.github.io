@@ -1,5 +1,12 @@
-_site
-.sass-cache
 node_modules
 Gemfile.lock
 *.gem
+
+# Compiled site
+_site
+.jekyll-cache/
+
+# Sass garbage
+.sass-cache
+
+

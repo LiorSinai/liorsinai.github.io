@@ -1,16 +1,16 @@
-title:              Clean Blog
-email:              your-email@example.com
-description:        A Blog Theme by Start Bootstrap
-author:             Start Bootstrap
-baseurl:            "/startbootstrap-clean-blog-jekyll"
-url:                "https://startbootstrap.github.io"
+title:              Lior Sinai
+email:              sinailior@gmail.com
+description:        My website for musings on mathematics, coding and physics.
+author:             Lior Sinai
+baseurl:            ""
+url:                "https://liorsinai.github.io"
 
 # Social Profiles
-twitter_username:   SBootstrap
-github_username:    StartBootstrap
-facebook_username:  StartBootstrap
-instagram_username:  
-linkedin_username:
+#twitter_username:   SBootstrap
+github_username:    LiorSinai
+#facebook_username:  StartBootstrap
+instagram_username:  lior_origami
+linkedin_username: lior-sinai-907191113
 
 # Add your google-analytics ID here to activate google analytics
 google_analytics:   UA-XXXXXXXXX-X # out your google-analytics code
@@ -23,3 +23,4 @@ plugins:
   - jekyll-feed
   - jekyll-paginate
   - jekyll-sitemap ## Uncomment this line to silently generate a sitemaps.org compliant sitemap for your Jekyll site
+
