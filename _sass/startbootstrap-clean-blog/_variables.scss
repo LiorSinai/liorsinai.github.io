@@ -1,6 +1,6 @@
 // Variables
 
-$white:    #fff !default;
+$white:    #fff !default; //!default just means it can be overridden elsewhere
 $gray-100: #f8f9fa !default;
 $gray-200: #e9ecef !default;
 $gray-300: #dee2e6 !default;
@@ -23,7 +23,23 @@ $green:   #28a745 !default;
 $teal:    #0085A1 !default;
 $cyan:    #17a2b8 !default;
 
-$primary:       $teal !default;
+//https://htmlcolorcodes.com/color-names/ 
+// html defaults: gold, olive, indigo, chocolate, darkorchid
+//red: indianred, crimson, firebrick, darkred
+//orange: coral, tomato, darkorange; orangered
+
+//https://www.computerhope.com/htmcolor.htm
+$beanred:  #F75D59 !default;
+$mangoorange: #ff8040 !default; 
+$marbleblue: #566D7E !default; 
+$bluegray: #98AFC7 !default;
+$steelblue: #4863A0 !default; 
+$bluekoi: #659EC7 !default;
+$caramel: #C68E17 default;
+$bronze:  #CD7F32 !default;
+
+$nav-font-colour: $black;
+$primary:       coral !default;
 $secondary:     $gray-600 !default;
 $success:       $green !default;
 $info:          $cyan !default;
@@ -31,3 +47,4 @@ $warning:       $yellow !default;
 $danger:        $red !default;
 $light:         $gray-100 !default;
 $dark:          $gray-800 !default;
+
