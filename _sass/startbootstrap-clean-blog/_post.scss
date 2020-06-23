@@ -1,4 +1,15 @@
 // Styling for the post page
+.post-list{
+	line-height: 2.5;
+	font-size: 24px; 
+	a {
+	 text-decoration: none;
+	 color: $primary;
+	}
+	.post-date {
+		color: $gray-600;
+	}
+}
 .post-preview {
   > a {
     color: $gray-900;
@@ -8,18 +19,21 @@
       color: $primary;
     }
     > .post-title {
-      font-size: 30px;
+      font-size: 35px !important; //override _global.scss
       margin-top: 30px;
-      margin-bottom: 10px;
+      margin-bottom: 0px;
     }
     > .post-subtitle {
       font-weight: 300;
       margin: 0 0 10px;
     }
+	> .post-excerpt {
+      font-weight: 400;
+      margin: -20px 0 10px;
+    }
   }
   > .post-meta {
     font-size: 18px;
-    font-style: italic;
     margin-top: 0;
     color: $gray-600;
     > a {
@@ -40,3 +54,4 @@
     }
   }
 }
+

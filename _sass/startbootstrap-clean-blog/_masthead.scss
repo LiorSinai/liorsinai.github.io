@@ -85,10 +85,15 @@ header
   }
 }
 header.simple{
-  margin-bottom: 1px;
+  margin-bottom: 5px;
   .page-heading,
   .post-heading,
   .site-heading {
+	text-align: center;
+	h1 {
+      font-size: 40px;
+      margin-top: 5px;
+    }
 	color: $black;
 	padding: 15px 0 0 0;
     @media only screen and (min-width: 768px) {
@@ -96,12 +101,8 @@ header.simple{
     }
   }
   .page-heading,
-  .site-heading {
-    text-align: center;
-    h1 {
-      font-size: 40px;
-      margin-top: 0;
-    }
+  .site-heading
+  {
     .subheading {
       font-size: 24px;
       font-weight: 500;
