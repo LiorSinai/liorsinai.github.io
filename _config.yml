@@ -5,12 +5,6 @@ author:             Lior Sinai
 baseurl:            ""
 url:                "https://liorsinai.github.io"
 
-# Social Profiles
-#twitter_username:   SBootstrap
-github_username:    LiorSinai
-#facebook_username:  StartBootstrap
-instagram_username:  lior_origami
-linkedin_username: lior-sinai-907191113
 
 # Add your google-analytics ID here to activate google analytics
 google_analytics:   UA-XXXXXXXXX-X # out your google-analytics code
@@ -24,3 +18,25 @@ plugins:
   - jekyll-paginate
   - jekyll-sitemap ## Uncomment this line to silently generate a sitemaps.org compliant sitemap for your Jekyll site
 
+# Social Profiles
+social:
+  - name: GitHub
+    icon: github  # font awesome icons
+    username: LiorSinai
+    url: https://github.com/LiorSinai
+    
+  - name: LinkedIn
+    icon: linkedin
+    username: lior-sinai-907191113
+    url: https://www.linkedin.com/in/lior-sinai-907191113 
+    
+  - name: Instagram
+    icon: instagram  # font awesome icons
+    username: LiorSinai
+    url: https://instagram.com/lior_origami
+    
+  - name: goodreads
+    icon: goodreads-g  
+    username: 61077900-lior-sinai
+    url: https://www.goodreads.com/user/show/61077900-lior-sinai
+    
