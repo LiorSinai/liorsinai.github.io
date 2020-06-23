@@ -2,16 +2,18 @@
 body {
   font-size: 20px;
   color: $gray-900;
-  @include serif-font;
+  //@include serif-font; //No bold with this font!!
 }
 
 p {
   line-height: 1.5;
   margin: 30px 0;
-  a {
-    text-decoration: underline;
-  }
 }
+
+
+
+
+
 
 h1,
 h2,
@@ -23,6 +25,14 @@ h6 {
   @include sans-serif-font;
 }
 
+//hyperlinks in content text
+ul, li, p {
+	a {
+	  text-decoration: underline;
+	  }
+}
+
+//hyperlinks around website
 a {
   color: $gray-900;
   @include transition-all;
@@ -31,6 +41,7 @@ a {
     color: $primary;
   }
 }
+
 
 blockquote {
   font-style: italic;
