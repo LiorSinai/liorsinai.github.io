@@ -4,7 +4,8 @@ layout: default
 
 <!-- Page Header -->
 {% if page.background %}
-<header class="masthead" style="background-image: url('{{ page.background | prepend: site.baseurl | replace: '//', '/' }}');background-position: 50% 45%;figcaption:Pegasus">
+<header class="masthead" style="background-image: url('{{ page.background | prepend: site.baseurl | replace: '//', '/' }}');
+								background-position: {{page.background-position-x | default: 50}}% {{page.background-position-y | default: 50}}% ;">
   {% else %}
   <header class="masthead">
     {% endif %}
@@ -21,7 +22,9 @@ layout: default
         </div>
       </div>
     </div>
+  {% if page.background-caption %} <p class="caption"> {{ page.background-caption }} </p> {% endif %}
   </header>
+
 
   <div class="container">
     <div class="row">

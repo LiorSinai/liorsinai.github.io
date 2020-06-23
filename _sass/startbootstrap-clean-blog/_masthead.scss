@@ -14,6 +14,13 @@ header
   background-color: $gray-600;
   background-attachment: scroll;
   @include background-cover;
+  > .caption{
+    font-size: 14px;
+    position: absolute; 
+    text-align: left; 
+	color: $gray-600;
+	line-height: 1;
+  }
   .overlay {
 	position: absolute;
 	top: 0;
