@@ -12,8 +12,6 @@ p {
 
 
 
-
-
 h1,
 h2,
 h3,
@@ -39,12 +37,20 @@ a {
   &:hover {
     color: $primary;
   }
+  text-decoration: underline;
 }
 
 
 blockquote {
   font-style: italic;
   color: $gray-600;
+}
+
+code {
+  color: initial;
+  background-color: $gray-300;
+  border-radius: 4px;
+  padding: 0 1px;
 }
 
 .section-heading {

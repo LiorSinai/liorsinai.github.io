@@ -10,9 +10,16 @@
 		color: $gray-600;
 	}
 }
+.post-figure{
+  text-align: center;
+  font-style: italic;
+  font-size: smaller;
+  margin: auto; 
+}
 .post-preview {
   > a {
     color: $gray-900;
+	text-decoration: none;
     &:focus,
     &:hover {
       text-decoration: none;
@@ -24,7 +31,7 @@
       margin-bottom: 0px;
     }
     > .post-subtitle {
-      font-weight: 300;
+      font-weight: 400;
       margin: 0 0 10px;
     }
 	> .post-excerpt {
@@ -54,4 +61,5 @@
     }
   }
 }
+
 

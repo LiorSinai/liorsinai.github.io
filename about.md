@@ -9,18 +9,13 @@ permalink: /about/
 
 Hi. Welcome to my blog. I'm an engineer from South Africa and I'm curious about the world. 
 My hobbies include reading, long distance running, and complex origami (all the origami on this site is folded by me).
-I also occasionally work on my own engineering projects. My favourite place to be is in the middle of the wild bushveld in Africa.
+I also occasionally work on my own engineering projects. My favourite place to be is in the middle of the bushveld.
 
 I recently completed a masters in systems and control engineering at the [University of Twente](https://www.utwente.nl/en)
 in the Netherlands. I also hold a bachelors in mechanical engineering from the [University of the Witwatersrand](https://www.wits.ac.za/) in South Africa.
 In between my bachelors and masters, I worked for the national telecommunications company of South Africa, Telkom.
 
-I want to use this space to focus on engineering, because this is where I have professional expertise. 
-However, my interests are broader than this. In fact after graduating, my reading list consisted mainly of psychology books[^1]. 
-I am also interested in the natural world and climate and climate change. I'll leave my thoughts on these topics to other mediums.
-
-
-Here is a list of topics I want to cover:  
+I want to use this space to explore scientific and engineering related ideas. Here is a list of topics I want to cover:  
 + **Scramble puzzle solver**: this post will describe an algorithm from this [paper][scramble_algorithm] that I implemented for solving scramble puzzles. 
 As a child I used to spend many hours trying to solve a  piece scramble puzzle. I was never able to do this. Much later I found out there is no logical
 way to solve these unlike, for example, with Rubik's cubes. Computers however can make short work of these puzzles. 
@@ -42,8 +37,6 @@ comparisons to other 3D rotation systems.
 + **Listing k integer partitions**: another ~~distraction~~ side problem from my thesis.
 
 _Lior Sinai_, {{ "2020-06-23" | date: '%d %B %Y' }}
-
-[^1]: I highly recommend these three: Emotional Intelligence by Daniel Goleman, Blueprint by Nicholas A. Christakis and Quiet by Susan Cain.
 
 [scramble_algorithm]: http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.953.6583&rep=rep1&type=pdf
 

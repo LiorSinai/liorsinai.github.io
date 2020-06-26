@@ -36,6 +36,7 @@
       &:hover {
         color: $primary ;// fade-out($black, .2);
       }
+	  text-decoration: none; //remove underline
     }
     .navbar-nav {
       > li.nav-item {

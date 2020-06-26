@@ -38,16 +38,11 @@ layout: default
         <article class="post-preview">
           <a href="{{ post.url | prepend: site.baseurl | replace: '//', '/' }}">
             <h2 class="post-title">{{ post.title }}</h2>
-			<!---
             {% if post.subtitle %}
-            <h3 class="post-subtitle">{{ post.subtitle }}</h3>
+            <p class="post-subtitle">{{ post.subtitle }}</p>
             {% else %}
-            <p class="post-subtitle">{{ post.excerpt | strip_html | truncatewords: 30 }}</p>
+            <p class="post-subtitle">{{ post.excerpt | strip_html | truncatewords: 40}}</p>
             {% endif %}
-			--->
-			<section class="post-excerpt">
-			  <p>{{ post.content | strip_html | truncatewords: 50 }}</p>
-			</section>
 		</a>
           <p class="post-meta">
             {{ post.date | date: '%d %B, %Y' }}          
