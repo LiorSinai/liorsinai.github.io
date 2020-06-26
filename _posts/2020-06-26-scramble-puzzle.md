@@ -15,7 +15,7 @@ _This post details a backtracking algorithm for solving scramble square puzzles.
 
 <figure class="post-figure">
 <img 
-    src="/assets/posts/ScrambleSquare/ScrambleSquare_serengeti.jpg"
+    src="/assets/posts/2020-06-26-scramble-puzzle/ScrambleSquare_serengeti.jpg"
 	style="width:50%"
 	alt="Serengeti scramble square"
 	>
@@ -49,7 +49,7 @@ Therefore, just trying every puzzle arrangement is too slow.
 
 <figure class="post-figure">
 <img 
-    src="/assets/posts/ScrambleSquare/order.png"
+    src="/assets/posts/2020-06-26-scramble-puzzle/order.png"
 	style="width:30%"
 	alt="backtracking order"
 	>
@@ -68,7 +68,7 @@ If for example, a piece does not fit in position $k=1$, then all remaining $4(4^
 
 <figure class="post-figure">
 <img 
-    src="/assets/posts/ScrambleSquare/Example.png"
+    src="/assets/posts/2020-06-26-scramble-puzzle/Example.png"
 	style="width:50%"
 	alt="scramble mockup"
 	>
@@ -203,12 +203,12 @@ def fit_position(self, k, used_k, rot_k):
 This code retrieves the following solutions in 0.17 seconds:
 <div id="unique-name" class="row">
 <img class="mx-auto"
-    src="/assets/posts/ScrambleSquare/Solution1.png"
+    src="/assets/posts/2020-06-26-scramble-puzzle/Solution1.png"
 	style="width:40%"
 	alt="solution 1"
 	>
 <img class="mx-auto"
-    src="/assets/posts/ScrambleSquare/Solution2.png"
+    src="/assets/posts/2020-06-26-scramble-puzzle/Solution2.png"
 	style="width:40%"
 	alt="solution 2"
 	>
