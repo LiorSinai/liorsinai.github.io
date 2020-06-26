@@ -68,9 +68,9 @@ If for example, a piece does not fit in position $k=1$, then all remaining $4(4^
 
 <figure class="post-figure">
 <img 
-    src="/assets/posts/ScrambleSquare/example.png"
+    src="/assets/posts/ScrambleSquare/Example.png"
 	style="width:50%"
-	alt="backtracking order"
+	alt="scramble mockup"
 	>
 </figure>
 
@@ -203,14 +203,14 @@ def fit_position(self, k, used_k, rot_k):
 This code retrieves the following solutions in 0.17 seconds:
 <div id="unique-name" class="row">
 <img class="mx-auto"
-    src="/assets/posts/ScrambleSquare/solution1.png"
+    src="/assets/posts/ScrambleSquare/Solution1.png"
 	style="width:40%"
-	alt="backtracking order"
+	alt="solution 1"
 	>
 <img class="mx-auto"
-    src="/assets/posts/ScrambleSquare/solution2.png"
+    src="/assets/posts/ScrambleSquare/Solution2.png"
 	style="width:40%"
-	alt="backtracking order"
+	alt="solution 2"
 	>
 </div>
 These are the only two solutions for this puzzle.
