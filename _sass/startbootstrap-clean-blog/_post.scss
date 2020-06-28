@@ -11,10 +11,30 @@
 	}
 }
 .post-figure{
+  display: block;
   text-align: center;
   font-style: italic;
   font-size: smaller;
   margin: auto; 
+  // set image sizes for mobile:desktop in ratio 1:1.6
+  .img-40{
+    max-width: 40%;
+	@media only screen and (max-width: 600px) {
+	  max-width: 64%;
+	}
+  }
+   .img-50{
+    max-width: 50%;
+	@media only screen and (max-width: 600px) {
+	  max-width: 80%;
+	}
+  }
+  .img-60{
+    max-width: 60%;
+	@media only screen and (max-width: 600px) {
+	  max-width: 95%;
+	}
+  }
 }
 .post-preview {
   > a {
