@@ -22,11 +22,10 @@ _This post details a backtracking algorithm for solving scramble square puzzles.
 </figure>
 
 When I was a child, I used to spend many hours trying to solve a scramble square puzzle. An example is shown above.
-My puzzle was similar to this, except instead of African animals, it had monkeys wearing colourful t-shirts. 
 The puzzle consists of nine square pieces and four images spread across the squares. 
 On each side on each square is half of one of the four images. For example the top half of an elephant.
 Some of the other pieces have the corresponding half, like the bottom half of the elephant.
-The aim is arrange the pieces in a 3x3 grid such that all inner images are aligned - all halves are matched.
+The aim to is arrange the pieces in a 3x3 grid such that all inner images are aligned - all halves are matched.
 This is actually very difficult, and I was not able solve it.
 
 
@@ -34,7 +33,7 @@ Much later, when I was in university, I returned to this puzzle. I wondered if t
 I was not able to find any, but I did find a depth first search backtracking algorithm for it described in this [paper][scramble_algorithm].
 This algorithm is rather painful to do by hand, but easy to implement with a computer.
 I wrote up the algorithm in Python, and within a second, I found the two solutions for my puzzle.
-So much for hours of frustation when I was younger!
+So much for hours of frustration when I was younger!
 
 The rest of this post will describe this algorithm in my detail.
 
@@ -47,7 +46,7 @@ This gives $4^8 9! \approx 23.8$ billion arrangements of the puzzle.
 Therefore, just trying every puzzle arrangement is too slow. 
 
 <figure class="post-figure">
-<img class="img-40"
+<img class="img-30"
     src="/assets/posts/2020-06-26-scramble-puzzle/order.png"
 	alt="backtracking order"
 	>
@@ -72,7 +71,7 @@ So if for example, a piece does not fit in position _k=1_, then all $4(4^7 7!)$ 
 	>
 </figure>
 
-The Serengeti puzzle I posted above has no solution[^1]. So instead I'll use a mock-up of the Monkey puzzle I had as a child. This is shown above. 
+The Serengeti puzzle I posted above has no solution[^1]. So instead I'll use a mock-up of a puzzle I had as a child. This is shown above. 
 The goal here is to match triangles with blocks of the same colour.
 I've labelled each piece from 0 to 8. 
 Each card is encoded as an array using the following rules:
@@ -124,7 +123,7 @@ class ScrambleSquare():
         pass
 {% endhighlight %}
 
-I can now present the algorithm in full. I will go into the detail of the abstract afterwards:
+I can now present the algorithm in full. I will go into the detail of the abstract functions afterwards:
 {% highlight python %}
 def solveScramble(cards: List[int]) -> None:
     def solve(k: int, puzzle, stack: List[int]):
@@ -237,5 +236,5 @@ In any case, it is definitely a worthwhile coding exercise in backtracking and r
 
 [scramble_algorithm]: http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.953.6583&rep=rep1&type=pdf
 
-[^1]: At first, I thought this was a mistake. However after failing to find solutions for several other puzzles on that <a href="https://www.scramblesquares.com">website</a>, I think this was delibrate. This is a crude form of copyright protection -  it prevents you from copying the puzzles (from this website at least).
+[^1]: At first, I thought this was a mistake. However after failing to find solutions for several other puzzles on that <a href="https://www.scramblesquares.com">website</a>, I think this was deliberate. This is a crude form of copyright protection -  it prevents you from copying the puzzles (from this website at least).
 [^2]: The original paper does not describe the abstract functions at all. 
