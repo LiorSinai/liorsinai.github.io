@@ -159,10 +159,7 @@ Two cards "fit" if the sum of the touching sides is 0. So it is written as:
 {% highlight python %}
 def fit_2cards(self, card1: List[int], rot1: int, side1: int, 
                      card2: List[int], rot2: int, side2: int) -> bool:
-	if card1[side1 - rot1] + card2[side2 - rot2] == 0:
-		return True
-	else:
-		return False
+	return (card1[side1 - rot1] + card2[side2 - rot2] == 0)
 {% endhighlight %}
 
 Cards are "rotated" 90&deg; counter-clockwise by subtracting a value from the index. The indexing behaviour of Python conveniently wraps around with negative numbers,
@@ -170,7 +167,7 @@ so something like `card1[0 - 1]` is evaluated as `card1[-1]=card1[3]`.
 
 The `fit_position()` function is not as straightforward. Each card needs to fit with the previous card, but the sides which are compared are different at each position. 
 Also, at positions 3, 5, 7 and 8, two sides on the card need to be checked.
-I found it was easiest to hardcode all this:
+I found it was easiest to hardcode all this. This is what it looks like, after some refactoring:
 {% highlight python %}
 def fit_position(self, k: int, used_k: int, rot_k: int) -> bool:
         if k == 0:
