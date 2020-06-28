@@ -35,7 +35,7 @@ This algorithm is rather painful to do by hand, but easy to implement with a com
 I wrote up the algorithm in Python, and within a second, I found the two solutions for my puzzle.
 So much for hours of frustration when I was younger!
 
-The rest of this post will describe this algorithm in my detail.
+The rest of this post will describe this algorithm in detail.
 
 ## The algorithm
 
@@ -74,16 +74,16 @@ So if for example, a piece does not fit in position _k=1_, then all $4(4^7 7!)$ 
 The Serengeti puzzle I posted above has no solution[^1]. So instead I'll use a mock-up of a puzzle I had as a child. This is shown above. 
 The goal here is to match triangles with blocks of the same colour.
 I've labelled each piece from 0 to 8. 
-Each card is encoded as an array using the following rules:
+Each piece is encoded as an array using the following rules:
 - Colours are mapped to a number: blue &rarr; 1, green &rarr;  2, red &rarr; 3  and purple &rarr; 4. 
 - Triangles are positive and blocks are negative.
 - Sides are labelled starting from the top and going clockwise.
 
 For example, piece 0 is encoded as `[-2, -3, +1, +4]`. 
-The rest of the cards look like:
+The rest of the pieces look like:
 {% highlight python %}
 blue, green, red, purple = 1, 2, 3, 4
-cards=[
+pieces = [
 	[-green,-red,+blue,+purple],
 	[-purple,+blue,+purple,-green],
 	[-blue,-green,+blue,+red],
@@ -96,14 +96,14 @@ cards=[
 ]
 {% endhighlight %}
 
-The state of the puzzle can be summarised in two variables: `order`, a list of the order of placements of pieces, and `rot`, the current rotation applied to each card.
+The state of the puzzle can be summarised in two variables: `order`, a list of the order of placements of pieces, and `rot`, the current rotation applied to each piece.
 A rotation is encoded as a number from 0 to 3.
 I created a simple class to store this state. I've also made a nice representation for the `print` function, and two functions that I'll leave abstract for now.
 
 {% highlight python %}
 class ScrambleSquare():
-    def __init__(self, cards: List[int]):
-        self.cards = cards
+    def __init__(self, pieces: List[int]):
+        self.pieces = pieces
         self.order = [-1, -1, -1, -1, -1, -1, -1, -1, -1]
         self.rot = [0, 0, 0, 0, 0, 0, 0, 0, 0] 
 
@@ -115,8 +115,8 @@ class ScrambleSquare():
         repr += ' '.join(map(str, [order[4], order[3], order[2]]))
         return repr
 
-    def fit_2cards(self, card1: List[int], rot1: int, side1: int, 
-	                 card2: List[int], rot2: int, side2: int) -> bool:
+    def fit_2pieces(self, piece1: List[int], rot1: int, side1: int, 
+	                 piece2: List[int], rot2: int, side2: int) -> bool:
         pass
 		
     def fit_position(self, k: int, used_k: int, rot_k: int) -> bool:
@@ -125,13 +125,13 @@ class ScrambleSquare():
 
 I can now present the algorithm in full. I will go into the detail of the abstract functions afterwards:
 {% highlight python %}
-def solveScramble(cards: List[int]) -> None:
+def solveScramble(pieces: List[int]) -> None:
     def solve(k: int, puzzle, stack: List[int]):
         calls[k] += 1
         if k == SIZE: # terminate recursion
             print('Solution found!!')
             print(puzzle)
-        for idx in range(len(stack)): #select a new card that hasn't been used
+        for idx in range(len(stack)): #select a new piece that hasn't been used
             new = stack[idx] 
             for r in range(NUM_ORIENTATIONS): #try different orientations
                 if puzzle.fit_position(k, new, r): #backtracking checkpoint
@@ -145,7 +145,7 @@ def solveScramble(cards: List[int]) -> None:
 
     calls = [0] * (SIZE + 1)
     stack = [0, 1, 2, 3, 4, 5, 6, 7, 8] 
-    puzzle = ScrambleSquare(cards)
+    puzzle = ScrambleSquare(pieces)
 
     solve(0, puzzle, stack) # initiate recursion
 {% endhighlight %}
@@ -154,48 +154,48 @@ I've written the algorithm as a recursive function, so that Python's memory stac
 This could also be done in `for` loop, but then the backtracking has to be explicitly implemented.
 Note: the constants are `NUM_ORIENTATIONS=4` and `SIZE=9`. The `calls` variable is useful for analysing the results.
 
-Now let's elaborate the abstract functions[^2]. The `fit_2cards()` function is simple.
-Two cards "fit" if the sum of the touching sides is 0. So it is written as:
+Now let's elaborate the abstract functions[^2]. The `fit_2pieces()` function is simple.
+Two pieces "fit" if the sum of the touching sides is 0. So it is written as:
 {% highlight python %}
-def fit_2cards(self, card1: List[int], rot1: int, side1: int, 
-                     card2: List[int], rot2: int, side2: int) -> bool:
-	return (card1[side1 - rot1] + card2[side2 - rot2] == 0)
+def fit_2pieces(self, piece1: List[int], rot1: int, side1: int, 
+                     piece2: List[int], rot2: int, side2: int) -> bool:
+	return (piece1[side1 - rot1] + piece2[side2 - rot2] == 0)
 {% endhighlight %}
 
-Cards are "rotated" 90&deg; counter-clockwise by subtracting a value from the index. The indexing behaviour of Python conveniently wraps around with negative numbers,
-so something like `card1[0 - 1]` is evaluated as `card1[-1]=card1[3]`. 
+Pieces are "rotated" 90&deg; counter-clockwise by subtracting a value from the index. The indexing behaviour of Python conveniently wraps around with negative numbers,
+so something like `piece1[0 - 1]` is evaluated as `piece1[-1]=piece1[3]`. 
 
-The `fit_position()` function is not as straightforward. Each card needs to fit with the previous card, but the sides which are compared are different at each position. 
-Also, at positions 3, 5, 7 and 8, two sides on the card need to be checked.
+The `fit_position()` function is not as straightforward. Each piece needs to fit with the previous piece, but the sides which are compared are different at each position. 
+Also, at positions 3, 5, 7 and 8, two sides on the piece need to be checked.
 I found it was easiest to hardcode all this. This is what it looks like, after some refactoring:
 {% highlight python %}
 def fit_position(self, k: int, used_k: int, rot_k: int) -> bool:
         if k == 0:
             fits=True
-        else: #Each card must fit with the previous card:
-            card_k = self.cards[used_k]
-            side_k = [1, 3, 0, 1, 1, 2, 2, 3, 3][k]  # select a side        
-            card_j = self.cards[self.order[k - 1]] # previous card
+        else: #Each piece must fit with the previous piece:
+            piece_k = self.pieces[used_k]
+            side_k = [1, 3, 0, 1, 1, 2, 2, 3, 3][k]         
+            piece_j = self.pieces[self.order[k - 1]]
             rot_j = self.rot[k - 1]        
-            side_j = [0, 1, 2, 3][side_k - 2] # pick the opposite side
-            fits = self.fit_2cards(card_k, rot_k, side_k, card_j, rot_j, side_j)
+            side_j = [0, 1, 2, 3][side_k - 2] #picks the opposite side
+            fits = self.fit_2pieces(piece_k, rot_k, side_k, piece_j, rot_j, side_j)
         
         #Extra fitting criteria for particular positions:
         if k in [3, 5, 7, 8]:
-            cards, order, rot = self.cards, self.order, self.rot
+            pieces, order, rot = self.pieces, self.order, self.rot
             if k == 3:
                 side_k = 0
-                card_other, rot_other, side_other = cards[order[0]], rot[0], 2
+                piece_other, rot_other, side_other = pieces[order[0]], rot[0], 2
             elif k == 5:
                 side_k = 1
-                card_other, rot_other, side_other = cards[order[0]], rot[0], 3
+                piece_other, rot_other, side_other = pieces[order[0]], rot[0], 3
             elif k == 7:
                 side_k = 2
-                card_other, rot_other, side_other = cards[order[0]], rot[0], 0
+                piece_other, rot_other, side_other = pieces[order[0]], rot[0], 0
             elif k == 8:
                 side_k = 2
-                card_other, rot_other, side_other = cards[order[1]], rot[1], 0
-            fits = fits and self.fit_2cards(card_k, rot_k, side_k, card_other, rot_other, side_other)
+                piece_other, rot_other, side_other = pieces[order[1]], rot[1], 0
+            fits = fits and self.fit_2pieces(piece_k, rot_k, side_k, piece_other, rot_other, side_other)
         return fits 
 {% endhighlight %}
 
