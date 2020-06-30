@@ -60,7 +60,8 @@ If we reach position _k=8_ and the last piece fits successfully, a solution is r
 
 This algorithm very effectively cuts down the search space. 
 If a piece does not fit in the *k*th position, then all arrangements with the piece in that position are skipped.
-So if for example, a piece does not fit in position _k=1_, then all $4(4^7 7!)$ arrangements with the piece in this position - 1.4% of the total search space - are skipped.
+So if for example, a piece does not fit in position _k=1_, then all $4(4^7 7!)$ arrangements with the piece in this position are skipped.
+That's 1.4% of the total search space.
 
 ## The Python code
 
@@ -116,7 +117,7 @@ class ScrambleSquare():
         return repr
 
     def fit_2pieces(self, piece1: List[int], rot1: int, side1: int, 
-	                 piece2: List[int], rot2: int, side2: int) -> bool:
+	                  piece2: List[int], rot2: int, side2: int) -> bool:
         pass
 		
     def fit_position(self, k: int, used_k: int, rot_k: int) -> bool:
@@ -158,8 +159,8 @@ Now let's elaborate the abstract functions[^2]. The `fit_2pieces()` function is 
 Two pieces "fit" if the sum of the touching sides is 0. So it is written as:
 {% highlight python %}
 def fit_2pieces(self, piece1: List[int], rot1: int, side1: int, 
-                     piece2: List[int], rot2: int, side2: int) -> bool:
-	return (piece1[side1 - rot1] + piece2[side2 - rot2] == 0)
+                      piece2: List[int], rot2: int, side2: int) -> bool:
+	return piece1[side1 - rot1] + piece2[side2 - rot2] == 0
 {% endhighlight %}
 
 Pieces are "rotated" 90&deg; counter-clockwise by subtracting a value from the index. The indexing behaviour of Python conveniently wraps around with negative numbers,
@@ -171,7 +172,7 @@ I found it was easiest to hardcode all this. This is what it looks like, after s
 {% highlight python %}
 def fit_position(self, k: int, used_k: int, rot_k: int) -> bool:
         if k == 0:
-            fits=True
+            fits = True
         else: #Each piece must fit with the previous piece:
             piece_k = self.pieces[used_k]
             side_k = [1, 3, 0, 1, 1, 2, 2, 3, 3][k]         
@@ -201,7 +202,7 @@ def fit_position(self, k: int, used_k: int, rot_k: int) -> bool:
 
 ## Results
 
-This code retrieves the following solutions in 0.17 seconds:
+This code retrieves the following solutions in 0.07 seconds:
 <div id="unique-name" class="row">
 <img class="mx-auto"
     src="/assets/posts/2020-06-26-scramble-puzzle/Solution1.png"
