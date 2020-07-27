@@ -15,10 +15,7 @@ I recently completed a masters in systems and control engineering at the [Univer
 in the Netherlands. I also hold a bachelors in mechanical engineering from the [University of the Witwatersrand](https://www.wits.ac.za/) in South Africa.
 In between my bachelors and masters, I worked for the national telecommunications company of South Africa, Telkom.
 
-I want to use this space to explore scientific and engineering related ideas. Here is a list of topics I want to cover:  
-+ **Sudoku solver**: this is a recent project of mine. Sudoku solvers are a well reserached topic (see [1][sudoku_ali], [2][sudoku_norvig] and [3][sudoku_stuart]).
-Some Sudoku's are very hard for people for people to solve, but as with the scramble puzzle solvers, computers can solve them easily. 
-This is mainly because they can try many options very quickly.
+I've used this space to explore scientific and engineering related ideas. Here is a list of other topics I want to cover in the future:  
 + **100 years to solve an integral**: the surprising history and (still relevant) importance of the integral of the secant. I will try make this 
 story accessible to everyone, but I will also include all the mathematical details for those who can follow. 
 For sources on this story, see [1][secant_Rickey] or [2][secant_teaching]. 
