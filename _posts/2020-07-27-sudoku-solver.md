@@ -23,8 +23,9 @@ _This post describes a Sudoku solver in Python. Even the most challenging Sudoku
 Recently the Sudoku bug bit me.
 According to [Wikipedia][wiki], this popular brain teaser puzzle rose to prominence in 2004. "Sudoku" is Japanese for "single number".
 The goal of Sudoku is to full a 9x9 grid where each row, column and 3x3 region contains each of the numbers from 1 to 9. 
-These puzzles range in difficulty, and some can be surprisingly hard to solve by hard. But all are remarkably easy to solve with computers.
+These puzzles range in difficulty, and some can be surprisingly hard to solve by hand. But all are remarkably easy to solve with computers.
 
+[McGuire_paper]: https://www.math.ie/McGuire_V2.pdf
 
 ### Other solvers
 
@@ -37,9 +38,8 @@ Her code however cannot solve hard puzzles because it only follows a simple cons
 The second article is by [Peter Norvig][norvig].
 He uses a more comprehensive search and constraint propagation strategy and provides a thorough analysis with multiple puzzles. 
 I used his set of [95 hard puzzles][norvig_top95] and [11 hardest puzzles][norvig_hardest] to test my code. 
-However, I found his structure weird. For example, he stores the board as a dictionary instead of a 9x9 array. 
+However, I found his structure unintuitive. For example, he stores the board as a dictionary instead of a 9x9 array. 
 
- 
 Raghav Virmani's augmented reality [solver][raghav] is very cool. This program solves and overlays solutions on pictures of unsolved Sudokus in real time. 
 It does this by combining Norvig's solver with a Convolutional Neural Network that can read pictures of numbers.
 
@@ -59,7 +59,11 @@ The difficulty levels are:
 3. Ultra-hard 
 4. Impossible 
 
-This is from a human viewpoint. Because the solver uses search, these levels don't affect its performance. All puzzles can be described as "easy". 
+This is from a human viewpoint. Because the solver uses search, these levels don't affect its performance. For a computer, all puzzles can be described as "easy". 
+
+This section only considers puzzles with a unique solution or no solution. 
+Any given Sudoku puzzle might have multiple solutions, but most published Sudokus only have one.
+My solver can find all solutions for any given puzzle.
 
 ### Easy to hard puzzles
 
@@ -79,10 +83,10 @@ Here is an example of an easy puzzle (left) and a hard puzzle (right).
 	>
 </div> {::comment} height:100% else get weird stretching effects {:/comment}
 
-The easy puzzle has 39 clues. At the start, there are 13 hidden singles. These are cells where there is a candidate that is unique to that row, column, or box.
-These can be filled in immediately. This will create other hidden singles, until the very end of the puzzle. I can solve such a puzzle in 3-5 minutes.
+The easy puzzle has 39 clues. At the start, there are 13 singles. These are cells where there is a candidate that is unique to that row, column, or box.
+These can be filled in immediately. This will create other singles, until the very end of the puzzle. I can solve such a puzzle in 3-5 minutes.
 
-The hard puzzle has 23 clues. At the start, there are only 2 hidden singles. To solve the rest of the puzzle, one should compare rows, columns and boxes to eliminate candidates. 
+The hard puzzle has 23 clues. At the start, there are only 2 singles. To solve the rest of the puzzle, one should compare rows, columns and boxes to eliminate candidates. 
 It is very easy to rediscover the other basic [strategies][stuart]: pairs, triples, pointing pairs and box-line reduction.
 I can solve these puzzles in 20-30 minutes.
 
@@ -107,7 +111,7 @@ Andrew Stuart rates them from Tough to Extreme to Diabolical. I don't solve thes
 	>
 </figure>
 
-This one is particularly nasty. Try put it Stuart's [solver][stuart]. It takes multiple steps of small elimanations before the puzzle can be solved.
+This one is particularly nasty. Try put it in Stuart's [solver][stuart]. It takes multiple steps of small eliminations before the puzzle can be solved.
 Meanwhile my solver takes only six guesses to solve it.
 
 ### Ultra-hard puzzles
@@ -138,7 +142,7 @@ So in other words, even an amateur like me can solve the hardest Sudoku puzzle i
 
 ### Impossible puzzles
 
-If you search for this term on the internet, you'll probably find a lot of hard, but certainly sovable, Sudokus. 
+If you search for this term on the internet, you'll probably find a lot of hard, but certainly solvable, Sudokus. 
 People like to exaggerate the difficulty of these puzzles. 
 There is, however, a very large set of puzzles that are truly impossible.
 They're trivially easy to construct. The easiest way to do so, is to play a game of Sudoku and make a mistake XD.
@@ -186,7 +190,7 @@ SIZE = 9
 BOX_SIZE = 3
 
 class Sudoku():
-    def __init__(self, grid: List):
+    def __init__(self, grid: List[List[int]]):
         n = len(grid)
         self.grid = grid
         self.n = n
@@ -235,7 +239,7 @@ class Sudoku():
 
 ### Candidate functions
 
-These functions are for editing for the `candidates` array. They are also part of the `Sudoku` class.
+These functions are for editing the `candidates` array. They are also part of the `Sudoku` class.
 
 Below is the `find_options` function which is called by `__init__`. 
 I've chosen to work with the Python [set](https://docs.python.org/3.7/library/stdtypes.html#set-types-set-frozenset) type for working with candidates.
@@ -320,7 +324,7 @@ def get_unique(self, indices):
 
 Here is the full solving algorithm. The code scans through all 9x9 blocks, and tries to place easy candidates following step 1 or 2. 
 It repeats this process until no changes are made.
-Then either the Sudoku is solved, or we should move onto strategy 3.
+Then either the Sudoku is solved, or we should move onto search through strategy 3.
 If the latter, the code looks for the block with the smallest number of candidates, and takes a guess there. 
 It then starts with step 1 again. 
 If at any time a block has no candidates, it means a mistake was made, and the code backtracks.
@@ -432,7 +436,7 @@ def str2grid(string: str) -> List[List[int]]:
 {% endhighlight %}
 
 
-## Analysis
+## 4. Analysis
 
 This code takes 0.15s and 39 calls to solve to solve the Inkala puzzle. The maximum call depth is 10. 
 
@@ -450,7 +454,7 @@ The average number of calls decreased to 11.6, while the maximum number of calls
 This shows there are only marginal gains for a lot more effort. 
 Also, they make no difference to the solving path for the Inkala puzzle. 
 
-The full code with the advanced strategies can be viewed at my Github repository at: [https://github.com/LiorSinai/SudokuSolver-Python][repo].
+The full code with the advanced strategies can be viewed at my GitHub repository at: [https://github.com/LiorSinai/SudokuSolver-Python][repo].
 There are also additional functions which are not described here. For example, `check_possible` which will flag impossible puzzles like the ones shown earlier. 
 
 [stuart_pointing_pairs]: https://www.sudokuwiki.org/Intersection_Removal
@@ -467,11 +471,10 @@ There are also additional functions which are not described here. For example, `
 [wiki]: https://en.wikipedia.org/wiki/Sudoku
 [online-solver]: https://www.sudoku-solutions.com/
 
-## Conclusion
+## 5. Conclusion
 
 I hope you enjoyed reading about my Sudoku solver.
-In some ways, being able to solve every Sudkoku puzzle in under a second trivialases the appeal of Sudoku. 
-Norvig says he wrote his solver to actively do this, to cure people of this "virus".
+In some ways, being able to solve every Sudoku puzzle in under a second trivialises the appeal of Sudoku. 
 But I still like to solve mildly challenging Sudokus by hand. It helps me to take my mind off things and relax. 
 
 
@@ -479,4 +482,4 @@ But I still like to solve mildly challenging Sudokus by hand. It helps me to tak
 
 
 [^1]: Look at the middle column. The three sets of 1, 5 and 6 require that the three numbers 1, 5 and 6 fit in the two blocks of H5 and J5. Impossible.  
-[^2]: This is a high ratio of 3:1 for wrong:correct guesses. It arises because after a wrong guess is taken all the guesses after that are also wrong until the algorithm backtracks. If we only count the first wrong guess, then the ratio is 4:6 for wrong:correct.
+[^2]: This is a high ratio of 3:1 for wrong:correct guesses. It arises because after a wrong guess is taken all the guesses after that are also wrong until the algorithm backtracks. If we only count the first wrong guess, then the ratio is 4:6.
