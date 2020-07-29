@@ -111,8 +111,10 @@ Andrew Stuart rates them from Tough to Extreme to Diabolical. I don't solve thes
 	>
 </figure>
 
-This one is particularly nasty. Try put it in Stuart's [solver][stuart]. It takes multiple steps of small eliminations before the puzzle can be solved.
+This one is particularly nasty. Try put it in Stuart's [solver][stuart_diabolical]. It takes multiple steps of small eliminations before the puzzle can be solved.
 Meanwhile my solver takes only six guesses to solve it.
+
+[stuart_diabolical]: https://www.sudokuwiki.org/sudoku.htm?bd=..31..72.7.....5...5.24..3....72......6...8......14....6..95.8...5.....9.49..26..
 
 ### Ultra-hard puzzles
 
