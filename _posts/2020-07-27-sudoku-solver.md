@@ -13,7 +13,7 @@ _This post describes a Sudoku solver in Python. Even the most challenging Sudoku
 ## 1. Introduction
 
 <figure class="post-figure">
-<img class="img-40"
+<img class="img-50"
     src="/assets/posts/sudoku-solver/Minimal_17.png"
 	alt="Sudoku minimal"
 	>
