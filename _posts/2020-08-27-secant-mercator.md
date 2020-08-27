@@ -149,7 +149,7 @@ Here is a visualisation of this construction:
 And here is a cross section of the sphere along side the final map:
 <figure class="post-figure">
 <img class="img-95"
-    src="/assets/posts/secant-mercator/lambert_construction.png"
+    src="/assets/posts/secant-mercator/Lambert_construction.png"
 	alt="Lambert cylindrical  map"
 	>
 	<figcaption>Lambert cylindrical  map. Edited from <a href="https://map-projections.net/single-view/lambert">map-projections.net/singleviewp/lambert</a>  </figcaption>
