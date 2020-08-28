@@ -76,7 +76,7 @@ In mathematical notation, the definition is:
 
 $$ sec(\varphi) = \frac{c}{a} $$
 
-It is the inverse of the more widely used cosine function:
+It is the reciprocal of the more widely used cosine function:
 
 $$ sec(\varphi) = \frac{1}{cos(\varphi)} $$
 
