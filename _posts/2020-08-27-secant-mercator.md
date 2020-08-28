@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "100 years to solve an integral"
-subtitle: "The history of the Mercator Map and the integral of the secant"
+subtitle: "The history of the Mercator map and the integral of the secant"
 date:   2020-08-27
 author: Lior Sinai
 background: '/assets/posts/secant-mercator/Bartholomew_mercator1914.jpg'
@@ -23,7 +23,7 @@ But these are all journal articles, consigned mostly to academics.
 I want to present it here in a less formal and more colourful setting, to make it more accessible.
 
 This is an article about mathematics, so familiarity with the following is helpful: algebra, trigonometry, radians and basic calculus. 
-These are usually covered in an advanced high school maths classes or first year maths courses.
+These are usually covered in advanced high school maths classes or first year maths courses.
 
 
 ## First year maths
@@ -40,13 +40,13 @@ This relationship made sense, because sine and cosine derivatives were opposites
 
 $$ \int tan(x) dx = \int \frac{sin(x)}{cos(x)}dx = -ln|cos(x)| + c $$
 
-Ok, that was tricky. It was not immediately obvious here that the inverse of the chain rule could be used, because the function $cos(x)$ was present with its derivative $sin(x)$.
+Ok, that was tricky. It was not immediately obvious that the inverse of the chain rule could be used here, because the function $cos(x)$ was present with its derivative $sin(x)$.
 But given enough thought, it made sense. Then he said, this is the integral of the secant, and learn it off by heart:
 
 $$ \int sec(x) dx = ln|sec(x) + tan(x)| + c $$
 
 OK, where did that come from? My lecturer offered no explanation. It was easy to verify that it worked by finding the derivative. 
-(Paper [2][secant_Rickey] has a more complex proof using only simpler integrals.)
+(Paper [2][secant_Rickey] has a more complex proof using only integration.)
 But how had he come up with that?
 
 I think, at this point, most first year calculus students like me have the following fleeting thoughts:
@@ -55,11 +55,11 @@ I think, at this point, most first year calculus students like me have the follo
 3. It doesn't matter anyway because where will I ever use this? 
 
 Actually, number 1 is true, as many a student can testify after writing a test. 
-Number 2 is false - in fact it was found by an amateur teacher while looking at raw numbers. 
+Number 2 is false - in fact it was found by a teacher while looking at raw numbers. 
 Such a method for finding an integral is so unusual, that one might conjecture it is the _only_ integral that has been found like this.
 Surely in calculus class, where raw numbers are so rare, you would be laughed at if you attempted to solve an integral like that.
-Lastly, number 3 remains true for me. But this doesn't mean this integral isn't useful - it is vital for constructing the very useful Mercator map. 
-This is why a teacher was crunching numbers when he serendipitously realised what the formula was.
+Lastly, number 3 remains true for me. But this doesn't mean this integral isn't useful - it is used to construct the Mercator map. 
+That is why a teacher was crunching numbers when he serendipitously realised what the formula was.
 
 ## Quick revision: trigonometry
 
@@ -100,7 +100,7 @@ Lists of these projections can be found [here][map_projections] or [here][wiki_p
 I will explain two of the simplest here, which will help with understanding the Mercator map in the next section.
 
 All map projections can be represented as equations that transform spherical co-ordinates to flat map co-ordinates.
-The co-ordinates on the sphere are the angles $\varphi$ and $\lambda$. These correspond to lines of latitude and longitude respectively. 
+The co-ordinates on the sphere are the angles $\varphi$ and $\lambda$. These correspond to lines of latitude (parallels) and longitude (meridans) respectively. 
 The co-ordinates on the flat map are $x$ and $y$. A map projection is therefore a transformation from $\varphi$ and $\lambda$ to $x$ and $y$.
 
 One of the simplest and oldest known projections is the equirectangular projection:
@@ -110,11 +110,11 @@ One of the simplest and oldest known projections is the equirectangular projecti
     src="/assets/posts/secant-mercator/equirectangular.png"
 	alt="Equirectangular map"
 	>
-	<figcaption>From <a href="https://map-projections.net/single-view/rectang-0">map-projections.net/singleviewp/rectang-0</a>  </figcaption>
+	<figcaption>Equirectangular map. From <a href="https://map-projections.net/single-view/rectang-0">map-projections.net/singleviewp/rectang-0</a>  </figcaption>
 </figure>
 
-It is made by mapping meridians to vertical straight lines of constant spacing and circles of latitude to horizontal straight lines of constant spacing.
-This has the affect of stretching out objects along the lines of latitude (West-East lines).
+It is made by mapping meridians and parallels to vertical and horizontal straight lines of constant spacing.
+This has the affect of stretching out objects along the parallels.
 The equations for this projection are:
 
 $$ \begin{align} y &= R\varphi\\ x &= R\lambda \end{align}$$
@@ -125,7 +125,7 @@ While the equations are simple, the construction process can be hard to visualis
     src="/assets/posts/secant-mercator/equirectangular_construction.png"
 	alt="Equirectangular map construction"
 	>
-	<figcaption>A segment of the sphere is pulled off and flattened.
+	<figcaption>A segment of the sphere is peeled off and flattened.
 The right most image shows a top view of the flattening. The arcs are pulled flat in the longitudial direction, so that they become straight lines.
 They do not change length in this process, but that requires stretching out the sides along the $x$-axis. 
 Thus a single point where all the arcs meet, is stretched into a line.   </figcaption>
@@ -208,7 +208,7 @@ This stretch factor can be calculated as follows:
 
 First Mercator divided the globe into graticules of equal spacing $\delta\varphi$ and $\delta\lambda$. 
 Along the meridians, the arc length of each graticule is $R\delta\varphi$.
-Along the parallels, the radius of the circle is $Rcos(\varphi)$, so that the bottom length is $(Rcos(\varphi))\delta\lambda$.
+Along the parallels, the radius of the circle is $Rcos(\varphi)$, so that the arc length is $(Rcos(\varphi))\delta\lambda$.
 The tangent can be then approximated as:
 
 $$ tan(\alpha) \approx \frac{Rcos(\varphi)\delta\lambda}{R\delta\varphi}$$
@@ -249,11 +249,11 @@ No thinking or maths required! (And no fancy instruments on globes either.) In m
 For online maps, the local projection is very important. If you are looking for directions in a city, what matters most to you is that the roads look correct.
 This is why the Mercator map is used.
 The scale for it changes at each latitude, but online maps can easily calculate this at each point. 
-Try this with [Google maps][maps_google]. For the same zoom factor, the scale bar is not the same length at each latitude. 
-Along the equator, the scale bar has a minimum of 5m. Up near the poles, which is way more stretched out, the scale bar goes down to 1m.
+Try this with [Google Maps][maps_google]. For the same zoom factor, the scale bar is not the same length at each latitude. 
+Also, along the equator, the scale bar has a minimum of 5m. Up near the poles, which is way more stretched out, the scale bar goes down to 1m.
 But you don't notice this when zooming in on a specific point in the map.
 
-A nice online calculator for rhumb lines and great circles can be found [here][map_calcs]. There is also the option to show the lines on the Mercator map.
+For the record, if you are going to look at long distances on Google Maps, it's best to turn the "Globe view" option on.
 
 ## Tables for trigs, Mercator and logs
 
@@ -274,7 +274,7 @@ In 1599, Edward Wright published tables for the equator Mercator map equation. H
 He also gave the first mathematical description of the Mercator map, which Mercator himself did not explain fully. 
 This made it easier for others to make their own Mercator maps.
 
-In 1614, John Napier introduced logarithms. This is the inverse of the exponential operation. In modern terms, a logarithm $y$ of $x$ to base $b$ is written as:
+In 1614, John Napier introduced logarithms. This is the inverse of the exponential operation. In modern terms, the logarithm $y$ of $x$ to base $b$ is written as:
 
 $$ y = log_b x  \quad ; \quad b^y = x $$
 
@@ -283,7 +283,7 @@ For example, from the laws of exponents:
 
 $$ 2^a \div 2^b = 2^{a-b}$$
 
-Therefore a division can be done as:
+Therefore a division can be done as follows:
 
 $$ 3764 \div 873 = 2^{11.878} \div 2^{9.770} = 2^{2.108} = 4.311 $$ 
 
@@ -345,14 +345,15 @@ It is an extremely common projection. When I was younger, I had a map of the wor
 However I hope you now fully appreciate its main purpose is navigation.
 Outside of that, it unnecessarily distorts shapes, and in particular makes the Americas and Europe look much larger than they actually are.
 This has been linked, not without rational, to colonialism and racism. 
-For decades, cartographers have bemoaned its use in applications where it really has no right to be.
-Here is even an assuming clip from a 90's TV show: [www.youtube.com/watch?v=vVX-PrBRtTY](https://www.youtube.com/watch?v=vVX-PrBRtTY).
-Yet it is still used today in illogical places[^6].
+For decades, cartographers have bemoaned its use in applications where it really has no right to be[^6].
+Here is even an amusing clip from a 90's TV show: [www.youtube.com/watch?v=vVX-PrBRtTY](https://www.youtube.com/watch?v=vVX-PrBRtTY).
 
 There are many different projections out there, all with their own purpose. 
-For general artistic purposes, my personal favourite is the [Winkel Triple](https://en.wikipedia.org/wiki/Winkel_tripel_projection).
-This is the official map of the National Geographic Society.
+For general artistic purposes, my personal favourite is the [Winkel Triple](https://en.wikipedia.org/wiki/Winkel_tripel_projection). 
+It is the official map of the National Geographic Society.
 It is an elegant compromise between form and scale, in both the final representation and in the mathematics. 
+A more general favourite is the[Robinson Projection](https://en.wikipedia.org/wiki/Robinson_projection).
+It was designed with an "artistic approach". Unlike the other projections, instead of using equations, Arthur H. Robinson manually fixed the scale factors at 5&deg; intervals.
 
 
 ---
@@ -360,7 +361,7 @@ It is an elegant compromise between form and scale, in both the final representa
 [^1]: If I remember correctly, I was wandering through Wikipedia. Along the way I landed on the page for the [Integral of the secant function][wiki_secant], which includes a very brief history.  
 [^2]: The rate of change of the area with respect to the x-axis is the line (very thin rectangle) $y$. That is, $\frac{dA}{dx}=y \implies A=\int y dx$.
 [^3]: Well, not exactly, but it is close enough to a sphere for most mapping applications. Where more accuracy is required, there are extensions which can account for deviations from a sphere.
-[^4]: I am not sure if Mercator knew of this projection. It was only formally described by Johann Heinrich Lambert in 1772. However, I think it is the easiest way to visualise the Mercator projection construction, so I have used it here anyway. There are other constructions for it but I do not think they are helpful - the Mercator is a very unnatural projection.
+[^4]: I am not sure if Mercator knew of this projection. It was only formally described by Johann Heinrich Lambert in 1772. However, I think it is the easiest way to visualise the Mercator projection construction, so I have used it here anyway. There are other constructions for it but I do not think they are helpful. The Mercator just is a very unnatural projection.
 [^5]: The values in the table are calculated as $log_{10}(f(n^\circ + \frac{k}{60})) + 10$.
 [^6]: There are several popular Coronavirus map trackers that use the Mercator projection. How sad. 
 
