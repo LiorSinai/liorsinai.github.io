@@ -334,7 +334,7 @@ It truly is remarkable to me that this little formula on my first year exam had 
 I really think it should be taught more in class. This was already tried and tested by [3][secant_teaching]. 
 At a small scale, they found it worked. 
 
-If you are more interested in how Google makes it map, I highly suggest reading this blog post by a Google engineer:
+If you are more interested in how Google makes its map, I highly suggest reading this blog post by a Google engineer:
 [medium.com/google-design/google-maps-cb0326d165f5](https://medium.com/google-design/google-maps-cb0326d165f5).
 Can you spot the integral of the secant in the Google code?
 
