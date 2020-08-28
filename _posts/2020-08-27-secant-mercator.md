@@ -263,7 +263,7 @@ These days pocket calculators are so common that we have forgotten that they wer
 This was true even into the '90s. 
 
 In the past, if you wanted to calculate sec(36&deg;), you could draw a big triangle and physically measure the angle and distances with the ruler. 
-Then you could write out the long division calculation on a piece of paper.
+Then you could write out the long division calculation.
 More likely, however, you would read up the value in a trigonometry table. 
 The numbers in these tables were painstakingly calculated using approximation formulas and trigonometric identities. 
 But for the user, they were very simple. You just had to look up the numbers, and occasionally interpolate between numbers if you wanted higher accuracy. 
@@ -307,8 +307,8 @@ Again more work for the table constructor; less work for the end user. The follo
 </figure>
 
 In 1645, according to legend, a teacher named Henry Bond noticed something strange. 
-The numbers in Wright's Mercator table were similar to the numbers in the $ln(tan(\varphi))$ tables
-(unfortunately the above table is to base 10 instead of base $e$ so you can't check this with it). 
+The numbers in Wright's Mercator table were similar to the numbers in a $ln(tan(\varphi))$ tables
+(that table must have been to base $e$ instead of base 10 like the above table). 
 They just were offset by a factor of 2 and 45&deg; in the tables. So he essentially conjectured that:
 
 $$ \int_0^{\varphi_1} sec(\varphi) d\varphi = ln \left| \tan \left( \frac{\varphi_1}{2} + 45^\circ \right) \right | $$
@@ -349,10 +349,10 @@ For decades, cartographers have bemoaned its use in applications where it really
 Here is even an amusing clip from a 90's TV show: [www.youtube.com/watch?v=vVX-PrBRtTY](https://www.youtube.com/watch?v=vVX-PrBRtTY).
 
 There are many different projections out there, all with their own purpose. 
-For general artistic purposes, my personal favourite is the [Winkel Triple](https://en.wikipedia.org/wiki/Winkel_tripel_projection). 
+My personal favourite is the [Winkel Triple](https://en.wikipedia.org/wiki/Winkel_tripel_projection). 
 It is the official map of the National Geographic Society.
 It is an elegant compromise between form and scale, in both the final representation and in the mathematics. 
-A more general favourite is the[Robinson Projection](https://en.wikipedia.org/wiki/Robinson_projection).
+A more general favourite is the [Robinson Projection](https://en.wikipedia.org/wiki/Robinson_projection).
 It was designed with an "artistic approach". Unlike the other projections, instead of using equations, Arthur H. Robinson manually fixed the scale factors at 5&deg; intervals.
 
 
