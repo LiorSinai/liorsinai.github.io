@@ -216,7 +216,7 @@ $$ tan(\alpha) \approx \frac{Rcos(\varphi)\delta\lambda}{R\delta\varphi}$$
 This graticule is then flattened into the rectangle with the following two requirements:
 
 1. The angles are kept constant, by setting $\alpha =\beta$.
-2. The parallels are projected on to $x$-axis, like in the Lambert projection. This means $\delta x = R\delta \lambda$.
+2. The parallels are projected on to the $x$-axis, like in the Lambert projection. This means $\delta x = R\delta \lambda$.
 
 Therefore the transformation is:
 
@@ -307,7 +307,7 @@ Again more work for the table constructor; less work for the end user. The follo
 </figure>
 
 In 1645, according to legend, a teacher named Henry Bond noticed something strange. 
-The numbers in Wright's Mercator table were similar to the numbers in a $ln(tan(\varphi))$ tables
+The numbers in Wright's Mercator table were similar to the numbers in a $ln(tan(\varphi))$ table
 (that table must have been to base $e$ instead of base 10 like the above table). 
 They just were offset by a factor of 2 and 45&deg; in the tables. So he essentially conjectured that:
 
