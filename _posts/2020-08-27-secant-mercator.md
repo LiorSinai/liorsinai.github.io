@@ -227,9 +227,10 @@ $$ \begin{align} tan(\alpha) &= tan(\beta) \\
 
 From here, it is a small step to turn this into an integral. However, calculus was only properly invented a century later after Mercator published his map. 
 Instead what Mercator did, was realise that he could add up the stretch factors at each point. 
-The stretch at graticule _n_ is approximately the stretch of the graticule below it plus $R sec(\varphi) \delta \varphi$. Or, presented as a summation:
+The stretch at graticule _n_ is approximately the stretch of the graticule below it plus $R sec(\varphi) \delta \varphi$. This can then be turned into a sum:
 
-$$ y_n = \sum^{n}_{k=0} R sec(k \cdot \delta \varphi) \delta \varphi $$
+$$ \begin{align} y_n &\approx R sec(n \cdot \delta \varphi) \delta \varphi + y_{n-1} \\
+                     &=\sum^{n}_{k=0} R sec(k \cdot \delta \varphi) \delta \varphi \end{align}$$
 
 Using a constant value for $\delta \varphi $, Mercator was able to calculate the spacings for his map. Then he drew a world map over it.
 This is a modern rendering of the final result:
@@ -247,8 +248,8 @@ Calculating the bearing can be done simply with a ruler and a projector.
 No thinking or maths required! (And no fancy instruments on globes either.) In modern day terms we would say, it was a big hit with sailors.
 
 For online maps, the local projection is very important. If you are looking for directions in a city, what matters most to you is that the roads look correct.
-This is why the Mercator map is used.
-The scale for it changes at each latitude, but online maps can easily calculate this at each point. 
+This is why the Mercator map is used - to preserve angles between grids in roads. Other map projections don't meet this simple requirment.
+A minor problem is that the scale changes at each latitude, but online maps can easily calculate this at each point. 
 Try this with [Google Maps][maps_google]. For the same zoom factor, the scale bar is not the same length at each latitude. 
 Also, along the equator, the scale bar has a minimum of 5m. Up near the poles, which is way more stretched out, the scale bar goes down to 1m.
 But you don't notice this when zooming in on a specific point in the map.
