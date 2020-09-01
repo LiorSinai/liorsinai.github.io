@@ -16,9 +16,6 @@ in the Netherlands. I also hold a bachelors in mechanical engineering from the [
 In between my bachelors and masters, I worked for the national telecommunications company of South Africa, Telkom.
 
 I've used this space to explore scientific and engineering related ideas. Here is a list of other topics I want to cover in the future:  
-+ **100 years to solve an integral**: the surprising history and (still relevant) importance of the integral of the secant. I will try make this 
-story accessible to everyone, but I will also include all the mathematical details for those who can follow. 
-For sources on this story, see [1][secant_Rickey] or [2][secant_teaching]. 
 This will also address the controversy and moral issues surrounding the Mercator projection (which really should not be used in representative/artistic/non-GPS related maps!).
 + **Electromagnetic waves and the internet**: working in telecommunications taught me much about the infrastructure behind the internet. I'd like to explain that here. 
 It always amuses me how people know that wi-fi doesn't work several meters away from the router, but at the same time, are surprised to learn that most of the internet is not
@@ -37,8 +34,4 @@ _Lior Sinai_, {{ "2020-06-26" | date: '%d %B %Y' }}
 [sudoku_norvig]: https://norvig.com/sudoku.html 
 [sudoku_stuart]: https://www.sudokuwiki.org/sudoku.htm
 [sudoku_ali]: https://dev.to/aspittel/how-i-finally-wrote-a-sudoku-solver-177g
-
-[secant_wiki]: https://en.wikipedia.org/wiki/Integral_of_the_secant_function
-[secant_Rickey]: https://doi.org/10.1080/0025570X.1980.11976846
-[secant_teaching]: https://scholarworks.umt.edu/tme/vol7/iss2/12/
 
