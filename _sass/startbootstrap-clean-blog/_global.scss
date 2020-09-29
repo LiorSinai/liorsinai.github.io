@@ -91,3 +91,17 @@ img::-moz-selection {
   color: $white;
   background: transparent;
 }
+
+table{
+    border-collapse: collapse;
+    border-spacing: 0;
+	margin: auto; 
+}
+
+th{
+    border:2px solid #000000;
+}
+
+td{
+    border:2px solid #000000;
+}
