@@ -205,7 +205,41 @@ The trees range in depth from 11 to 17, with 51 to 145 leaves. The total number 
 The training accuracy is 99.60% and the test accuracy is 98.70%. The F1 score for the test set is 0.926.
 This is a large improvement on the baseline, especially for the F1 score.
 
+This is a simple  flattened representation of one of the tree, where each successive dash represents a level lower in the tree, and left children come before right:
+{% highlight python %}
+000  n_samples: 4000; value: [3611, 389]; impurity: 0.1756; split: Income<=114.500
+001 - n_samples: 3203; value: [3135, 68]; impurity: 0.0416; split: Family<=1.500
+002 -- n_samples: 1601; value: [1570, 31]; impurity: 0.0380; split: Income<=98.500
+003 --- n_samples: 1456; value: [1445, 11]; impurity: 0.0150; split: Mortgage<=298.000
+004 ---- n_samples: 1437; value: [1427, 10]; impurity: 0.0138; split: CD Account<=0.500
+005 ----- n_samples: 1388; value: [1381, 7]; impurity: 0.0100; split: Experience<=8.500
+006 ------ n_samples: 232; value: [227, 5]; impurity: 0.0422; split: Income<=90.500
+007 ------- n_samples: 219; value: [216, 3]; impurity: 0.0270; split: Mortgage<=224.000
+008 -------- n_samples: 214; value: [212, 2]; impurity: 0.0185; split: Education<=1.500
+009 --------- n_samples: 123; value: [121, 2]; impurity: 0.0320; split: CCAvg<=2.800
+010 ---------- n_samples: 119; value: [119, 0]; impurity: 0.0000
+011 ---------- n_samples: 4; value: [2, 2]; impurity: 0.5000
+012 --------- n_samples: 91; value: [91, 0]; impurity: 0.0000
+...
+{% endhighlight %} 	
+
+The value is the number of samples in each class in that node. The impurity is a measure of the mix of classes in the node. A pure node has only 1 type of class and 0 impurity.
+More will be explained on this later.
+The split is the rule for determine which values go to the left or right child.
+
 [UniversalBank_kaggle]: https://www.kaggle.com/sriharipramod/bank-loan-classification/
+
+We can inspect the random forest and calculate a feature importance for each feature. The following graph is a comparison between two types of (normalised) feature importances. 
+The orange bars are based on how much that feature contributes to decreasing the impurity levels in the tree.
+The blue bars are based on randomly scrambling that feature column, and recording how much this decreases the overall accuracy of the model.
+More detail on these calculations will be given later.
+
+<figure class="post-figure">
+<img class="img-80"
+    src="/assets/posts/random-forests/UniversalBank_feature_importances.png"
+	alt="Feature importances for the Universal Bank classifier"
+	>
+</figure>
 
 ## Code
 ### RandomForestClassifier 
@@ -522,24 +556,6 @@ def _find_bettersplit(self, var_idx: int, X, Y, node_id: int, best_score: float)
 
 Making $m$ splits will result in $m+1$ leaf nodes (think about it). The tree therefore has $2m+1$ nodes in total, and $2m$ parameters (a feature and value per split node).
 
-This is a simple  flattened representation of a tree, where each successive dash represents a level lower in the tree, and left children come before right:
-{% highlight python %}
-000  n_samples: 4000; value: [3611, 389]; impurity: 0.1756; split: Income<=114.500
-001 - n_samples: 3203; value: [3135, 68]; impurity: 0.0416; split: Family<=1.500
-002 -- n_samples: 1601; value: [1570, 31]; impurity: 0.0380; split: Income<=98.500
-003 --- n_samples: 1456; value: [1445, 11]; impurity: 0.0150; split: Mortgage<=298.000
-004 ---- n_samples: 1437; value: [1427, 10]; impurity: 0.0138; split: CD Account<=0.500
-005 ----- n_samples: 1388; value: [1381, 7]; impurity: 0.0100; split: Experience<=8.500
-006 ------ n_samples: 232; value: [227, 5]; impurity: 0.0422; split: Income<=90.500
-007 ------- n_samples: 219; value: [216, 3]; impurity: 0.0270; split: Mortgage<=224.000
-008 -------- n_samples: 214; value: [212, 2]; impurity: 0.0185; split: Education<=1.500
-009 --------- n_samples: 123; value: [121, 2]; impurity: 0.0320; split: CCAvg<=2.800
-010 ---------- n_samples: 119; value: [119, 0]; impurity: 0.0000
-011 ---------- n_samples: 4; value: [2, 2]; impurity: 0.5000
-012 --------- n_samples: 91; value: [91, 0]; impurity: 0.0000
-...
-{% endhighlight %} 	
-
 After the tree is made, we can make predictions by filtering down samples through the tree. The image at the top of this page shows a schematic of this.
 The original method from the FastAI course was to filter each sample row by row. I found it is quicker to filter several rows at a time.
 The first batch of rows is split into two based on the current node split value.
@@ -606,19 +622,14 @@ def impurity_feature_importance(self):
         return feature_importances/feature_importances.sum() 
 {% endhighlight %} 	
 
-There is another simpler method to calculate feature importance: randomly permutate (shuffle) a feature column, and then see how well the model performs.
-This is called the permutation feature importance and is a better alternative to the impurity based feature importance.
-Scikit-learn has a great [article](https://scikit-learn.org/stable/auto_examples/inspection/plot_permutation_importance.html)
-on how the latter can be misleading. 
+There is another simpler method to calculate feature importance: fill a feature column with random values, and see how well the model performs.
+But the values shouldn't be entirely random: they should follow the same distribution as the original values.
+The easiest way to accomplish this is to randomly permutate (shuffle) a feature column.
+Thus this is called the permutation feature importance.
+Scikit-Learn has a great [article][scikit_perm_fi] on the advantages of this over impurity based feature importance.
 (A `perm_feature_importance()` function is in the utilities.py module.)
 
-The following graph is a comparison between the two types of (normalised) feature importances. For both, Education is deemed the second most important despite being only 5th in the correlation table.
-<figure class="post-figure">
-<img class="img-80"
-    src="/assets/posts/random-forests/UniversalBank_feature_importances.png"
-	alt="Feature importances for the Universal Bank classifier"
-	>
-</figure>
+[scikit_perm_fi]: https://scikit-learn.org/stable/auto_examples/inspection/plot_permutation_importance.html
 
 ### BinaryTree
 <figure class="post-figure">
