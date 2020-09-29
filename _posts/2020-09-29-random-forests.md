@@ -96,7 +96,7 @@ Based on these, a simple baseline model can be developed:
 		 </li>
 	  </ul>
    </li>
-   <li>If score1&nbsp;>&nbsp;score2, classify as Veriscolor. If score1&nbsp;>&nbsp;score`, classify as Virginica. If score1&nbsp;=&nbsp;score2, leave unknown, or classify at random. </li>
+   <li>If score1&nbsp;>&nbsp;score2, classify as Veriscolor. If score1&nbsp;<&nbsp;score2, classify as Virginica. If score1&nbsp;=&nbsp;score2, leave unknown, or classify at random. </li>
 </ol>
 This simple strategy guarantees that 140 samples, which is 93.3% of the samples, will be correctly classified.
 
