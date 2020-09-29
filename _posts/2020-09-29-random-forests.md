@@ -10,7 +10,7 @@ tags:	'machine learning'
 _A random forest classifier in 270 lines of Python code. It is written from (almost) scratch. It is modelled on Scikit-Learn's RandomForestClassifier._ 
 
 <figure class="post-figure">
-<img class="img-60"
+<img class="img-80"
     src="/assets/posts/random-forests/Random_forest_diagram_complete.png"
 	alt="Simplified random forest"
 	>
