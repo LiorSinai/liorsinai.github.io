@@ -205,7 +205,7 @@ The trees range in depth from 11 to 17, with 51 to 145 leaves. The total number 
 The training accuracy is 99.60% and the test accuracy is 98.70%. The F1 score for the test set is 0.926.
 This is a large improvement on the baseline, especially for the F1 score.
 
-This is a simple  flattened representation of one of the tree, where each successive dash represents a level lower in the tree, and left children come before right:
+This is a simple  flattened representation of one of the trees. Each successive dash represents a level lower in the tree, and left children come before right:
 {% highlight python %}
 000  n_samples: 4000; value: [3611, 389]; impurity: 0.1756; split: Income<=114.500
 001 - n_samples: 3203; value: [3135, 68]; impurity: 0.0416; split: Family<=1.500
@@ -622,10 +622,8 @@ def impurity_feature_importance(self):
         return feature_importances/feature_importances.sum() 
 {% endhighlight %} 	
 
-There is another simpler method to calculate feature importance: fill a feature column with random values, and see how well the model performs.
-But the values shouldn't be entirely random: they should follow the same distribution as the original values.
-The easiest way to accomplish this is to randomly permutate (shuffle) a feature column.
-Thus this is called the permutation feature importance.
+There is another simpler method to calculate feature importance: shuffle (permutate) a feature column, and record how well the model performs.
+Shuffling a column makes the values for each sample random, but at the same time keeps the overal distribution for the feature constant.
 Scikit-Learn has a great [article][scikit_perm_fi] on the advantages of this over impurity based feature importance.
 (A `perm_feature_importance()` function is in the utilities.py module.)
 
