@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Random forest classifier from stratch in Python"
+title:  "Random forest classifier from scratch in Python"
 date:   2020-09-29
 author: Lior Sinai
 categories: coding
@@ -420,7 +420,7 @@ The function `_split_node()` does many different actions:
 	<li>  Randomly allocates a subset of features. Importantly, this is different per split. If the whole tree was made from the same subset of 
 	features, it is likely to be 'boring' and not that useful. </li>
 	<li> Makes a call to `_find_bettersplit()` to determine the best feature to split the node on. This is a greedy approach because it expands the tree based
-	on the best feature right now. The  </li>
+	on the best feature right now.  </li>
 	<li> Creates children for this node based on the best feature for splitting. </li>	
 </ul>
 
