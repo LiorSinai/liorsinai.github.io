@@ -132,7 +132,7 @@ This is a simple  flattened representation of one of the trees. Each successive 
 The value is the number of samples in each class in that node. The impurity is a measure of the mix of classes in the node. A pure node has only 1 type of class and 0 impurity.
 More will be explained on this later.
 The split is the rule for determining which values go to the left or right child.
-For example, the first split is almost the same as the first rule in the baseline model.:
+For example, the first split is almost the same as the first rule in the baseline model.
 
 ### Universal Bank loans
 
