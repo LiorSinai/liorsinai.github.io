@@ -313,7 +313,7 @@ def fit(self, X, Y):
 {% endhighlight %}
 
 The `_create_tree()` function is called by `fit()`. It randomly allocates samples, and creates a DecisionTree with the same parameters as the RandomForestClassifier. 
-It then the heavy lifting to the DecisionTree's `fit()` function.
+It then passes the heavy lifting to the DecisionTree's `fit()` function.
 
 {% highlight python %}
 def _create_tree(self, X, Y):
