@@ -20,7 +20,7 @@ _A random forest classifier in 270 lines of Python code. It is written from (alm
 I recently learnt about Random Forest Classifiers/Regressors. It is a supervised machine learning technique that performs well on interpolation problems. 
 It was formally introduced in 2001 by [Leo Breiman][Breiman_2001].
 They are much easier to train and much smaller than the more modern, but more powerful, neural networks.
-They are very common and are included in most major machine learning software and libraries, including R and Scikit-Learn. 
+They are often included in major machine learning software and libraries, including R and Scikit-learn. 
 
 [Breiman_2001]:https://link.springer.com/article/10.1023/A:1010933404324
 
@@ -43,7 +43,7 @@ The first version was based on the code in the FastAI course, but I have made it
 The version presented here is slightly simpler and more compact.
 
 
-Scikit-Learn's [RandomForestClassifier][sklearn_RandomForestClassifier] is far superior to mine. 
+Scikit-learn's [RandomForestClassifier][sklearn_RandomForestClassifier] is far superior to mine. 
 It is written in several thousand lines of code; mine was written in just 270.
 The main advantages of it are: 
 <ul style="margin-top:-30px;">
@@ -112,6 +112,27 @@ This is a clear improvement on the baseline.
 
 [iris_wiki]: https://en.wikipedia.org/wiki/Iris_flower_data_set
 [iris_kaggle]: https://www.kaggle.com/arshid/iris-flower-dataset
+
+
+This is a simple  flattened representation of one of the trees. Each successive dash represents a level lower in the tree, and left children come before right:
+{% highlight python %}
+000  n_samples: 120; value: [43, 39, 38]; impurity: 0.6657; split: PetalLength<=2.450
+001 - n_samples: 43; value: [43, 0, 0]; impurity: 0.0000
+002 - n_samples: 77; value: [0, 39, 38]; impurity: 0.4999; split: PetalLength<=4.750
+003 -- n_samples: 34; value: [0, 34, 0]; impurity: 0.0000
+004 -- n_samples: 43; value: [0, 5, 38]; impurity: 0.2055; split: PetalWidth<=1.750
+005 --- n_samples: 7; value: [0, 4, 3]; impurity: 0.4898; split: SepalWidth<=2.650
+006 ---- n_samples: 3; value: [0, 1, 2]; impurity: 0.4444
+007 ---- n_samples: 4; value: [0, 3, 1]; impurity: 0.3750
+008 --- n_samples: 36; value: [0, 1, 35]; impurity: 0.0540; split: SepalLength<=5.950
+009 ---- n_samples: 5; value: [0, 1, 4]; impurity: 0.3200
+010 ---- n_samples: 31; value: [0, 0, 31]; impurity: 0.0000
+{% endhighlight %} 	
+
+The value is the number of samples in each class in that node. The impurity is a measure of the mix of classes in the node. A pure node has only 1 type of class and 0 impurity.
+More will be explained on this later.
+The split is the rule for determining which values go to the left or right child.
+For example, the first split is almost the same as the first rule in the baseline model.:
 
 ### Universal Bank loans
 
@@ -206,28 +227,6 @@ The forest took about 10 seconds to train.
 The trees range in depth from 11 to 17, with 51 to 145 leaves. The total number of leaves is 1609.
 The training accuracy is 99.60% and the test accuracy is 98.70%. The F1 score for the test set is 0.926.
 This is a large improvement on the baseline, especially for the F1 score.
-
-This is a simple  flattened representation of one of the trees. Each successive dash represents a level lower in the tree, and left children come before right:
-{% highlight python %}
-000  n_samples: 4000; value: [3611, 389]; impurity: 0.1756; split: Income<=114.500
-001 - n_samples: 3203; value: [3135, 68]; impurity: 0.0416; split: Family<=1.500
-002 -- n_samples: 1601; value: [1570, 31]; impurity: 0.0380; split: Income<=98.500
-003 --- n_samples: 1456; value: [1445, 11]; impurity: 0.0150; split: Mortgage<=298.000
-004 ---- n_samples: 1437; value: [1427, 10]; impurity: 0.0138; split: CD Account<=0.500
-005 ----- n_samples: 1388; value: [1381, 7]; impurity: 0.0100; split: Experience<=8.500
-006 ------ n_samples: 232; value: [227, 5]; impurity: 0.0422; split: Income<=90.500
-007 ------- n_samples: 219; value: [216, 3]; impurity: 0.0270; split: Mortgage<=224.000
-008 -------- n_samples: 214; value: [212, 2]; impurity: 0.0185; split: Education<=1.500
-009 --------- n_samples: 123; value: [121, 2]; impurity: 0.0320; split: CCAvg<=2.800
-010 ---------- n_samples: 119; value: [119, 0]; impurity: 0.0000
-011 ---------- n_samples: 4; value: [2, 2]; impurity: 0.5000
-012 --------- n_samples: 91; value: [91, 0]; impurity: 0.0000
-...
-{% endhighlight %} 	
-
-The value is the number of samples in each class in that node. The impurity is a measure of the mix of classes in the node. A pure node has only 1 type of class and 0 impurity.
-More will be explained on this later.
-The split is the rule for determining which values go to the left or right child.
 
 [UniversalBank_kaggle]: https://www.kaggle.com/sriharipramod/bank-loan-classification/
 
@@ -626,7 +625,7 @@ def impurity_feature_importance(self):
 
 There is another simpler method to calculate feature importance: shuffle (permutate) a feature column, and record how well the model performs.
 Shuffling a column makes the values for each sample random, but at the same time keeps the overal distribution for the feature constant.
-Scikit-Learn has a great [article][scikit_perm_fi] on the advantages of this over impurity based feature importance.
+Scikit-learn has a great [article][scikit_perm_fi] on the advantages of this over impurity based feature importance.
 (A `perm_feature_importance()` function is in the utilities.py module.)
 
 [scikit_perm_fi]: https://scikit-learn.org/stable/auto_examples/inspection/plot_permutation_importance.html
