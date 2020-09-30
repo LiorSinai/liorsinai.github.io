@@ -105,7 +105,8 @@ I used my code to make a random forest classifier with the following parameters:
 `forest = RandomForestClassifier(n_trees=10, bootstrap=True, max_features=2, min_samples_leaf=3)`
 
 I randomly split the data into 120 training samples and 30 test samples.
-The `forest` trained on this data has trees with depths in the range of 3 to 7, and 65 leaves in total.
+The forest took 0.23 seconds to train. 
+It had trees with depths in the range of 3 to 7, and 65 leaves in total.
 It  misclassified one sample in the training and test set each, for an accuracy of 99.2% and 96.7% respectively.
 This is a clear improvement on the baseline.
 
@@ -201,6 +202,7 @@ I used my code to make a random forest classifier with the following parameters:
 `forest = RandomForestClassifier(n_trees=20, bootstrap=True, max_features=3, min_samples_leaf=3)`
 
 I randomly split the data into 4000 training samples and 1000 test samples and trained the `forest` on it.
+The forest took about 10 seconds to train.
 The trees range in depth from 11 to 17, with 51 to 145 leaves. The total number of leaves is 1609.
 The training accuracy is 99.60% and the test accuracy is 98.70%. The F1 score for the test set is 0.926.
 This is a large improvement on the baseline, especially for the F1 score.
@@ -225,7 +227,7 @@ This is a simple  flattened representation of one of the trees. Each successive 
 
 The value is the number of samples in each class in that node. The impurity is a measure of the mix of classes in the node. A pure node has only 1 type of class and 0 impurity.
 More will be explained on this later.
-The split is the rule for determine which values go to the left or right child.
+The split is the rule for determining which values go to the left or right child.
 
 [UniversalBank_kaggle]: https://www.kaggle.com/sriharipramod/bank-loan-classification/
 
@@ -518,7 +520,7 @@ $$
 $$
 
 The lower the Gini impurity, the better the split. To determine the best split, we sum the Gini impurities of the left and right children nodes, weighted by the number of samples in each node.
-We then try to minimise this weighted value.
+We then minimise this weighted value.
 
 The second question is, how do we find a value to split on? Well, a brute force approach is to try a split at every sample with a unique value.
 This is not necessarily the most intelligent way to do things.[^5] But it is the most generic and works well for many different scenarios (few unique values, many unique values, outliers etc).
@@ -687,7 +689,7 @@ In the future, I would like to investigate more advanced versions of tree ensemb
 ---
 
 [^1]: Don't know what a sepal is? I didn't either. It's the outer part of the flower that encloses the bud. Basically it's a leaf that looks like a petal. 
-[^2]: The F1 score balances recall (fraction of true positives predicted) with precision (fraction of correct positives). $F1 =\frac{2}{\frac{1}{\text{recall}}+\frac{1}{\text{precision}}}$
+[^2]: The F1 score balances recall (fraction of true positives predicted) with precision (fraction of correct positives). Guessing all true would have high recall but low precision. It is better to have both. $F1 =\frac{2}{\frac{1}{\text{recall}}+\frac{1}{\text{precision}}}$
 [^3]: It is annoying that the Scikit-learn module does not include this parameter. There are ways around it. For example the FastAI package edits the Scikit-learn code with `set_rf_samples()`. Or you could sample data yourself and train a tree one at a time using the `warm_start=True` parameter. But these are hacks for what I think could have been a simple input parameter.
 [^4]: Let the sample size be _k_ and the total number of samples be _n_. Then the probability that there is at least one version of any particular sample is: $$ \begin{align} P(\text{at least 1}) &= P(\text{1 version}) + P(\text{2 versions}) + .... + P(k \text{ versions}) \\  &= 1 - P(\text{0 versions}) \\ &= 1 - \left (\frac{n-1}{n} \right)^k \\\underset{n \rightarrow \infty}{lim} P(\text{at least 1}) &= 1 - e^{-k/n}\\\end{align}$$. <br> For _n=k_, $P(\text{at least 1})\rightarrow 1-e^{-1} = 0.63212...$
 [^5]: Another way would probably be to determine the distribution of values e.g. linear, exponential, categorical. Then use this information to create a good feature range.
