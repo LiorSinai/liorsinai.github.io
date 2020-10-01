@@ -424,7 +424,7 @@ class DecisionTree:
         return self.features[self.split_features[node_id]]
 {% endhighlight %}
 
-The import variables are stored in arrays. The binary tree structure is stored in a separate class, BinaryTree. 
+The important variables are stored in arrays. The binary tree structure is stored in a separate class, BinaryTree. 
 A node ID is used to retrieve elements from the BinaryTree. As long as we keep track of these node IDs, we can fully abstract the complexity of the BinaryTree.
 
 The fit function is again separate to initialisation.
