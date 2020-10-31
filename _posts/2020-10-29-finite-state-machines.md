@@ -7,7 +7,7 @@ categories: coding
 tags:	'regex, finite state machines'
 ---
 
-_This post describes how finite state machines for string matching were applied to a particular kind of puzzle, nonograms. String pattern matching can be done very efficiently with finite state machines. In fact, these formed the basis of the first regex matchers, but have since been replaced by more versatile but slower backtracking algorithms._ 
+_I recently solved a particular kind of puzzle, nonograms, using finite state machines for regex matching. This is a very efficient way to do regex matching and in fact formed the basis of the first regex matchers. But finite state machines have since been replaced with more versatile but slower backtracking algorithms._ 
 
 
 
@@ -59,7 +59,7 @@ I think this is the most valuable part of the solver, because this technique is 
 
 ## How to solve nonograms
 
-Starting a blank nonogram puzzle can be daunting. Thankfully there is a simple technique to get going.
+A blank nonogram puzzle can be daunting. Thankfully there is a simple technique to get going.
 For every row/column, construct the left-most/top-most solution. Then slide it across all the way to the right/bottom.
 The cells that always remain part of the same sequence (whether black or white) can be shaded in.
 
@@ -70,11 +70,11 @@ For example, for the above nonogram:
 	alt="nonogram elephant solving"
 	>
 </figure>
-Row 6 is the row of interest. Rows 4 and 5 show the left-most and right-most solutions respectively (and not solutions for row 4 or 5). 
-The shaded cells in row 6 are the cells that always overlap in row 4 and row 5. These can be kept black, and all other cells should be left unknown.
+Row 6 is the row of interest. Rows 5 and 7 show the left-most and right-most solutions respectively (and not solutions for row 5 or 7). 
+The shaded cells in row 6 are the cells that always overlap in row 5 and row 7. These can be kept black, and all other cells should be left unknown.
 
 This process is then completed for every row. Next, it is done for each column, except this time the solution is constrained by the cells already shaded in each row.
-This process can then repeated on the row with the new constraints. And so on. For many puzzles, the entire puzzle can be solved with this one technique alone.
+This process can then be repeated on each row with the new constraints. And so on. For many puzzles, the entire puzzle can be solved with this one technique alone.
 
 Before continuing, I would like to showcase examples where this fails. The first is this aeroplane puzzle:
 
@@ -116,7 +116,7 @@ A caveat though with "Domino Logic III"  - a string of bad guesses can lead down
 The trickiest part of the left-right algorithm is finding the left-most match.[^0] 
 For an empty puzzle, this is trivial. However as more cells are shaded and the puzzle gets larger,
 this gets harder. See for example the above half finished puzzle (final [solution][bear_solution]).
-The main difficulty comes from deciding whether to place a white or not. This binary choice leads to $\mathcal{O}(2^n)$ complexity.[^1]
+The main difficulty comes from deciding whether to place a white or not. This binary choice leads to $\mathcal{O}(2^n)$ complexity.
 I originally implemented a depth-first search (DFS) with backtracking, but for large puzzles (100x100) this was too slow.
 This was especially crippling on puzzles which required guessing, which adds another layer of backtracking.
 
@@ -138,7 +138,7 @@ The nonogram problem here can easily be rephrased as a regex problem. This is do
 	- black cell: $01_2 = 1$
 	- white cell: $10_2 = 2$
 	- either:     $11_2 = 3$
-- Write each nonogram pattern _(a, ..., z)_ as the following regex: `([23]*)([13]){a}([23]+)...([13]){z}([23]*)`.
+- Write each nonogram pattern _(a, b, ..., z)_ as the following regex: `([23]*)([13]){a}([23]+)([13]){b}([23]+)...([13]){z}([23]*)`.
 
 Regex matchers themselves are usually DFS algorithms. For the most part this is more practical than finite state automata. 
 DFS allows more complex regular expressions (Cox's article has a full list in his post). 
@@ -148,10 +148,10 @@ However the exponential nature of backtracking can cause them to fail, sometimes
 
 An alternative is to represent the character expression as a nondeterministic finite state automation. Let's break that name down:
 - automation: a sort of machine/program. I find the term archaic but it does come from a time before computers.
-- finite state: there is a countable number of states. This is opposed to infinite or continuous states, such gradients with measurements in nature, or states which depend on such a large combination of elements that they are for practical purposes uncountable.
-- nondeterministic: given a state, it cannot always be determined what the previous state was. Actually, that is a minor problem here because once we have a match, we cannot work backwards to reconstruct it. So we have to keep track of the states on the forward pass.
+- finite state: there is a countable number of states. This is opposed to infinite or continuous states, such as measurements with gradients in nature, or states which depend on such a large combination of elements that they are for practical purposes uncountable.
+- nondeterministic: given a state, it cannot always be determined what the previous state was. Actually, that is a minor problem here because we do want to know how many times we have passed through each state, not just the current state. But we can store this information outside of the NFA.
 
-The finite state automata is composed of states _S_ which transition in one of the following ways:
+The NFA is composed of states _S_ which transition in one of the following ways:
 <figure class="post-figure">
 <img class="img-80"
     src="/assets/posts/nonograms/symbols.png"
@@ -176,12 +176,12 @@ It is made into an $O(n^2)$ algorithm by doing the following:
 1. At each split with multiple valid transitions, simultaneously  do all.
 2. Only keep track of current active states (and not the history).
 
-Only doing the first would result in breadth-first Search (BFS), which still has $O(2^n)$ complexity.
-The second step however means that the number of active states per character is a function of the pattern length (which is $O(n)$).
-So since we only read $n$ characters,the whole algorithm is $O(n^2)$.
+Only doing the first would result in breadth-first search (BFS), which still has $O(2^n)$ complexity.
+The second step however means that the number of active states per character is a function of the pattern length. That is $O(n)$.
+So since we process $n$ characters,the whole algorithm is $O(n^2)$.
 
 The minor difficulty is that we do want to keep track of part of the history - that is, the current matching vectors - as well as the current state.
-But since we can keep one match per state and we only want the left-most match, we can just keep the left-most match per state.
+But we can keep one match per state without increasing the complexity, and since we only want the left-most match, we can just keep the left-most match per state.
 
 
 [Thompson_paper]: https://dl.acm.org/doi/10.1145/363347.363387
@@ -268,7 +268,7 @@ void NonDeterministicFiniteAutomation::compile(vector<int> pattern_)
     is_compiled = false;
     this->states = {};
 
-    // add start to stack
+    // add start and end to state list
     State start {'\0', num_states++, 's'};
     states.push_back(start);
     State end {'\0', num_states++}; //continuously update the end
@@ -286,7 +286,7 @@ void NonDeterministicFiniteAutomation::compile(vector<int> pattern_)
     //general case
     stack<int> st;  // state ids to modify
     st.push(0);  // add start to the stack
-    st.push(1);  // add end to the start
+    st.push(1);  // add end to the stack
     int next_, state, prev_;  // always work with these 3 states. Underscore because next and prev are std keywords
     vector<char> fragments = convert_pattern(pattern);
     for (char sym: fragments){
@@ -407,14 +407,16 @@ Match NonDeterministicFiniteAutomation::find_match(std::vector<int>& array){
 ## Conclusion
 
 String matching with NFAs is a useful technique that I'm sure will come in handy in many different situations.
-I don't see them replacing backtracking in regex anytime soon. But certainly for cases like this which don't have complex matching criteria, it is the superior option.
+It is understandable why more versatile DFS replaced them as the default algorithm for regex.
+The simplicity of NFAs is also their downfall - complex regex cannot be modelled with them.
+But certainly for cases like this which don't have complex matching criteria, it is the superior option.
 
 I'm still curious if there are faster ways to solve nonograms or to find a left-most match. Jan Wolter's code for one was certainly faster than mine, and I am not sure why.
 
 
 ---
 
-[^0]: The right-most can be found with the same algorithm by either iterating through the indices backwards, or passing a reversed version of the pattern and line to the left-most matcher.
+[^0]: The right-most match can be found with the same algorithm by either iterating through the indices backwards, or passing a reversed version of the pattern and line to the left-most matcher.
 [^1]: For a pattern $(x_1, x_2, ..., x_p)$ in a line with $n$ cells, the number of free whites is: $n_{free} = n - (\sum_i^p x_i) - (p-1)$. In the worst case with all unknown except for a single black at the end, this will result in $2^{n_{free}}$ choices for the whites.
-[^2]: Regex is short for regular expression. It is standardised sequence of characters that define a search pattern in a (text) string. Most modern program languages have an inbuilt regex implementation. For more detail, see the Wikipedia [article][wiki_regex] or an online regex tester like [regex101][regex101].
+[^2]: Regex is short for regular expression. It is a standardised sequence of characters that define a search pattern in a (text) string. Most modern program languages have an inbuilt regex implementation. For more detail, see the Wikipedia [article][wiki_regex] or an online regex tester like [regex101][regex101].
 [^3]: To make the code more readable, I've presented it as if I called `using namespace std`. But according to best practice, I did not do this in the actual code.
