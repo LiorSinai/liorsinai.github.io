@@ -675,7 +675,7 @@ class BinaryTree():
 
 ## Conclusion
 
-I hope you enjoyed this post, and that it clarified the inner works of a random forest. If you would like to know more, I again recommend Jeremy Howard's [FastAI course][fastai].
+I hope you enjoyed this post, and that it clarified the inner workings of a random forest. If you would like to know more, I again recommend Jeremy Howard's [FastAI course][fastai].
 He explains the rational behind random forests, more on tree interpretation and more on the limitations of random forests.
 
 What did you think of the top-down approach? I think it works very well.

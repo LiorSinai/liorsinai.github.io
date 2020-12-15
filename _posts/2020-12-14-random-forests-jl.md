@@ -9,8 +9,9 @@ tags:	'machine learning'
 
 _A random forest classifier in 360 lines of Julia code. It is written from (almost) scratch._ 
 
-_This post is a copy of my previous post on a [random forest classifier](/coding/2020/09/29/random-forests.html) written in Python, except the code and images were created with Julia. Some explanations have also been changed. As an exercise principle, no code or image was generated with `PyCall`. The goal of this post is show that equivalent code can be created with Julia. This code is 8x faster than the Python code._ 
+_This post is a copy of my previous post on a [random forest classifier](/coding/2020/09/29/random-forests.html) written in Python, except the code and images were created with Julia. Some explanations have also been changed. As an exercise principle, no code or image was generated with [PyCall][PyCall]. The goal of this post is to show that equivalent code can be created with Julia, except this code is 8x faster._ 
 
+[PyCall]: https://github.com/JuliaPy/PyCall.jl
 
 <figure class="post-figure">
 <img class="img-80"
@@ -48,7 +49,7 @@ The full code can be accessed at my Github [repository][git_random_forests].
 Having been inspired by Jeremy Howard's teaching methods, I will present this post in a top-down fashion.
 First I'll introduce two datasets and show how the random forest classifier can be used on them.
 Next, I'll describe the high level `AbstractClassifier` type, then the two concrete subtypes based off it, 
-`RandomForestClassifier` and `DecisionTreeClassifier`. Lastly I'll describe the `BinaryTree` class that that is used in the `DecisionTreeClassifier`.
+`RandomForestClassifier` and `DecisionTreeClassifier`. Lastly I'll describe the `BinaryTree` struct that is used in the `DecisionTreeClassifier`.
 All code is also explained top-down.
 
 [git_random_forests]: https://github.com/LiorSinai/RandomForest-jl
@@ -101,7 +102,7 @@ I used my code to make a random forest classifier with the following parameters:
 
 I randomly split the data into 120 training samples and 30 test samples.
 The forest took 0.01 seconds to train. 
-It had trees with depths in the range of 3 to 7, and 56 leaves in total.
+It had trees with depths in the range of 2 to 4, and 31 leaves in total.
 It  misclassified one sample in the training and two in the test set, for an accuracy of 99.2% and 96.7% respectively.
 This is a clear improvement on the baseline.
 
@@ -211,7 +212,7 @@ I used my code to make a random forest classifier with the following parameters:
 
 I randomly split the data into 4000 training samples and 1000 test samples and trained the `forest` on it.
 The forest took about 0.90 seconds to train.
-The trees range in depth from 11 to 17, with 43 to 120 leaves. The total number of leaves is 1696.
+The trees range in depth from 11 to 16, with 43 to 120 leaves. The total number of leaves is 1696.
 The training accuracy is 99.67% and the test accuracy is 98.60%. The F1 score for the test set is 0.92.
 This is a large improvement on the baseline, especially for the F1 score.
 
@@ -233,15 +234,15 @@ More detail on these calculations will be given later.
 ### TreeEnsemble 
 
 This is a very short file which defines a module `TreeEnsemble`, includes all the other code, and exports some functions and types for external use.
+It also extends `Base.size` with two new methods.
+
 {% highlight julia %}
 module TreeEnsemble
-
-include("RandomForest.jl")
 
 export  AbstractClassifier, predict, score, fit!, perm_feature_importance,
         # binary tree
         BinaryTree, add_node!, set_left_child!, set_right_child!, get_children,
-        is_leaf, nleaves, find_depths,
+        is_leaf, nleaves, find_depths, get_max_depths,
         # Decision Tree Classifier
         DecisionTreeClassifier, predict_row, predict_batch, predict_prob,
         feature_importance_impurity, print_tree, node_to_string,
@@ -249,6 +250,8 @@ export  AbstractClassifier, predict, score, fit!, perm_feature_importance,
         RandomForestClassifier,
         # utilities
         check_random_state, split_data, confusion_matrix, calc_f1_score
+		
+include("RandomForest.jl")
 
 end
 {% endhighlight %}
@@ -363,7 +366,7 @@ I've shown an include for "DecisionTree.jl" which I'll describe later.
 "DecisionTree.jl" itself includes "Classifier.jl" and "Utilities.jl" so we don't need to include them here.[^headers]
 
 The supervised learning is done by calling the `fit!()` function. 
-This creates each tree one a time.
+This creates each tree one at a time.
 Most of the heavy lifting is done by other functions. 
 Afterwards, it sets attributes including the feature importances and the out-of-bag (OOB) score. 
 The random state is saved before each tree is made, because this can be used to exactly regenerate the random indices for the OOB score.
@@ -584,7 +587,7 @@ The function `split_node!()` does many different actions:
     <li>  Calculates the values and impurity of the current node. </li>
 	<li>  Randomly allocates a subset of features. Importantly, this is different per split. If the whole tree was made from the same subset of 
 	features, it is likely to be 'boring' and not that useful. </li>
-	<li> Makes a call to `find_bettersplit()` to determine the best feature to split the node on. This is a greedy approach because it expands the tree based
+	<li> Makes a call to `find_better_split()` to determine the best feature to split the node on. This is a greedy approach because it expands the tree based
 	on the best feature right now.  </li>
 	<li> Creates children for this node based on the best feature for splitting. </li>	
 </ul>
@@ -645,7 +648,7 @@ function split_node!(tree::DecisionTreeClassifier, X::DataFrame, Y::DataFrame, d
 end
 {% endhighlight %}
 
-`find_bettersplit()` is the main machine learning function. It is not surprisingly the slowest function in this code and the main bottleneck for performance.
+`find_better_split()` is the main machine learning function. It is not surprisingly the slowest function in this code and the main bottleneck for performance.
 The first question to answer is, what is considered a good split? For this, the following simpler, related problem is used as a proxy:
 if we were to randomly classify nodes, but do so in proportion to the known fraction of classes, what is the probability we would be wrong?
 Of course, we are not randomly classifying nodes - we are systematically finding the best way to do so. 
@@ -756,7 +759,7 @@ $$ FI_f = \sum_{i \in split_f} \left(g_i - \frac{g_{l}n_{l}+g_{r}n_{r}}{n_i} \ri
 
 Where $f$ is the feature under consideration, $g$ is the Gini Impurity, $i$ is the current node, $l$ is its left child, $r$ is its right child, and $n$ is the number of samples.
 
-The weighted impurity scores from `find_bettersplit()` need to be recalculated here.
+The weighted impurity scores from `find_better_split()` need to be recalculated here.
 
 {% highlight julia %}
 function feature_importance_impurity(tree::DecisionTreeClassifier)
@@ -845,7 +848,7 @@ end
 
 ## Conclusion
 
-I hope you enjoyed this post, and that it clarified the inner works of a random forest. If you would like to know more, I again recommend Jeremy Howard's [FastAI course][fastai].
+I hope you enjoyed this post, and that it clarified the inner workings of a random forest. If you would like to know more, I again recommend Jeremy Howard's [FastAI course][fastai].
 He explains the rationale behind random forests, more on tree interpretation and more on the limitations of random forests.
 
 What did you think of the top-down approach? I think it works very well.
@@ -860,6 +863,6 @@ In the future, I would like to investigate more advanced versions of tree ensemb
 [^2]: The F1 score balances recall (fraction of true positives predicted) with precision (fraction of correct positives). Guessing all true would have high recall but low precision. It is better to have both. $F1 =\frac{2}{\frac{1}{\text{recall}}+\frac{1}{\text{precision}}}$
 [^4]: Let the sample size be _k_ and the total number of samples be _n_. Then the probability that there is at least one version of any particular sample is: $$ \begin{align} P(\text{at least 1}) &= P(\text{1 version}) + P(\text{2 versions}) + .... + P(k \text{ versions}) \\  &= 1 - P(\text{0 versions}) \\ &= 1 - \left (\frac{n-1}{n} \right)^k \\\underset{n \rightarrow \infty}{lim} P(\text{at least 1}) &= 1 - e^{-k/n}\\\end{align}$$. <br> For _n=k_, $P(\text{at least 1})\rightarrow 1-e^{-1} = 0.63212...$
 [^5]: Another way would probably be to determine the distribution of values e.g. linear, exponential, categorical. Then use this information to create a good feature range.
-[^headers]: Julia has no header guards like in C++. So if we included the "Utilities.jl" file here, as far as I know, it will recompile "Utilities.jl" code, overwriting the old code in the process. But I could be wrong about that.
+[^headers]: Julia has no header guards like in C++. So if we included the "Utilities.jl" file here, as far as I know, it will recompile the "Utilities.jl" code, overwriting the old code in the process. But I could be wrong about that.
 [^underscores]: The Julia convention is to _not_ use underscores in the variable names. However I prefer this notation and use them extensively here. For example, I use `max_depth` instead of `maxdepth`. I think this makes the names clearer and easier to understand. Otherwise this disadvantages non-native English speakers. This is something I feel strongly about after having studied and worked in Europe where most of my colleagues spoke English as a second or third language. For example, for some languages it may be more natural to break "haskey" into "ha skey" or "hask ey" than the English "has key". Using "has_key" eliminates this issue, but "haskey" is used in Base.
 [^batches]: The Python code used a more sophisticated method which grouped rows together in batches. This greatly sped up the Python code. But loop arrays are fast in Julia and I found no benefit to using batches here. 
