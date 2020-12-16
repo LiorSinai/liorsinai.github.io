@@ -9,7 +9,7 @@ tags:	'machine learning'
 
 _A random forest classifier in 360 lines of Julia code. It is written from (almost) scratch._ 
 
-_This post is a copy of my previous post on a [random forest classifier](/coding/2020/09/29/random-forests.html) written in Python, except the code and images were created with Julia. Some explanations have also been changed. As an exercise principle, no code or image was generated with [PyCall][PyCall]. The goal of this post is to show that equivalent code can be created with Julia, except this code is 8x faster._ 
+_This post is a copy of my previous post on a [random forest classifier](/coding/2020/09/29/random-forests.html) written in Python, except the code and images were created with Julia. Some explanations have also been changed. As an exercise principle, no code or image was generated with [PyCall][PyCall]. The goal of this post is to show that equivalent code can be created with Julia, except this code is 9x faster._ 
 
 [PyCall]: https://github.com/JuliaPy/PyCall.jl
 
