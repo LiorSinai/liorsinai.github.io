@@ -454,7 +454,7 @@ The function `_split_node()` does many different actions:
     <li>  Calculates the values and impurity of the current node. </li>
 	<li>  Randomly allocates a subset of features. Importantly, this is different per split. If the whole tree was made from the same subset of 
 	features, it is likely to be 'boring' and not that useful. </li>
-	<li> Makes a call to `_find_bettersplit()` to determine the best feature to split the node on. This is a greedy approach because it expands the tree based
+	<li> Makes a call to `_find_better_split()` to determine the best feature to split the node on. This is a greedy approach because it expands the tree based
 	on the best feature right now.  </li>
 	<li> Creates children for this node based on the best feature for splitting. </li>	
 </ul>
@@ -497,7 +497,7 @@ def _split_node(self, X, Y, depth: int):
         self._split_node(X.iloc[rhs], Y[rhs[0], :], depth+1)
 {% endhighlight %}
 
-`_find_bettersplit()` is the main machine learning function. It is not surprisingly the slowest function in this code and the main bottleneck for performance.
+`_find_better_split()` is the main machine learning function. It is not surprisingly the slowest function in this code and the main bottleneck for performance.
 The first question to answer is, what is considered a good split? For this, the following simpler, related problem is used as a proxy:
 if we were to randomly classify nodes, but do so in proportion to the known fraction of classes, what is the probability we would be wrong?
 Of course, we are not randomly classifying nodes - we are systematically finding the best way to do so. 
@@ -598,7 +598,7 @@ $$ FI_f = \sum_{i \in split_f} \left(g_i - \frac{g_{l}n_{l}+g_{r}n_{r}}{n_i} \ri
 
 Where $f$ is the feature under consideration, $g$ is the Gini Impurity, $i$ is the current node, $l$ is its left child, $r$ is its right child, and $n$ is the number of samples.
 
-The weighted impurity scores from `_find_bettersplit()` need to be recalculated here.
+The weighted impurity scores from `_find_better_split()` need to be recalculated here.
 
 {% highlight python %}
 def impurity_feature_importance(self):

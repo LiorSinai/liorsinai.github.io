@@ -433,7 +433,7 @@ end
 
 The prediction of the forest is done through majority voting. In particular, a 'soft' vote is done, where each tree's vote is weighted by its probability prediction per class.
 The final prediction is therefore equivalent to the class with the maximum sum of probabilities.
-{% highlight python %}
+{% highlight julia %}
 function predict_prob(forest::RandomForestClassifier, X::DataFrame)
     if length(forest.trees) == 0
         throw(NotFittedError(:forest))

@@ -113,7 +113,7 @@ The release of Julia 1.0 was just over two years ago; Python 1.0 was released 25
 The Julia community is playing catch-up with Python and has the second-mover advantage of knowing what works and what doesn't.
 But there simply are not as many packages, features, tutorials or videos as Python has. 
 Fewer people ask questions on StackOverflow or Discourse.
-Like many opensource projects, the documentation is often lacking.[^pie]
+Like many open-source projects, the documentation is often lacking.[^pie]
 The language itself is changing fast, and some code on Julia Academy's own online tutorials is already out of date.[^out_of_date]
 Then there is all the massive amounts of legacy code in companies and institutions.
 So if you're a beginner programmer, you can stop reading now. My advice is focus on Python. It has more resources and will get you further.
@@ -186,7 +186,7 @@ A prime advantage of the type system is on display with my [`score()`][git_score
 For my Python code, I wrote a separate score function inside the `DecisionTreeClassifier` and [`RandomForestClassifier`][git_score_rfc] classes.
 They are however essentially identical functions.
 For my Julia code, I wrote a single function which takes in a type of `AbstractClassifier`. 
-Since I defined both my classifiers to be subtypes of `AbstractClassifier`, calling score on those objects dispatches to the this `score` function.
+Since I defined both my classifiers to be subtypes of `AbstractClassifier`, calling score on those objects dispatches to this `score` function.
 
 [git_score_jl]: https://github.com/LiorSinai/RandomForest-jl/blob/89a948fe30c22bb92947f7016f7ca25135e1720b/Classifier.jl#L35
 [git_score_rfc]: https://github.com/LiorSinai/randomForests/blob/1b3737097e8d80a947aa880ce20038db09016383/TreeEnsemble.py#L98
@@ -234,13 +234,13 @@ x = 5
 end
 {% endhighlight %}
 
-This is a contrived example, but shows a real error I had. The correct code should be `export x, y` where the ',' tells the compiler that there is more to export.
+This is a contrived example, but shows a real error I had. The correct code should be `export x, y` where the `,` tells the compiler that there is more to export.
 But I forgot this comma (it was a long list of exports) and therefore everything after it was ignored and I got "undefined" errors.
 
 #### Fast loops
 
 Unlike Python where vectorisation is recommended as much as possible, you don't have to vectorise in Julia.
-Julia code loops overs arrays just as fast as vectorisation. 
+Julia loops overs arrays just as fast as vectorisation. 
 In fact, because you use potentially less allocations with for loops and in-place operations, these can be faster.
 See #6 at [ww.stochasticlifestyle.com/7-julia-gotchas-handle/][julia_tips].
 
@@ -257,14 +257,14 @@ This can be used to broadcast most functions e.g. `f.(x)` will apply `f` individ
 
 #### Performance philosophy
 
-Julia's design philosophy tends to err on the side of performance, whereas Python errs on flexibility.
+Julia tends to err on the side of performance, whereas Python errs on the side of flexibility.
 An example is with integer overflow. By default Julia does not check for integer overflow because this slows down the code. So `3^40` will result in a negative number.
 Python has automatic overflow checking, so `3**40` gives the correct answer.
-But if you really need to do overflow checking, such as with Cryptography, than you can use the `big()` function e.g. `big(3)^40` will give the correct answer.
+But if you really need to do overflow checking, such as with Cryptography, then you can use the `big()` function e.g. `big(3)^40` will give the correct answer.
 
 ## Neutral issues about Julia <a id="Neutral issues about Julia"></a>
 
-Before I go on to the negatives, there are a whole bunch of issues I don't feel strongly about either way.
+Before I go on to the negatives, there are few issues I don't feel strongly about either way.
 - Julia use one-based indexing. So does Matlab. Meanwhile C, C++ and Python use zero-based indexing. It's a choice. Either way I get off-by-one errors. 
 But really, if you really want me to go with a preference, I prefer one-based indexing. 
 - Functional vs object-orientated programming (OOP). Whole books have been written on the merits and cons of both.
@@ -374,7 +374,7 @@ If none of this convinces you, I think achieving a 9 times increase in speed for
 This was a long review of Julia but it is by no means exhaustive. There are many other features I liked about it but it shares many of these with Python.
 This includes type inference, containers which can hold multiple types, and higher order functions.
 I've also avoided reviewing packages, including curated packages like Plots and DataFrame.
-I can say briefly that Plots is capable (the image at the [top](#SIR model) was generated with it) but lacking in features compared to Python's Matplotlib or Seaborn, but I prefer DataFrame to Pandas.
+I can say briefly that Plots is capable (the image at the [top](#SIR model) was generated with it) but lacking in features compared to Python's Matplotlib or Seaborn, and that I prefer DataFrame to Pandas.
 But this is a topic for a whole other time.
 
 In closing, I think Julia is an awesome language and I hope the community grows.
@@ -383,8 +383,6 @@ I also hope industry begins to adopt it like academia already has.
 [julialang_tips]: https://docs.julialang.org/en/v1/manual/performance-tips/
 [julialang_diffs]: https://docs.julialang.org/en/v1/manual/noteworthy-differences/
 [diffs]: https://cheatsheets.quantecon.org/
-
-
 
 
 ---
