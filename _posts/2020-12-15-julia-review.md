@@ -4,7 +4,7 @@ title:  "Thoughts on Julia after 2 weeks"
 date:   2020-12-15
 author: Lior Sinai
 categories: coding
-background: '/assets/posts/julia-review/Julia_dark2.png'
+background: '/assets/posts/julia-review/JuliaDark2.png'
 tags:	'julia'
 ---
 
