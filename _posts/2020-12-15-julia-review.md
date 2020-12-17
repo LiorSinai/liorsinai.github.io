@@ -66,7 +66,7 @@ Tests were run from the Anaconda CMD and Julia REPL.
   <tr>
     <td>ratio mean times</td>
     <td style="text-align:right">10</td>
-    <td style="text-align:right">1</td>
+    <td style="text-align:right">1.00</td>
     <td style="text-align:right">142.85</td>
     <td style="text-align:right">15.38</td>
   </tr>
@@ -135,7 +135,7 @@ For example, the same function will be compiled differently if integers are pass
 This means compiled Julia code can be heavily optimised and therefore is fast.
 A downside is that the first call where JIT compiling takes place is slow.
 A more detailed explanation can be found at [ww.stochasticlifestyle.com/7-julia-gotchas-handle/][julia_tips].
-- Julia uses multiple-dispatch to combine the benefits of dynamic typing and static typing. 
+- Julia uses multiple dispatch to combine the benefits of dynamic typing and static typing. 
 In short, multiple methods with different argument types can exist for a single function and Julia will choose the best one to use at compile time.
 To facilitate  this, Julia has a comprehensive type system which can easily be extended.
 This [video][multidispatch_video] by one of the founders explains this concept the best.
@@ -164,7 +164,7 @@ I guess no programming language is perfect.
 Like all programming languages, there was a learning curve to Julia. This was made more difficult by the lack of resources. 
 However generally it was easy to learn coming from a Python background and there are many things I definitely  prefer about Julia.
 
-#### The type system and multiple-dispatch
+#### The type system and multiple dispatch
 This really does balance controlling types with giving the user flexibility.
 For my random forest [code][Julia_repo], it essentially provided a way to make object specific functions, even though Julia is a functional language.
 For example, the [`DecisionTreeClassifier`][git_dtc_fit!] and [`RandomForestClassifier`][git_rfc_fit!] have different `fit!()` methods associated with each of them.
@@ -260,16 +260,16 @@ This can be used to broadcast most functions e.g. `f.(x)` will apply `f` individ
 Julia tends to err on the side of performance, whereas Python errs on the side of flexibility.
 An example is with integer overflow. By default Julia does not check for integer overflow because this slows down the code. So `3^40` will result in a negative number.
 Python has automatic overflow checking, so `3**40` gives the correct answer.
-But if you really need to do overflow checking, such as with Cryptography, then you can use the `big()` function e.g. `big(3)^40` will give the correct answer.
+But if you really need to do overflow checking, such as with Cryptography, then you can use the `big()` function e.g. `big(3)^40`.
 
 ## Neutral issues about Julia <a id="Neutral issues about Julia"></a>
 
 Before I go on to the negatives, there are few issues I don't feel strongly about either way.
-- Julia use one-based indexing. So does Matlab. Meanwhile C, C++ and Python use zero-based indexing. It's a choice. Either way I get off-by-one errors. 
+- Julia uses one-based indexing. So does Matlab. Meanwhile C, C++ and Python use zero-based indexing. It's a choice. Either way I get off-by-one errors. 
 But really, if you really want me to go with a preference, I prefer one-based indexing. 
 - Functional vs object-orientated programming (OOP). Whole books have been written on the merits and cons of both.
 Julia is most certainly a functional orientated language. 
-But with  multiple dispatch it provides some features of OOP, so for the most part it bridges this divide (more on where it fails in the next section).
+But its multiple dispatch goes a long way to bridging the divide with OOP (more on where it fails in the next section).
 - My personal opinion is Julia is more difficult than Python. Maybe you've got that sense too with my talk of type management. 
 Julia gives the user more control than Python, and I think a necessary trade-off of that is more complexity.
 But I found C++ harder to learn, and C even harder.
@@ -287,7 +287,7 @@ I am not sure if this is a specific fault with my installation or a general faul
 Eventually I relied on manual code edits, printing and returning extra variables to do my debugging. 
 I really hope this is improved in the future.
 - Package precompile times. Be warned, the first time you use a package it takes long to load! This is because Julia precompiles code the first time it is used.
-However thankfully you only have to put up with this once per Julia installation/environment.
+Thankfully you only have to put up with this once per Julia installation/environment.
 - Compiler latency, or the infamous First Time to Plot problem. 
 This is one of the most common complaints, and indeed was at the top of the list in a recent [video][julia_wrong] by a founder of "What's wrong with Julia". 
 Every time you use Julia,the first time you use any function it will be slow because of the JIT compiling.
@@ -327,8 +327,8 @@ For example, making a struct which is a subtype of `RandomForestClassifier` is d
 
 These are minor issues I don't like. They may be changed in future updates or are not important issues.
 - Scoping issues: scoping is dealt with better than Python but still there are some inconsistences.
-For example, in Julia you have to write the `global` keyword if you want to modify an external variable to a function or control loop (I understand this is a recent change).
-However, you don't have to write it if you just want to read the value.
+For example, in Julia you have to write the `global` keyword if you want to modify a variable that is external to a function or control loop (I understand this is a recent change).
+However, you don't have to write `global`  if you just want to read the value.
 Here is an example:
 <ul >
 {%highlight julia %}
@@ -357,7 +357,7 @@ It is the name of famous [actresses](https://en.wikipedia.org/wiki/Julia_Roberts
 There is precedent: in 1901 Emil Jellinek named a car after his daughter Mercedez, 
 dooming every Spanish woman with that name since to explain that they are not named after a car; the car is named after them ([reference](https://en.wikipedia.org/wiki/Mercedes-Benz)).
 But really, in this day and age I think the founders should have known better.
-Worse, the Julia language is named after no-one ([reference](https://docs.julialang.org/en/v1/manual/faq/)).
+The Julia language isn't even named after anyone ([reference](https://docs.julialang.org/en/v1/manual/faq/)).
 Could they not have chosen a less inconvenient name?
 
 [julia_name]: https://www.babycenter.com/baby-names-julia-2368.htm

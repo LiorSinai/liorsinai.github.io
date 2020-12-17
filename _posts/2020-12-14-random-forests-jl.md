@@ -312,7 +312,6 @@ using CSV, DataFrames, Printf
 include("DecisionTree.jl") 
 
 mutable struct RandomForestClassifier{T}  <: AbstractClassifier
-    T::DataType #for the type of values in the DecisionTree.
     #internal variables
     n_features::Union{Int, Nothing}
     n_classes::Union{Int, Nothing}
@@ -338,7 +337,7 @@ mutable struct RandomForestClassifier{T}  <: AbstractClassifier
             random_state=Random.GLOBAL_RNG,
             bootstrap=true,
             oob_score=false
-        ) where T = new(T,
+        ) where T = new(
             nothing, nothing, [], [], nothing, n_trees,
             max_depth, 
 			max_features, 
@@ -351,9 +350,7 @@ mutable struct RandomForestClassifier{T}  <: AbstractClassifier
 end
 {% endhighlight %}
 
-The parameter `T` is stored so it can be used to define the type for the split values in the decision trees. 
-(Saving this type as an attribute feels ugly, but I could not find a better way to do this.) 
-The type can be determined from the training dataset. 
+The type T can be determined from the training dataset. 
 But most of the time it will be `Float64`, so we can make an outer constructer to make this type the default:
 {% highlight julia %}
 RandomForestClassifier(;n_trees=100, max_depth=nothing, max_features=nothing, min_samples_leaf=1, random_state=Random.GLOBAL_RNG,
@@ -418,8 +415,9 @@ function create_tree(forest::RandomForestClassifier, X::DataFrame, Y::DataFrame)
         X_ = copy(X)
         Y_ = copy(Y)
     end
-
-    new_tree = DecisionTreeClassifier{forest.T}(
+	
+	T = typeof(forest).parameters[1] # use the same type T used for the forest
+    new_tree = DecisionTreeClassifier{T}(
             max_depth = forest.max_depth,
             max_features = forest.max_features,
             min_samples_leaf = forest.min_samples_leaf,
