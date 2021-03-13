@@ -288,28 +288,32 @@ Therefore a division can be done as follows:
 
 $$ 3764 \div 873 = 2^{11.878} \div 2^{9.770} = 2^{2.108} = 4.311 $$ 
 
-
 The logarithms again had to be painstakingly calculated through approximation calculations. 
-Once they were, a user could look them up in the logarithm table, again with the added benefit that inversion was easy.
+Napier did this using a kinetic framework. While this idea may be unusual today, it has to do with how Napier originally visualised logarithms[^Napier].
+His final table related numbers to logarithms and their sines. Here is an example:
+<figure class="post-figure">
+<img class="img-80"
+    src="/assets/posts/secant-mercator/Napiertable.png"
+	alt="Napier trigonometric table"
+	>
+	<figcaption>Napier's original trigonometric table. From <a href="https://jscholarship.library.jhu.edu/bitstream/handle/1774.2/34187/31151005337641.pdf">John Napier and the Invention of Logarithms</a></figcaption>
+</figure>
+
+A  user could look use such a table to simply look up a logarithm table, with the added benefit that inversion was easy.
 These proved to be very popular - people clearly did not like doing multiplication and division in the past.
-Using addition and subtraction  in their place also made calculations less error prone, especially with successive calculations.
+Using addition and subtraction in their place also made calculations less error prone, especially with successive calculations.
 
-Next, mathematicians decided to combine these tables. 
-If you wanted to multiply trigonometric functions, you could find the values in a trigonometric table and then convert them to logarithms.
-Or you could find logarithms of trigonometric functions directly and put them in a table.
-Again more work for the table constructor; less work for the end user. The following is such a table[^5]:
-
+Next, mathematicians extended these tables to other trigonometric function[^correction]:
 <figure class="post-figure">
 <img class="img-95"
     src="/assets/posts/secant-mercator/APN2002-table3-30deg.png"
 	alt="Logarithmic trigonometric table"
 	>
-	<figcaption>A page from the 2002 American Practical Navigator. From <a href="https://en.wikipedia.org/wiki/File:APN2002-table3-30deg.tiff"> Wikipedia</a></figcaption>
+	<figcaption>A page from the 2002 American Practical Navigator. Values are calculated as $log_{10}(f(n^\circ + \frac{k}{60})) + 10$. From <a href="https://en.wikipedia.org/wiki/File:APN2002-table3-30deg.tiff"> Wikipedia</a></figcaption>
 </figure>
 
 In 1645, according to legend, a teacher named Henry Bond noticed something strange. 
-The numbers in Wright's Mercator table were similar to the numbers in a $ln(tan(\varphi))$ table
-(that table must have been to base $e$ instead of base 10 like the above table). 
+The numbers in Wright's Mercator table were similar to the numbers in a $log_e(tan(\varphi))$ table.
 They just were offset by a factor of 2 and 45&deg; in the tables. So he essentially conjectured that:
 
 $$ \int_0^{\varphi_1} sec(\varphi) d\varphi = ln \left| \tan \left( \frac{\varphi_1}{2} + 45^\circ \right) \right | $$
@@ -363,8 +367,17 @@ It was designed with an "artistic approach". Unlike the other projections, inste
 [^2]: The rate of change of the area with respect to the x-axis is the line (very thin rectangle) $y$. That is, $\frac{dA}{dx}=y \implies A=\int y dx$.
 [^3]: Well, not exactly, but it is close enough to a sphere for most mapping applications. Where more accuracy is required, there are extensions which can account for deviations from a sphere.
 [^4]: I am not sure if Mercator knew of this projection. It was only formally described by Johann Heinrich Lambert in 1772. However, I think it is the easiest way to visualise the Mercator projection construction, so I have used it here anyway. There are other constructions for it but I do not think they are helpful. The Mercator just is a very unnatural projection.
-[^5]: The values in the table are calculated as $log_{10}(f(n^\circ + \frac{k}{60})) + 10$.
 [^6]: There are several popular Coronavirus map trackers that use the Mercator projection. How sad. 
+[^correction]: My original article said that logarithmic trigonmetric tables appeared _after_ normal logarithmic tables. However because of Napier's unusual derivation of the approxmiation formula, this is not true. This was pointed out to me on comments on this post on HackerNews. You can see these [here][hackernews].
+[^Napier]: Here is a brief overview of Napier's method: He compared a particle travelling along an infinite line with another particle travelling along a finite line of length $R$. The first particle travels at a uniform speed $\frac{dx_1}{dt}=1$, while the second particle travels at a speed proportional to the distance it has left along the finite line, $\frac{dx_2}{dt}=R-x_2=x$. The solution to this differential equation is: 
+
+	$$  \begin{align} x_1 &= log_{\frac{1}{e}} \left(\frac{x}{R}\right)  \\ 
+						  &\approx log_{\left(1-\frac{1}{R}\right)^R}\left(sin(\theta) \right) 
+		\end{align}$$ 
+
+	More information can be found at [https://plus.maths.org/content/dynamic-logarithms](https://plus.maths.org/content/dynamic-logarithms).
+
+
 
 [smbc]: https://www.smbc-comics.com/comic/how-math-works
 [secant_Rickey]: https://doi.org/10.1080/0025570X.1980.11976846
@@ -377,7 +390,10 @@ It was designed with an "artistic approach". Unlike the other projections, inste
 
 [map_calcs]: https://www.movable-type.co.uk/scripts/latlong.html
 
-
 [maps_apple]: https://www.apple.com/ios/maps/
 [maps_google]: https://www.google.com/maps/
 [maps_bing]: https://www.bing.com/maps
+
+[napier_formula]: https://plus.maths.org/content/dynamic-logarithms
+[napier_history]: https://jscholarship.library.jhu.edu/bitstream/handle/1774.2/34187/31151005337641.pdf#page=25 
+[hackernews]: https://news.ycombinator.com/item?id=24304311
