@@ -9,7 +9,7 @@ tags:	coding backtracking sudoku
 
 _This post describes a Sudoku solver in Python. Even the most challenging Sudoku puzzles can be quickly and efficiently solved with depth first search and constraint propagation._
 
-Update 13-03-2021: Erfan Paslar made a neat user interface for my solving using JavaScript and the Eel Python package. You can see his code on my GitHub [repository][repo], or head over to his own [website][Erfan_blog] for a tutorial on Eel. 
+Update 13-03-2021: Erfan Paslar made a neat user interface for my solver using JavaScript and the Eel Python package. You can download the solver and UI code from my GitHub [repository][repo]. Also head over to his own [website][Erfan_blog] for a tutorial on Eel. 
 As an example of the UI, here is the solution for the 13 March 2021 NY Time's Hard puzzle: [solution](/assets/posts/sudoku-solver/NYTimes_20210313.png).
 
 [Erfan_blog]: https://letscode.erfanpaslar.ir/post.php?pId=16
