@@ -9,4 +9,6 @@ _site
 # Sass garbage
 .sass-cache
 
+# VSCode
+.vscode/
 

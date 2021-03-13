@@ -9,6 +9,11 @@ tags:	coding backtracking sudoku
 
 _This post describes a Sudoku solver in Python. Even the most challenging Sudoku puzzles can be quickly and efficiently solved with depth first search and constraint propagation._
 
+Update 13-03-2021: Erfan Paslar made a neat user interface for my solving using JavaScript and the Eel Python package. You can see his code on my GitHub [repository][repo], or head over to his own [website][Erfan_blog] for a tutorial on Eel. 
+As an example of the UI, here is the solution for the 13 March 2021 NY Time's Hard puzzle: [solution](/assets/posts/sudoku-solver/NYTimes_20210313.png).
+
+[Erfan_blog]: https://letscode.erfanpaslar.ir/post.php?pId=16
+
 
 ## 1. Introduction
 
@@ -17,7 +22,7 @@ _This post describes a Sudoku solver in Python. Even the most challenging Sudoku
     src="/assets/posts/sudoku-solver/Minimal_17.png"
 	alt="Sudoku minimal"
 	>
-  <figcaption>A minimal Sudoku puzzle </figcaption>
+  <figcaption>A 17-clue Sudoku puzzle </figcaption>
 </figure>
 
 Recently the Sudoku bug bit me.
@@ -347,14 +352,14 @@ def solveSudoku(grid, num_boxes=SIZE, all_solutions=False):
                         solved = False
                         options = puzzle.candidates[i][j] 
                         if len(options) == 0:
-                            return puzzle.grid, False # unsolvable -> backtrack
+                            return False # this call is going nowhere
                         elif len(options) == 1:  # Step 1
                             puzzle.place_and_erase(i, j, list(options)[0]) # Step 2
                             edited = True
             if not edited: # changed nothing in this round -> either done or stuck
                 if solved:
-                    solution_set.append(grid2str(puzzle.grid.))
-                    return puzzle.grid, True
+                    solution_set.append(grid2str(puzzle.grid))
+                    return True
                 else: # Find the square with the least number of options
                     min_guesses = (n + 1, -1)
                     for i in range(n):
@@ -363,29 +368,28 @@ def solveSudoku(grid, num_boxes=SIZE, all_solutions=False):
                             if len(options) > 1:
                                 min_guesses = min((len(options), (i, j)), min_guesses)
                     i, j = min_guesses[1]
-                    options = puzzle.candidates[i][j]  
-                    for y in options: # step 3. Backtracking checkpoint
-                        puzzle_next = deepcopy(puzzle) 
+                    options = puzzle.candidates[i][j] 
+                    for y in options: # step 3. backtracking check point:
+                        puzzle_next = deepcopy(puzzle)
                         puzzle_next.place_and_erase(i, j, y)
-                        grid_final, solved = solve(puzzle_next, depth=depth+1)
+                        solved = solve(puzzle_next, depth=depth+1)
                         if solved and not all_solutions:
                             break # return 1 solution
-                    return grid_final, solved
-        return puzzle.grid, solved
+                    return solved
+        return solved
     
     calls, depth_max = 0, 0
     solution_set = []
     puzzle = Sudoku(grid)   
     n = puzzle.n
 
-    grid_final, solved = solve(puzzle, depth=0)
+    solved = solve(puzzle, depth=0)
     info = {'calls': calls,  
-		'max depth': depth_max, 
-		'solutions': len(solution_set),
-		'solution_set': solution_set
-		}
+            'max depth': depth_max, 
+            'nsolutions': len(solution_set),
+            }
 
-    return grid_final, solved, info
+    return solution_set, solved, info
 {% endhighlight %}
 
 ### Auxiliary functions
