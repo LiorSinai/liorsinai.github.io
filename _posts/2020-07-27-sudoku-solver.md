@@ -195,6 +195,8 @@ The `__repr__` function overrides the default string for the `print` function.
 {% highlight python %}
 SIZE = 9
 BOX_SIZE = 3
+from copy import deepcopy
+from typing import List, Tuple, Set
 
 class Sudoku():
     def __init__(self, grid: List[List[int]]):
