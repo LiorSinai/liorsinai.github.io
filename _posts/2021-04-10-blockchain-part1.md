@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "A personal blockchain for file management: part 1"
+title:  "A private blockchain for files: part 1"
 date:   2021-04-10
 author: Lior Sinai
 categories: coding
@@ -8,12 +8,12 @@ background: '/assets/posts/blockchain/Blockchain.jpeg'
 tags:	'blockchain'
 ---
 
-_A simple program for storing files in your own personal blockchain (because you can)._ 
+_A program for storing files in your own personal blockchain (because you can)._ 
 
 
 This series is split into two parts. 
 Part 1 describes the high levels details of the program I made and what it can do.
-Part 2 goes into the technical details of the C# program.
+[Part 2][part2] goes into the technical details of the C# program.
 
 [repo]: https://github.com/LiorSinai/BlockchainFileSystemCs
 [verge-nft]: https://www.theverge.com/22310188/nft-explainer-what-is-blockchain-crypto-art-faq
@@ -46,7 +46,7 @@ In short, it's a pain to manage transactions on a blockchain.
 
 However, the new onset of [Non-fungible Token][verge-nft] (NFT) mania reignited my interest in blockchain technology.
 I still thought it was a bad idea. But at least an NFT blockchain would be simpler to make than one which manages transactions.
-So I made a personal blockchain for storing NFTs in C#. You can find it at my [GitHub repository][repo].
+So I made a private blockchain for storing NFTs in C#. You can find it at my [GitHub repository][repo].
 It requires almost no programming experience to use, other than basic knowledge of a command line interface (e.g. the "Command Prompt" in Windows or the "Terminal" on a Mac).
 
 My blockchain program currently implements these features (I've crossed out features that are part of most cryptos but are not in my blockchain.):
@@ -77,7 +77,7 @@ Firstly, I've made a Command Line Interface for the program. It looks like this:
 
 You can enter commands such `--load MyBlockchain/MyBlockchain.json` or `--stage-token` or `--print-blockchain`.
 
-This program makes and edits a "managed folder". 
+This program makes and edits a managed folder. 
 Here is what such a folder looks like:
 
 <figure class="post-figure" id="Screenshot MyBlockchain">
@@ -169,12 +169,12 @@ Here is a simplified outline of this file:
 ```
 MyBlockchain
 |___Block0
-|	|___token0 - Hello.txt
-|	|___token1 - FumiakiKawahata_Yoda_LiorSinai.jpg
-| 	|___token2 - fox.png
-|	|___token3 - LoremIpsum.txt
+|	|___token f8 - Hello.txt
+|	|___token 85 - FumiakiKawahata_Yoda_LiorSinai.jpg
+| 	|___token 10 - fox.png
+|	|___token 44 - LoremIpsum.txt
 |___Block1
-	|___token0 - Dragonsunset.jpg
+	|___toke 58 - Dragonsunset.jpg
 
 ```
 Most of the JSON file should be human readable. 
@@ -207,7 +207,7 @@ Cryptographic hashes are the secret sauce behind the blockchain.
 A hash function maps any sort of data to a number. 
 Most blockchains use the SHA-256 hash, which maps data to a number between $0$ and $2^{256} - 1$:
 
-<figure class="post-figure" id="SHA256 simple">
+<figure class="post-figure" id="SHA256_simple">
 <img class="img-80" 
     src="/assets/posts/blockchain/sha256_simple.png"
 	alt="Sha256 simple"
@@ -221,7 +221,7 @@ Data in a computer is always stored as 1s and 0s.
 What the SHA-256 hash does is take these 1s and 0s in and performs the mathematical equivalent of shaking them up and shuffling them around. 
 It then spits out 256 1s and 0s, which can be written as a hexadecimal number with 64 characters, or a decimal number between $0$ and $2^{256} - 1$:
 
-<figure class="post-figure" id="SHA256 detail">
+<figure class="post-figure" id="SHA256_detail">
 <img class="img-80" 
     src="/assets/posts/blockchain/sha256_detail.png"
 	alt="Sha256 detail"
@@ -254,12 +254,17 @@ If we break this block's hash, the next block will have the wrong `previousHash`
 # Proof of work
 
 The proof of work is used to make inserting blocks into the blockchain difficult.
-This is so the network can perform verifications without people spamming it with millions of blocks committed at once.
-But this is a private blockchain, so you _can_ spam it if you want to.
+This serves two main purposes:
+1. It prevents people spamming the networks with millions of blocks committed at once.
+2. It functions as a lottery so the person claiming the reward for mining changes each time.
+
+The first is so that the network has time to verify blocks, and the second is to prevent a single entity from controlling all the mined coins
+(but [mining pools][mining-pools] dominate it anyway).
+But this is a private blockchain, so there are no rewards and you _can_ spam it if you want to.
 
 That said, I have included a proof of work algorithm for completeness. 
 I have implemented the _exact_ same algorithm as Bitcoin.
-Now that we understand hashes, it is easy to understand it: the block hash must be less than a certain number.
+It is: the block hash must be less than a certain number.
 Equivalently, the block hash must start with $n$ zeros in binary form, or $n/4$ zeros in hexadecimal form.
 To get it to this, we can set a free value called `Nonce`, add dummy files to the block, or make it at a different time.
 Essentially, we shoot in the dark and hope for the best.[^PoW]
@@ -268,12 +273,12 @@ The target $n$ for blockchain ranges as an integer from 0 to 256 (Bitcoin basica
 The default is 0 and it is strongly recommended you keep it at 0.
 
 To understand why, lets compare it to the Bitcoin [difficulty](https://www.blockchain.com/charts/difficulty). 
-This is usually given as number $D$ which can be found from $n$ as follows:
+This is usually given as a number $D$ which can be calculated from $n$ as follows:
 
 $$D = 2^{n-48}(2^{16}-1)$$
 
-Increasing the target by 1 doubles the difficulty and average time taken because it halves the amount of valid numbers.
-A standard PC has 2GHz $\approx 2^{30} $ calc/sec of processing power.
+Increasing the target by 1 halves the amount of valid numbers, so it doubles the difficulty and average time taken.
+A standard PC has 2GHz $\approx 2^{30} $ calc/sec of processing power.[^miners]
 For my CPU, this means it can do about 1.4 million hashes/sec $\approx 2^{20.4} $ hashes/sec (since it requires approximately $2^{10}$ calculations for a single hash).
 This means that on average:
 * a target of 20 takes 1 second.
@@ -297,15 +302,16 @@ are all dedicated on solving this one abstract problem while creating an ecologi
 
 This program is essentially a very basic piece of version control software.
 There is much better version control software out there like [Git](https://git-scm.com/), which ironically I'm using to version my blockchain software.
-In addition to tracking if a file changed, Git can track what changed and can restore a file to any time point.
-As well as many more features such as branching, security, online hosting ...
+In addition to tracking if a file changed, Git can track what changed and can restore a file to any time point
+as well as many more features such as branching, security, online hosting ...
 
 The blockchain really is the amazing solution for almost nothing.
 
 # Technical details
 
-Join me in [part 2]({{ "/2021/04/11/blockchain-part2" | relative_url }}).
+Join me in [part 2][part2].
 
+[part2]: {{ "coding/2021/04/11/blockchain-part2" | relative_url }}
 
 ---
 
@@ -318,7 +324,11 @@ Join me in [part 2]({{ "/2021/04/11/blockchain-part2" | relative_url }}).
 	And this is essentially how cryptos works except they uses "blocks" instead of "cheques" and the original amount is "found" by a "miner".
 	Note that unlike a normal, sane bank the blockchain doesn't store account balances. 
  
- [^PoW]: If you know a bettter strategy, please let me know. Nevermind improving my program, we could make lots of money with Bitcoin.
+[^PoW]: If you know a better strategy, please let me know. Nevermind improving my program, we could make lots of money with Bitcoin.
+
+[^miners]: Real miners use specialised [computers][bitcoin-miners] which do  $10^{14}\approx 2^{46.5}$ hashes/sec. A proof of work on one of those will take 24 years at the current Bitcoin difficulty.
+
+[bitcoin-miners]: https://www.buybitcoinworldwide.com/mining/hardware/
 	
 	
 
