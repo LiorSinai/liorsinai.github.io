@@ -15,6 +15,8 @@ I currently work as a software engineer. Previously I completed a masters in sys
 in the Netherlands. I also hold a bachelors in mechanical engineering from the [University of the Witwatersrand](https://www.wits.ac.za/) in South Africa.
 In between my bachelors and masters, I worked for the national telecommunications company of South Africa, Telkom.
 
+For a current list of posts, see [here]({{ "/posts" | relative_url }}). 
+Here is a list of possible future posts:
 + **Simple blockchain for nonfungible tokens**: These NFTs are suddenly everywhere over the internet. They reminded me of a masters project I did on a Bitcoin blockchain. I had thought of doing a blog post on that, but like many others I gew disillusioned with blockchain. These new NFTs however provide a new use case and I think it will be worthwhile explaining the technical details behind the current hype.
 + **Quaternions**: these strange 4-dimensional objects were never part of any of my engineering courses. However, they are incredibly useful for 3D rotations, and are used in most
 3D renders (for games and graphics). I'm self-taught in them, but I had to rely on several sources. I'd like to explain them in a full detail here, along with 
