@@ -246,6 +246,15 @@ So now that we have this magic hash function, it's very easy to see why it is so
 We can hash files and save the result. If anything in the file changes, it will change the hash and we will know.
 Furthermore we can hash whole blocks, and if anything in the block changes, we will know.
 
+<figure class="post-figure" id="bitcoin_fig2">
+<img class="img-80" 
+    src="/assets/posts/blockchain/bitcoin_fig2.png"
+	alt="blockchain diagram"
+	>
+	<figcaption>Source: <a href="https://bitcoin.org/bitcoin.pdf">Bitcoin whitepaper</a></figcaption>
+</figure>
+
+
 Each block also has the previous block's hash inside of it. Hence we have a chain. 
 If we break this block's hash, the next block will have the wrong `previousHash`, and then its hash will be wrong so the block afterwards will have the wrong hash, and so on.
 
@@ -259,7 +268,12 @@ This serves two main purposes:
 2. It functions as a lottery so the person claiming the reward for mining changes each time.
 
 The first is so that the network has time to verify blocks, and the second is to prevent a single entity from controlling all the mined coins
-(but [mining pools][mining-pools] dominate it anyway).
+(but [mining pools][mining-pools] dominate it anyway). Together this prevents [double-spending][bitcoin-whitepaper].
+
+
+[bitcoin-whitepaper]: https://bitcoin.org/bitcoin.pdf#page=2
+
+ 
 But this is a private blockchain, so there are no rewards and you _can_ spam it if you want to.
 
 That said, I have included a proof of work algorithm for completeness. 
@@ -278,8 +292,8 @@ This is usually given as a number $D$ which can be calculated from $n$ as follow
 $$D = 2^{n-48}(2^{16}-1)$$
 
 Increasing the target by 1 halves the amount of valid numbers, so it doubles the difficulty and average time taken.
-A standard PC has 2GHz $\approx 2^{30} $ calc/sec of processing power.[^miners]
-For my CPU, this means it can do about 1.4 million hashes/sec $\approx 2^{20.4} $ hashes/sec (since it requires approximately $2^{10}$ calculations for a single hash).
+A standard PC has 2GHz $\approx 2^{30} $ calc/sec of processing power.
+For my CPU, this means it can do about 1.4 million hashes/sec $\approx 2^{20.4} $ hashes/sec (since it requires approximately $2^{10}$ calculations for a single hash).[^miners]
 This means that on average:
 * a target of 20 takes 1 second.
 * a target of 21 takes 2 seconds.
@@ -302,8 +316,8 @@ are all dedicated on solving this one abstract problem while creating an ecologi
 
 This program is essentially a very basic piece of version control software.
 There is much better version control software out there like [Git](https://git-scm.com/), which ironically I'm using to version my blockchain software.
-In addition to tracking if a file changed, Git can track what changed and can restore a file to any time point
-as well as many more features such as branching, security, online hosting ...
+In addition to tracking if a file changed, Git can track what changed and can restore a file to any time point.
+It also has many more features such as branching, security, online hosting, rebasing, commit messages ...
 
 The blockchain really is the amazing solution for almost nothing.
 
