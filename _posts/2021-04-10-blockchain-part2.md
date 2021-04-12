@@ -62,7 +62,7 @@ This is a stub of the Blockchain class:
 {%highlight C# %}
 public class Blockchain
 {   
-    // Attributes
+    // attributes
     public string Name { get; set ; }
     [JsonIgnore]
     public string BlockchainDirectory { get; set ; }
@@ -74,6 +74,10 @@ public class Blockchain
     [JsonIgnore]
     public const int MAX_DIFFICULTY = 256;
     public List<Block> Blocks {get; private set;}
+	
+    // constructors
+    public Blockchain(string directory_="") {/* code */}
+    public Blockchain(string directory_, DateTime timeStamp_){/* code */} // for loading
 	
     // properties
     public Block Front() {return this.Blocks[0];}
@@ -94,7 +98,7 @@ public class Blockchain
 } //class Blockchain
 {% endhighlight %}
 
-The only fully public attributes are  Name and BlockchainDirectory.  They are not incorported in any hashes or data checks. 
+The only fully public attributes are  Name and BlockchainDirectory.  They are not included in any hashes or data checks. 
 The rest are set privately.
 `MakeBlock()` is a helper function to ensure that blocks increment their indices properly and carry over previous hashes.
 Otherwise blocks can be created indepedently of the blockchain with their own constructors.
@@ -117,7 +121,7 @@ This is a stub of the Block class:
 {%highlight C# %}
 public class Block
 {
-    // Attributes of a Block
+    // attributes 
     [JsonIgnore]
     public string BlockDirectory { get; set ; }
     public const int Version = 1;
@@ -132,7 +136,12 @@ public class Block
     [JsonIgnore]
     public bool Verified {get; private set;}
 	
-    //functions
+    // constructors
+    public Block(int index_, string previousHash_, string directory_=""){/* code */}
+    //for loading:
+    public Block(int index_, string previousHash_, string directory_, DateTime timeStamp_, uint target, uint nonce){/* code */}
+	
+    // functions
     public string StageToken(PseudoToken pseudotoken){/* code */}
     public void Print(){/* code */}
     public bool Verify(){/* code */}
@@ -143,12 +152,12 @@ public class Block
 } //class Block
 {% endhighlight %}
 
-Again the directory BlockDirectory is public.
+Again the attribute for the directory is public.
 Proof of work is not essential in this program, so Target and Nonce are both public variables.
 Otherwise, all other attributes are set privately.
 
 `StageToken()` adds a token to the Dictionary Tokens. 
-It converts a PseudoToken, which is a struct with information about the Token, to a fully fledged Token which as a valid file path.
+It converts a PseudoToken, which is a struct with information about the Token, to a fully fledged Token which is linked to a valid file path.
 
 The Block hash is calculated by hashing the Block header. 
 This is an 80 byte array which is created by concatenating the following attributes together:
@@ -217,7 +226,13 @@ public class Token
     public string FileName { get; private set; }
     public string FileHash { get; private set; }
 	
-    //functions
+    // constructors
+    public Token(PseudoToken t){/* code */}
+    // for loading:
+    public Token(string userName_, string fileName_, string author_, DateTime timeStamp, string fileHash_){/* code */}
+	
+	
+    // functions
     public static string GetFileHash(string filePath){/* code */}
     public void Print(string dir =""){/* code */}
     public byte[] Serialise(){/* code */}
@@ -227,19 +242,20 @@ public class Token
 {% endhighlight %}
 
 The token is linked to a file, but I've chosen not to store the file data in it.
-It only stores the file name and the file data is loaded each time it is needed.
-This also requires knowning the directory where the file resides.
-I've chosen not to store this so it needs to be passed to the `Print()` and `Verify()` functions.
+It only stores the file name. The file data is loaded each time it is needed.
+This requires knowning the directory where the file resides
+but I've chosen not to store it.
+It therefore needs to be passed to the `Print()` and `Verify()` functions.
 
 If a file is not found during printing, a warning is printed.
 But if a file is not found during verification, an error is thrown.
 
-A user needs to enter the Author and UserName. The TimeStamp is the creation time of the token.
+The Author and UserName attributes are manual inputs. The TimeStamp is the creation time of the token.
 I've thought about extracting the metadata from the file as well e.g. file creation date and file author.
 However I don't think it will add much value.
 
 `Serialise()` is the equivalent of a block's `GetHeader()`. It creates a byte array which is then hashed. 
-This byte array is a variable length and is formed as follows:
+This byte array has a variable length and is formed as follows:
 
 <table>
 <thead>
@@ -273,9 +289,10 @@ This byte array is a variable length and is formed as follows:
 </table>
 
 The plain text information is converted to bytes according to ASCII codes, and the FileHash is converted from hexadecimal.
+As I mentioned before, it's important to not this mix these two conversions.
 
 ## PseudoToken
-A struct which holds all the data for creating a Token. This is the whole struct:
+A PseudoToken is a struct which holds all the data for creating a Token. This is the whole struct:
 {% highlight C# %}
 public struct PseudoToken 
 {

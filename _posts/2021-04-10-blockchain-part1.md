@@ -54,7 +54,7 @@ My blockchain program currently implements these features (I've crossed out feat
 2. <s>Decentralized network management.</s> 
 	1. <s>Consenesus mechanism. </s>
 	2. <s>Propagation mechanism. </s>
-	2. <s>Central Waiting list (mempool). </s>
+	2. <s>Central waiting list (mempool). </s>
 3. Proof of work.
 	1. Manual setting of difficulty from level 0 to 256. Default is 0.
 	2. <s> Automatic difficulty adjustment mechanism. </s>
@@ -174,12 +174,12 @@ MyBlockchain
 | 	|___token 10 - fox.png
 |	|___token 44 - LoremIpsum.txt
 |___Block1
-	|___toke 58 - Dragonsunset.jpg
+	|___token 58 - Dragonsunset.jpg
 
 ```
 Most of the JSON file should be human readable. 
 The only pieces which might not be are the timestamps, which are the number of seconds since 1 January 1970 (it's very easy for a [computer][epochconverter] to convert to an actual date)
-and the plethora of 64 character length hexadecimal numbers. The latter are essential for checking if any of the data has been tampered with.
+and the plethora of hexadecimal numbers. The latter are essential for checking if any of the data has been tampered with.
 More on them later.
 
 [epochconverter]: https://www.epochconverter.com/
