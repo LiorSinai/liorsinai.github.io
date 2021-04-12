@@ -45,7 +45,7 @@ For the record, I have not touched a cheque in 15 years.
 In short, it's a pain to manage transactions on a blockchain. 
 
 However, the new onset of [Non-fungible Token][verge-nft] (NFT) mania reignited my interest in blockchain technology.
-I still thought it was a bad idea. But at least an NFT blockchain would be simpler to make than one which manages transactions.
+I still thought it was a bad idea. But at least an NFT blockchain would be an _easy_ bad idea.
 So I made a private blockchain for storing NFTs in C#. You can find it at my [GitHub repository][repo].
 It requires almost no programming experience to use, other than basic knowledge of a command line interface (e.g. the "Command Prompt" in Windows or the "Terminal" on a Mac).
 
