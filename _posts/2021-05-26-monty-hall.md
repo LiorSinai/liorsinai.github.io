@@ -31,7 +31,7 @@ Drama ensues, and the script follows a charming but predictable path.
 
 There's a  scene early on in the film where the professor quizzes the star of the movie, Ben, on the [Monty Hall problem][betterExplained_MontyHall].
 It's a famous and deceptively simple brain teaser.
-It has had its share of controversy, like that time in the 90s when everyone supposedly corrected the [world's smartest woman's take on the problem][article_savant]. 
+It has had its share of controversy, like that time in the 90s when everyone corrected the [world's smartest woman's take on the problem][article_savant]. 
 
 It is as follows: You are on a game show and you're given the choice of 3 doors. Behind one door is a car, and behind two are goats. You are asked to pick a door at random, and you will win whatever is behind it. You pick a door. The game show host keeps this door closed, and he opens another door which he knows has a goat behind it. There are now only two closed doors in the game. The game show host then asks you if you want to switch doors.
 
@@ -60,10 +60,10 @@ I made a simulation of this game in JavaScript, and I highly recommend playing i
       </ul>
   </div>
   <form>
-      <button class="button" type="button" onclick="init()">restart</button>
       <span class="num-doors-banner">
             number of doors: <input id="num-doors" type="number" class="num-doors" min="3">
       </span>
+    <button class="button" type="button" onclick="init()">change</button>
   </form>
 </div>
 
@@ -82,18 +82,18 @@ So, yeah, I'll take door number two, and thank you for that extra 33.3%."
 
 This is technically correct, but hard to follow, especially while  watching a movie. 
 Why did the probability change to 66.7%, instead of being shared equally 50% between the two remaining doors?
-This answer offers no explanation, but it need not be so obtuse. I hope to elucidate it shortly. 
+This answer offers no explanation, but it need not be so obtuse. 
 
 On a high level, it is important to realise that the host knows more than you, and by opening the door, he leaks this information to you. If he were to shuffle the goat and the car behind the remaining doors, then no information would be leaked and the 50/50 assumption would be valid. 
 
-You can get a good feel of this information leakage by increasing the number of doors. The host will open all but two doors in the second step. Go back and try the again game but with 100 doors.
+You can get a good feel of this information leakage by increasing the number of doors. The host will open all but two doors in the second step. Go back and try the again game but with 100 doors and 99 goats.
 
 With the number of doors set to 100, I hope you follow this line of thinking:
-1. There are 100 doors, and my chance of guessing correctly is very low (1 in 100). I probably got a goat with my first guess.
-2. The host opens 98 doors. I would have to be very lucky to have the car and for him to reveal 98 of the 99 goats, rather than having a goat and him revealing the other 98 goats and leaving the car.
-3. So if I switch I should almost certainly get the car (99 in 100).
+1. There are 100 doors, and my chance of guessing correctly is very low (1/100). I probably got a goat with my first guess (99/100).
+2. The host opens 98 doors. He has most likely revealed the other 98 goats, leaving the car behind the final unopened door.
+3. So if I switch I should almost certainly get the car (99/100).
 
-Here the cognitive biases and arrogance and controversy from the three door problem disappears. There's no "my first guess is as good as the second". The second guess is better. 
+Here the cognitive biases from the three door problem disappears. There's no "my first guess is as good as the second". The second guess is better. 
 
 With our first guess there is a 1% chance the car is behind that door, and a 99% chance the car is behind one of the other 99 doors. Then 98 doors are opened and there is _still_ a 99% chance it is behind one of the other 99 doors, but obviously you're not going to pick one of the 98 open doors. So therefore all that 99% probability shifts to the one remaining closed door.
 
@@ -105,7 +105,7 @@ Here is what I call the pessimist strategy:
 2. The host opens a door and reveals a goat. Great, he's just shown me where the second goat is.
 3. So if I switch I should probably get a car.
 
-Or the more optimistic approach: After my first guess, there's a 2/3 chance the car is behind one of the others doors, and after one is opened, I'm not going to choose it. So that 2/3 chance is all shifted to one door, which I am going to choose. This was essentially Ben's answer.
+Or the more optimistic approach: After my first guess, there's a 2/3 chance the car is behind one of the others doors, and after one is opened, I can't choose it. So that 2/3 chance is all shifted to one door, which I am going to choose. This was essentially Ben's answer.
 
 Now that I know this logic, I cannot unknow it. It's like an illusion that after being broken cannot be hidden again, or a riddle whose answer renders the riddle itself silly. 
 
