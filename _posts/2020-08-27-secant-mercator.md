@@ -288,8 +288,10 @@ Therefore a division can be done as follows:
 
 $$ 3764 \div 873 = 2^{11.878} \div 2^{9.770} = 2^{2.108} = 4.311 $$ 
 
+Where $11.878 = log_{2}(3764)$ and $9.770 = log_{2}(873)$
+
 The logarithms again had to be painstakingly calculated through approximation calculations. 
-Napier did this using a kinetic framework. While this idea may be unusual today, it has to do with how Napier originally visualised logarithms[^Napier].
+Napier did this using a kinetic framework. While this idea may be unusual today, it has to do with how Napier originally visualised logarithms.[^Napier]
 His final table related numbers to logarithms and their sines. Here is an example:
 <figure class="post-figure">
 <img class="img-80"
@@ -299,7 +301,7 @@ His final table related numbers to logarithms and their sines. Here is an exampl
 	<figcaption>Napier's original trigonometric table. From <a href="https://jscholarship.library.jhu.edu/bitstream/handle/1774.2/34187/31151005337641.pdf">John Napier and the Invention of Logarithms</a></figcaption>
 </figure>
 
-A  user could look use such a table to simply look up a logarithm table, with the added benefit that inversion was easy.
+A  user could look use such a table to look up a logarithm, with the added benefit that inversion was easy.
 These proved to be very popular - people clearly did not like doing multiplication and division in the past.
 Using addition and subtraction in their place also made calculations less error prone, especially with successive calculations.
 
@@ -369,9 +371,9 @@ It was designed with an "artistic approach". Unlike the other projections, inste
 [^4]: I am not sure if Mercator knew of this projection. It was only formally described by Johann Heinrich Lambert in 1772. However, I think it is the easiest way to visualise the Mercator projection construction, so I have used it here anyway. There are other constructions for it but I do not think they are helpful. The Mercator just is a very unnatural projection.
 [^6]: There are several popular Coronavirus map trackers that use the Mercator projection. How sad. 
 [^correction]: My original article said that logarithmic trigonometric tables appeared _after_ normal logarithmic tables. However because of Napier's unusual derivation of the approximation formula, this is not true. This was pointed out to me on comments on this post on HackerNews. You can see these [here][hackernews].
-[^Napier]: Here is a brief overview of Napier's method: He compared a particle travelling along an infinite line with another particle travelling along a finite line of length $R$. The first particle travels at a uniform speed $\frac{dx_1}{dt}=1$, while the second particle travels at a speed proportional to the distance it has left along the finite line, $\frac{dx_2}{dt}=R-x_2=x$. The solution to this differential equation is: 
+[^Napier]: Here is a brief overview of Napier's method: He compared a particle travelling along an infinite line with another particle travelling along a finite line of length $R$. The first particle travels at a uniform speed $\frac{dx_1}{dt}=1$, while the second particle travels at a speed proportional to the distance it has left along the finite line, $\frac{dx_2}{dt}=R-x_2$. The distance the second particle travels is related to the first particle with this differential equation: $\frac{dx_2}{dx_1}=R-x_2$. Its solution is:
 
-	$$  \begin{align} x_1 &= log_{\frac{1}{e}} \left(\frac{x}{R}\right)  \\ 
+	$$  \begin{align} x_1 &= log_{\frac{1}{e}} \left(\frac{R-x_2}{R}\right)  \\ 
 						  &\approx log_{\left(1-\frac{1}{R}\right)^R}\left(sin(\theta) \right) 
 		\end{align}$$ 
 

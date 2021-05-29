@@ -1,0 +1,104 @@
+div.simulator-container {
+    border: 1px solid black;
+    padding: 1em;
+    margin: 1em 0em;
+}
+
+.flex-container {
+    display: flex;
+}
+
+div.door-container{
+    max-height: 400px; 
+    overflow: auto; 
+}
+
+@media screen and (max-height: 600px) {
+    div.door-container  {
+        max-height: 250px;
+    }
+}
+
+
+.flex-container > div {
+    margin: 10px;
+    padding: 20px;
+}
+
+.grid-container {
+    display: inline-grid;
+    grid-template-columns: 4em 2em 2em 2em ;
+    grid-template-rows: 1em 1em;
+    column-gap: 15px;
+}
+
+.grid-row-1 {
+    grid-row: 1;
+}
+.grid-row-2 {
+    grid-row: 2;
+}
+
+.banner{
+    display: block;
+    font-size: 20px;
+    height: 2em;
+}
+@media screen and (max-width: 80em) {
+    .banner  {
+        height: 3em;
+    }
+}
+@media screen and (max-width: 40em) {
+    .banner  {
+        height: 5em;
+    }
+}
+
+
+.button{
+    display: inline;
+    cursor: pointer;
+}
+
+div.door-container > ul {
+    list-style-type: none;
+}
+
+ul.door-list > li {
+    display: inline-block;
+}
+
+input.num-doors{
+    width: 4em;
+}
+
+span.num-doors-banner{
+    display: inline-block;
+}
+
+
+.door {
+    /*padding: 10px;*/
+    display: block;
+    position: relative;
+    margin: 10px;
+    cursor: pointer;
+    height: 140px;
+    width: 80px;
+    background-color: #A0522D;
+    border: 3px solid black;
+    color: white;
+    text-align: center;
+}
+
+
+.goat {
+    background-color: grey;
+    color: black;
+}
+
+.car {
+    background-color: lightblue;
+    color: black;
+}
