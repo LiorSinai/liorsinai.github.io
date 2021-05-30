@@ -75,7 +75,7 @@ I made a simulation of this game in JavaScript, and I highly recommend playing i
 The answer is it is most certainly better to switch. Play enough rounds following both strategies (about 20 rounds each) and you should see that switching is definitely the better strategy. (Coders can inspect the JavaScript with their browser. There is nothing funny going I swear.)
 Most people do not grasp this at first, including me.
 
-Of course the hero in the movie see it immediately. Here is his answer:
+Of course the hero in the movie sees it immediately. Here is his answer:
 >"Well, when I was originally asked to choose a door, I had a 33.3% chance of choosing right.
 But after he opens one of the doors and then re-offers me the choice, it's now 66.7% if I choose to switch. 
 So, yeah, I'll take door number two, and thank you for that extra 33.3%."
@@ -132,4 +132,4 @@ Do you agree? Why do you think this is the case?
     I suggest reading "A Man for All Markets" by the person who invented card counting, Edward Thorp, for a real explanation of card counting.
 
 [^cheating]:
-    if you know JavaScript you can easily cheat. But please keep to the spirit of the game.
+    If you know JavaScript you can easily cheat. But please keep to the spirit of the game.
