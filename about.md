@@ -17,7 +17,6 @@ In between my bachelors and masters, I worked for the national telecommunication
 
 For a current list of posts, see [here]({{ "/posts" | relative_url }}). 
 Here is a list of possible future posts:
-+ **Simple blockchain for nonfungible tokens**: These NFTs are suddenly everywhere over the internet. They reminded me of a masters project I did on a Bitcoin blockchain. I had thought of doing a blog post on that, but like many others I gew disillusioned with blockchain. These new NFTs however provide a new use case and I think it will be worthwhile explaining the technical details behind the current hype.
 + **Quaternions**: these strange 4-dimensional objects were never part of any of my engineering courses. However, they are incredibly useful for 3D rotations, and are used in most
 3D renders (for games and graphics). I'm self-taught in them, but I had to rely on several sources. I'd like to explain them in a full detail here, along with 
 comparisons to other 3D rotation systems.
@@ -28,5 +27,5 @@ A similar article can be found [here](https://mybroadband.co.za/news/internet/98
 + **Counting routes for the multiple travelling salesman problem**: this is a side problem from my thesis (I really should not have spent so much time on it).
 + **Listing k integer partitions**: another ~~distraction~~ side problem from my thesis.
 
-_Lior Sinai_, {{ "2020-13-03" | date: '%d %B %Y' }}
+_Lior Sinai_, {{ "2021-05-31" | date: '%d %B %Y' }}
 
