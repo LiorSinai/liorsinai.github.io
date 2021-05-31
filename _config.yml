@@ -6,8 +6,7 @@ baseurl:            ""
 url:                "https://liorsinai.github.io"
 
 
-# Add your google-analytics ID here to activate google analytics
-google_analytics:   UA-XXXXXXXXX-X # out your google-analytics code
+google_analytics:   G-G3HC3VB0LR 
 
 # Build settings
 markdown:           kramdown
