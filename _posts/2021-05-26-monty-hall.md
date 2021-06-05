@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Intuitive explanations for non-intuitive problems: the Monty Hall problem"
-date:   2021-04-11
+date:   2021-05-26
 author: Lior Sinai
 categories: coding
 background: '/assets/posts/monty-hall/doors.jpg'
