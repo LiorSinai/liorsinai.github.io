@@ -165,7 +165,7 @@ for num_people in 1 to 60:
 
 
 Many of my friends share a birthday. But with picking any random 30 you're only slightly more likely to get the other people who have the same birthday.
-Hence the [blue curve](#probability_graphs) is only slightly above the theoretical curve.
+Hence the [blue curve](#probability_graphs) is only slightly above the theoretical curve. I need to pick 21 friends instead of 23 to have a 50% chance to two of them sharing a birthday.
 
 # Conclusion
 
