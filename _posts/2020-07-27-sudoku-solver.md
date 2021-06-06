@@ -140,7 +140,7 @@ In 2012, this 21-clue puzzle by mathematician Arto Inkala was labelled the [hard
 
 Is it the hardest? I do not know. But it is certainly a monster. At the very start, one cell has two candidates, and the rest have three.
 You're forced to make a guess in the cell with the two candidates. And then at best, another two guesses before you can use any of the techniques in Stuart's solver.
-That is a $1$ in $2^3 = 8$ probability of guessing correctly with no wrong guesses. My solver takes 39 guesses to solve this, of which 29 are wrong[^2].
+That is a $1$ in $2^3 = 8$ probability of guessing correctly with no wrong guesses. My solver takes 39 guesses to solve this, of which 29 are wrong.[^2]
 So in other words, even an amateur like me can solve the hardest Sudoku puzzle in the world by hand, as long as they are willing to do it 40 times.
 
 [stuart_swordfish]: https://www.sudokuwiki.org/Sword_Fish_Strategy
@@ -149,10 +149,10 @@ So in other words, even an amateur like me can solve the hardest Sudoku puzzle i
 
 ### Impossible puzzles
 
-If you search for this term on the internet, you'll probably find a lot of hard, but certainly solvable, Sudokus. 
+If you search for the term "impossible sudokus" on the internet, you'll probably find a lot of hard, but certainly solvable, Sudokus. 
 People like to exaggerate the difficulty of these puzzles. 
 There is, however, a very large set of puzzles that are truly impossible.
-They're trivially easy to construct. The easiest way to do so, is to play a game of Sudoku and make a mistake XD.
+They're trivially easy to construct. The easiest way to do so, is to play a game of Sudoku and make a mistake 😆
 Here are two puzzles which are impossible from the start:
 
 <div id="unique-name" class="row">
@@ -170,7 +170,7 @@ Here are two puzzles which are impossible from the start:
 
 Very amusingly, Norvig passed the puzzle on the right to his solver, and it took almost 24 minutes to conclude that it was impossible.
 His solver otherwise takes less than a second to solve ultra-hard Sudokus. 
-As an amateur Sudoku player, it took me less than a minute to verify that it was impossible[^1].
+As an amateur Sudoku player, it took me less than a minute to verify that it was impossible.[^1]
 
 
 ## 3. Code
@@ -193,10 +193,11 @@ I also wrote a few helper functions to extract rows, columns and boxes from the 
 The `__repr__` function overrides the default string for the `print` function.
 
 {% highlight python %}
-SIZE = 9
-BOX_SIZE = 3
 from copy import deepcopy
 from typing import List, Tuple, Set
+
+SIZE = 9
+BOX_SIZE = 3
 
 class Sudoku():
     def __init__(self, grid: List[List[int]]):
@@ -242,7 +243,6 @@ class Sudoku():
             box.append(self.grid[i][j])
         return box
 		
-
 {% endhighlight %}
 
 
@@ -448,16 +448,16 @@ def str2grid(string: str) -> List[List[int]]:
 
 This code takes 0.15s and 39 calls to solve to solve the Inkala puzzle. The maximum call depth is 10. 
 
-For Norvig's [95 hard puzzles][norvig_top95], the code takes a total of 30.504s, with an average time of 0.321s per puzzle. 
+For Norvig's [95 hard puzzles][norvig_top95], the code takes a total of 11.69s, with an average time of 0.12s per puzzle. 
 The average number of calls is 93.0, while the maximum number of calls is 588. 
 This is slower than Norvig's code. I am unsure if this is because of the algorithm, the implementation or because of my hardware.
-For Norvig's [11 hardest puzzles][norvig_hardest], the total time is 0.671s, with an average of 0.061s per puzzle.
-The average number of calls is also much lower, at 15.6, with a maximum number calls of 55.
+For Norvig's [11 hardest puzzles][norvig_hardest], the total time is 0.24s, with an average of 0.023s per puzzle.
+The average number of calls is 15.6 with a maximum number calls of 55.
 
 Out of curiosity, I added more advanced strategies: [pairs][stuart_naked], [triples][stuart_hidden] and [pointing pairs][stuart_pointing_pairs]. 
-For the 95 puzzles, this reduces the total solving time to 8.658s and it reduces the average time to 0.091s.
-The average number of calls is just 13.7 and the maximum number of calls is 129.
-For the 11 hardest puzzles, these extra strategies required more time and slow the solving time slightly to 0.072s per puzzle. 
+For the 95 puzzles, this reduces the total solving time to 3.52s and it reduces the average time to 0.037s.
+The average number of calls is just 11.6 and the maximum number of calls is 74.
+For the 11 hardest puzzles the solving time is slightly slower at 0.029s per puzzle. 
 The average number of calls decreased to 11.6, while the maximum number of calls increased to 74.
 This shows there are only marginal gains for a lot more effort. 
 Also, they make no difference to the solving path for the Inkala puzzle. 
