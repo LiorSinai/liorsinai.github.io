@@ -25,6 +25,7 @@ I have divided this section in to the following parts:
 2. [Probability of groups of collisions](#groups-collisions)
 3. [Probability of at least 1 collision](#at-least-1)
 4. [Probability of collisions when drawing from a distribution](#drawing-distribution)
+5. [Integer partitions](#integer-partitions)
 
 <h2 id="exact-k-collisions"> Probability of $k$ collisions </h2>
 
@@ -112,11 +113,12 @@ We can only draw as many pairs, triples and sets in general as exist.
 In my group of friends there is a day where seven people share a birthday, but none where six do.
 So I cannot include this probability in my calculation, which the calculation in the previous section does.
 
-The probability of drawing from a distribution is a difficult problem. One of the areas where it is well studied is [poker][wiki_poker]. In poker it is very important to know the probability of drawing a hand of cards given the known distribution of cards in the whole deck.
+The probability of drawing from a distribution is a tricky problem. 
+One applications is calculating probabilities of hands in [poker][wiki_poker]. 
 
 [wiki_poker]: https://en.wikipedia.org/wiki/Poker_probability
 
-It is much simpler and quicker to run Monte Carlo simulations, as I did in my [previous post][BirthdayProblem]. Here is a comparison of running 1,000 and 10,000 trials per point compared to the true graph:
+It is simpler and quicker to run Monte Carlo simulations, as I did in my [previous post][BirthdayProblem]. Here is a comparison of running 1,000 and 10,000 trials per point compared to the true graph:
 
 <figure class="post-figure" id="probability_graphs">
 <img class="img-80" 
@@ -128,7 +130,7 @@ It is much simpler and quicker to run Monte Carlo simulations, as I did in my [p
 
 The Monte Carlo simulations hold up well. The MC 10,000 curve is almost indistinguishable from the theoretical curve.
 
-But how does one calculate the theoretical curve? It is easiest to start with a simpler, very specific problem. 
+But how does one calculate the theoretical curve? Let's start with a simpler, very specific problem. 
 What if I want to select 30 friends of which none share birthdays, but 12 share birthdays with one other friend (not in the 30), and 2 share with two other friends each, and 1 is one of the 7 that share a birthday on the same day? (This is the simpler problem.)
 - There are $\binom{374}{30}$ ways in total to choose 30 people. 
 - From the $n_2=73$ pairs, I want to select 10 pairs $\binom{73}{10}$, 1 of 2 from each pair $\binom{2}{1}^{10}$. 
@@ -156,8 +158,8 @@ Subtract from 1 to get the probability of least 2 sharing a birthday.
 
 For Julia code on my laptop, this takes 22.5 seconds.
 Monte Carlo simulations with 10,000 trials per each point from 1 to 60 takes 2.2 seconds for all 600,000 trials.
-So the Monte Carlo simulations is faster.
+So the Monte Carlo simulations are faster.
 
-If there is an easier way to calculate the theoretical value, please let me know 🙂.
+If there is an easier way please let me know 🙂.
 
 ---
