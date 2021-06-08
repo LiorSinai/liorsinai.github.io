@@ -4,7 +4,7 @@ title:  "Intuitive explanations for non-intuitive problems: the Birthday Problem
 date:   2021-06-04
 author: Lior Sinai
 categories: coding
-background: ''
+background: '/assets/posts/birthday-collisions/happy_birthday_Annie_Sprat.jpg'
 categories: mathematics
 tags: mathematics probability
 ---
@@ -41,7 +41,7 @@ In high school, I was part of two classes of about 25 people each. In the first 
 </figure>
 
 This trend holds for larger samples.
-I have over 400 Facebook friends, and of these 379 have publically available birthdays. When I sample from these people at random, I find collisions with a probability distribution following the blue curve above. This is very similar to the red curve, which is the exact mathematical probability that can be calculated for a large population of people. The green curve is an approximate probability.
+I have over 400 Facebook friends, and of these 379 have publicly available birthdays. When I sample from these people at random, I find collisions with a probability distribution following the blue curve above. This is very similar to the red curve, which is the exact mathematical probability that can be calculated for a large population of people. The green curve is an approximate probability.
 
 So why is the number of people required so low? The short answer is the large amount of combinations of pairs that can share birthdays. This number rises exponentially but most people apply a linear heuristic to this problem, which leads them to massively overestimate the answer.
 
@@ -59,7 +59,7 @@ Imagine you are in a circle with 23 other people. What is the probability you sh
 	<figcaption></figcaption>
 </figure>
 
-To simplify calculations, it is easiest to assume that sharing a birthday with someone is independent of sharing it with anyone else. This is not entirely accurate. For example, if person A and person B share a birthday, then the probability of sharing a birthday with person B depends on the probability of sharing it with person A. In the highly unlikely case of everyone else having the same birthday, then the probablity of sharing with anyone depends on everyone. But the assumption of independence is good because (1) most people will not share birthdays and (2) the events of multiple people sharing birthdays are very unlikely.
+To simplify calculations, it is easiest to assume that sharing a birthday with someone is independent of sharing it with anyone else. This is not entirely accurate. For example, if person A and person B share a birthday, then the probability of sharing a birthday with person B depends on the probability of sharing it with person A. In the highly unlikely case of everyone else having the same birthday, then the probability of sharing with anyone depends on everyone. But the assumption of independence is good because (1) most people will not share birthdays and (2) the events of multiple people sharing birthdays are very unlikely.
 
 Under the assumption sharing is independent, you can imagine going to each and every person and asking them if they have the same birthday as you. There is a 1/365 chance they will say yes, and a 364/365 chance they will say no. For exactly one other person sharing a birthday with you, this is a standard binomial probability where there are 22 ways where 1 person will say yes and 21 will say no:
 
@@ -150,7 +150,7 @@ That is, I ran many simulations where I randomly picked a given number of people
 I did this 10,000 times for each number of people and saved the mean number of trials with collisions as the probability.
 Here is the pseudo code:
 
-{%highlight C# %}
+{%highlight julia %}
 num_trials = 10,000
 samples = ListOfBirthdays
 prob = Array(size=60)
@@ -165,14 +165,15 @@ for num_people in 1 to 60:
 
 
 Many of my friends share a birthday. But with picking any random 30 you're only slightly more likely to get the other people who have the same birthday.
-Hence the [blue curve](#probability_graphs) is only slightly above the theoretical curve. This means I need to pick 21 friends instead of 23 to have a 50% chance to two of them sharing a birthday.
+Hence the [blue curve](#probability_graphs) is only slightly above the theoretical curve. 
+The result is I need to pick 21 friends instead of 23 to have a 50% chance to two of them sharing a birthday.
 
 # Conclusion
 
 I hope you enjoyed this article and now believe the chances, even if it still feels unintuitive.
 I suggest trying it out with your own Facebook friends or LinkedIn connections.
 
-If you want more in-depth mathematics please see my next part on [Advanced mathematics for the birthday problem][BirthdayCollisionsAdvanced].
+If you want more in-depth mathematics please see my next post on [Advanced mathematics for the birthday problem][BirthdayCollisionsAdvanced].
 
 [BirthdayCollisionsAdvanced]: {{ "mathematics/2021/06/05/advanced-collisions" | relative_url }}
 

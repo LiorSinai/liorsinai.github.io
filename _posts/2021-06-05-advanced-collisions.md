@@ -16,7 +16,7 @@ This follows from my previous blog post on [Intuitive explanations for non-intui
 Please see that post for a heuristic understanding of the problem.
 It assumed independence of sharing birthdays.
 This post makes no such assumption, so the mathematics is more advanced.
-A background in counting methods, combinations and permutations is required.
+A background in counting methods with combinations and permutations is required.
 
 [BirthdayProblem]: {{ "mathematics/2021/06/04/birthday-collisions" | relative_url }}
 
@@ -33,7 +33,7 @@ What is the chance of $i$ people in a group of $k$ people sharing a birthday? In
 But sharing is dependent. If person A and person B share a birthday, then sharing a birthday with person B depends on sharing a birthday with person A. Counting methods can account for this dependence.
 
 In a group of 23 people there are ${23 \choose 2}=253$ ways that two people can be chosen. 
-Seperately we can imagine filling 22 slots with distinct birthdays (not 23 because one is shared). 
+Separately we can imagine filling 22 slots with distinct birthdays (not 23 because one is shared). 
 There are $^{365}P_{22}$ ways of filling these slots. The total probability is then:
 
 $$ \begin{align} 
@@ -42,7 +42,7 @@ P(x=2 | k=23) &= {23 \choose 2} \frac{^{365}P_{22}}{365^{23}} \\
 \end{align}
 $$ 
 
-Simarily for three people sharing a birthday:
+Similarly for three people sharing a birthday:
 
 $$ \begin{align} 
 P(x=3 | k=23) &= {23 \choose 3} \frac{^{365}P_{21}}{365^{23}} \\
@@ -86,12 +86,10 @@ $$
 
 This is much more unlikely.
 
-To get the probablity of at least 2 people sharing, we need to account for all these scenarios. 
-We can go through all ways of partitioning $k$ people. This is known as the [integer partition problem][wiki_partitions].
+To get the probability of at least 2 people sharing, we need to account for all these scenarios. 
+We can go through all ways of partitioning $k$ people. This is known as the integer partition problem.
 In practice, I find it is accurate enough to only consider up to 3 or 4 people sharing a birthday, because the other 
 scenarios are so unlikely. However the method in the next section is much simpler.
-
-[wiki_partitions]: https://en.wikipedia.org/wiki/Partition_(number_theory)
 
 <h2 id="at-least-1"> Probability of at least 1 collision </h2>
 
@@ -108,13 +106,13 @@ For 23 people this gives a probability of 0.5073. The previous sections show tha
 <h2 id="drawing-distribution"> Probability of collisions when drawing from a distribution </h2>
 
 A rather subtle but important assumption made in the previous sections is that we are drawing people from a large population.
-This assumption breaks down when drawing from a small sample. For example,  Facebook friends. 
+This assumption breaks down when drawing from a small sample. For example, Facebook friends. 
 We can only draw as many pairs, triples and sets in general as exist.
-In my group of friends there is a day where seven people share a birthday, but none where six do.
+In my group of friends there is a day where seven people share a birthday but none where six do.
 So I cannot include this probability in my calculation, which the calculation in the previous section does.
 
 The probability of drawing from a distribution is a tricky problem. 
-One applications is calculating probabilities of hands in [poker][wiki_poker]. 
+One notable application is calculating probabilities of hands in [poker][wiki_poker]. 
 
 [wiki_poker]: https://en.wikipedia.org/wiki/Poker_probability
 
@@ -152,7 +150,7 @@ P&(x =(1\times 17, 2\times 10, 3\times 2, 7\times 1)|k=30) \\
 $$ 
 
 Now repeat this calculation for every possible way of making up 30 friends from the known distribution.
-This can be done with an [integer partition][wiki_partitions] algorithm with a maximum on the values that each partition can take.
+This can be done with an integer partition algorithm with a maximum on the values that each partition can take.
 This will give the theoretical value of selecting zero friends who share birthdays.
 Subtract from 1 to get the probability of least 2 sharing a birthday.
 
@@ -161,5 +159,66 @@ Monte Carlo simulations with 10,000 trials per each point from 1 to 60 takes 2.2
 So the Monte Carlo simulations are faster.
 
 If there is an easier way please let me know 🙂.
+
+<h2 id="integer-partitions"> Integer partitions </h2>
+
+For completeness, here is code for the [integer partition problem][wiki_partitions] implemented in Julia.
+
+If $p(n)$ is an integer partition of $n$, then $p(n) = k + p(n -k)$. 
+The following recursive algorithm is based off this formula:
+{%highlight julia %}
+function integer_partitions(n::Integer, max_value::Int)
+    if n < 0
+        throw(DomainError(n, "n must be nonnegative"))
+    elseif n == 0
+        return Vector{Int}[[]]
+    end
+
+    partitions = Vector{Int}[]
+    for k in max_value:-1:1
+        for p in integer_partitions(n-k, min(k, n-k))
+            push!(partitions, vcat(k, p))
+        end
+    end        
+    return partitions
+end
+{% endhighlight %}
+
+This function gives all the unique partitions of a number.
+For the above problems we have the additional constraints:
+- There is a maximum value at each partition index.
+- Permutations of partitions are unique e.g. 3+0+0, 0+3+0 and 0+0+3 are all unique.
+
+The function is therefore modified to keep an index count:
+{%highlight julia %}
+function integer_partitions(n::Integer, max_values::Vector{Int}, idx=1)
+    if n < 0
+        throw(DomainError(n, "n must be nonnegative"))
+    elseif n == 0 
+        return Vector{Int}[[]]
+    end
+
+    partitions = Vector{Int}[]
+    max_value = (idx <= length(max_values)) ? min(n, max_values[idx]) : 0
+    for k in max_value:-1:1
+        for p in integer_partitions(n-k, max_values, idx + 1)
+            push!(partitions, vcat(k, p))
+        end
+    end    
+    # include 0 case 
+    if (idx + 1 <= length(max_values))
+        for p in integer_partitions(n, max_values, idx + 1)
+            push!(partitions, vcat(0, p))
+        end
+    end
+    return partitions
+end
+
+{% endhighlight %}
+
+Caching can be added to increase the performance. 
+
+[wiki_partitions]: https://en.wikipedia.org/wiki/Partition_(number_theory)
+
 
 ---
