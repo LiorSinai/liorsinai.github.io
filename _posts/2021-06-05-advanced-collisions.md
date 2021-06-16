@@ -116,7 +116,7 @@ One notable application is calculating probabilities of hands in [poker][wiki_po
 
 [wiki_poker]: https://en.wikipedia.org/wiki/Poker_probability
 
-It is simpler and quicker to run Monte Carlo simulations, as I did in my [previous post][BirthdayProblem]. Here is a comparison of running 1,000 and 10,000 trials per point compared to the true graph:
+It is simpler and quicker to run Monte Carlo simulations, as I did in my [previous post][BirthdayProblem]. Here is a comparison of running 1,000 and 10,000 trials per point compared to the true curve:
 
 <figure class="post-figure" id="probability_graphs">
 <img class="img-80" 
@@ -216,7 +216,7 @@ end
 
 {% endhighlight %}
 
-Caching can be added to increase the performance. 
+Caching can be added to improve the performance. 
 
 [wiki_partitions]: https://en.wikipedia.org/wiki/Partition_(number_theory)
 

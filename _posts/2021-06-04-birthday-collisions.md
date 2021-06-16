@@ -117,8 +117,8 @@ $$ \begin{align} P(X\geq 1) &= 1 - \left(\frac{364}{365}\right)^{253} \\
 
 The fraction 253/365 is 69%, so it is an overestimate of the real probability of 50%. But this does make sense because the chance of collision does not increase linearly. You could still compare pairs 1000 times and fail.
 
-In general, the number of pairs that can be formed is ${k \choose 2} = \frac{k(k-1)}{2}$. This is $k$ groups of pairs with $k-1$ other people divided by 2 because you count every pair twice.
-So the number of combinations increases by $k^2$, which is why the number of people required for a collision with $n$ distinct items is $\sqrt{n}$.
+In general, the number of pairs that can be formed is ${k \choose 2} = \frac{k(k-1)}{2}$. This is $k$ groups of $k-1$ pairs divided by 2 because you count every pair twice.
+So the number of combinations increases by $k^2$, which is why the number of people required for a collision with $n$ distinct items is proportional to $\sqrt{n}$.[^approx]
 
 
 ## The probability that two of my Facebook's friends share a birthday
@@ -166,7 +166,7 @@ for num_people in 1 to 60:
 
 Many of my friends share a birthday. But with picking any random 30 you're only slightly more likely to get the other people who have the same birthday.
 Hence the [blue curve](#probability_graphs) is only slightly above the theoretical curve. 
-The result is I need to pick 21 friends instead of 23 to have a 50% chance to two of them sharing a birthday.
+In practice this means I need to pick 21 friends instead of 23 to have a 50% chance to two of them sharing a birthday.
 
 # Conclusion
 
@@ -180,3 +180,19 @@ If you want more in-depth mathematics please see my next post on [Advanced mathe
 ---
 
 [^twins]: I am friends with five pairs of twins (excluding my twin). I have only counted one of each twin to avoid modelling this dependency relationship.
+
+[^approx]:
+	Here is an approximation formula derivation:
+
+	$$ 
+	\begin{align}
+		1-p &= \left(1-\frac{1}{n}\right)^{(k^2-k)/2} \\
+		ln(1-p) &= \frac{k^2-k}{2}ln\left(1-\frac{1}{n}\right) \\
+		ln(1-p) &\approx  \frac{k^2-k}{2}\left(\frac{-1}{n}\right)  \quad\quad, ln(1+x) \approx x  \\
+		k^2 &\approx  -2n\cdot ln(1-p)	 \quad\quad, k^2 >> k \\
+		k &=  \sqrt{-2n\cdot ln(1-p)}
+	\end{align}
+	$$
+
+	This is just an approximation, so no need to apply the quadratic formula for $k$.
+	For $p=0.5$, $k=1.177\sqrt{n}$ and for $p=0.99$, $k=3.035\sqrt{n}$. 
