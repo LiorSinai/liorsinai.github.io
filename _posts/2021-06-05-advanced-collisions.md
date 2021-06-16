@@ -50,6 +50,9 @@ P(x=3 | k=23) &= {23 \choose 3} \frac{^{365}P_{21}}{365^{23}} \\
 \end{align}
 $$ 
 
+This is much more unlikely.
+
+
 <h2 id="groups-collisions"> Probability of groups of collisions </h2>
 
 There can also be two pairs of two people sharing birthdays. Or three pairs. Or two pairs and a triplet and a quintuplet.
@@ -60,6 +63,14 @@ We can shuffle the birthdays between 21 unique slots ($^{365}P_{21}$).
 The first two slots can be shuffled without changing the arrangement because they both have identical looking pairs ($2!$).
 The probability is then:
 
+<figure class="post-figure" id="partitions21">
+<img class="img-80" 
+    src="/assets/posts/birthday-collisions/partitions21.png"
+	alt="partitions 2x2x19"
+	>
+	<figcaption></figcaption>
+</figure>
+
 $$ \begin{align} 
 P(x=(2,2) | k=23) &= \frac{\binom{23}{2}\binom{21}{2}}{2!}\frac{^{365}P_{21}}{365^{23} } \\
                     &= \frac{23!}{(2!)^2 2!19!} \frac{^{365}P_{21}}{365^{23}} \\
@@ -69,10 +80,10 @@ $$
 
 Now let's add a set of three:
 
-<figure class="post-figure" id="partitions">
+<figure class="post-figure" id="partitions19">
 <img class="img-80" 
-    src="/assets/posts/birthday-collisions/partitions.png"
-	alt="partitions"
+    src="/assets/posts/birthday-collisions/partitions19.png"
+	alt="partitions 2x2x3x16"
 	>
 	<figcaption></figcaption>
 </figure>
