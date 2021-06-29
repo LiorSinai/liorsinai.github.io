@@ -14,7 +14,7 @@ _The integral of the secant is well known to any beginners calculus student. Yet
 As this [comic][smbc] by SMBC rightly teases, the history of mathematics is often not so straightforward. 
 Theorems, formulas and notation that are routinely discussed in class, were once insights or accidents themselves.
 This is the story of one such formula, the integral of the secant. 
-I first read about it almost a decade ago[^1], when I got interested in cartography: the science and art of mapmaking. 
+I first read about it almost a decade ago,[^1] when I got interested in cartography: the science and art of mapmaking. 
 This integral is of vital importance to the Mercator map, and therefore many online maps that use it, like [Apple Maps][maps_apple] and [Google Maps][maps_google].
 
 
@@ -89,17 +89,17 @@ Here are the graphs of the secant and cosine for the angles from $-2\pi$ (-360&d
 	>
 </figure>
 
-The integral of the secant can be interpreted as the area under the graph[^2]. This is illustrated by the shaded region.
+The integral of the secant can be interpreted as the area under the graph.[^2] This is illustrated by the shaded region.
 
 ## An introduction to cartography
 
-The earth, which is a sphere[^3], cannot be projected onto a flat map without distortion. 
+The earth cannot be projected onto a flat map without distortion. 
 Over the years, cartographers have devised many different map projections which try to balance minimising distortion with other properties. 
 They come in all shapes and sizes.
 Lists of these projections can be found [here][map_projections] or [here][wiki_projections].
 I will explain two of the simplest here, which will help with understanding the Mercator map in the next section.
 
-All map projections can be represented as equations that transform spherical co-ordinates to flat map co-ordinates.
+All map projections can be represented as equations that transform spherical co-ordinates to flat map co-ordinates.[^3]
 The co-ordinates on the sphere are the angles $\varphi$ and $\lambda$. These correspond to lines of latitude (parallels) and longitude (meridans) respectively. 
 The co-ordinates on the flat map are $x$ and $y$. A map projection is therefore a transformation from $\varphi$ and $\lambda$ to $x$ and $y$.
 
@@ -163,7 +163,9 @@ $$ \begin{align} y &= Rsin(\varphi)\\ x &= R\lambda \end{align}$$
 For objects near the equator, this results in very little distortion, such as for Africa. But objects near the poles are compressed because of the sphere's curvature. 
 This can be seen clearly with Greenland.
 
-This map has the useful property that its area is equal to the surface area of the sphere. Thus, while objects are distorted, their areas are still correct.
+This map has the useful property that its area is equal to the surface area of the sphere. 
+The area of the flat map is $(2\pi R)(2R) = 4\pi R^2$ which is the same as that of the sphere.
+Thus, while objects are distorted, their areas are still correct.
 The relative scale of Greenland to Africa is therefore accurately represented in this map.
 
 
@@ -194,7 +196,7 @@ With modern technology, it is easy for ships and aeroplanes to stick to the grea
 So sailors preferred to stick to rhumb lines. They would rather get to their destination by travelling a little longer, then get lost and travel a lot more.
 
 Mercator's idea was to stretch out a cylindrical projection map in the North-South direction to preserve shapes and angles.
-Looking at the Lambert projection[^4], it can be seen that a different stretch factor is required for each latitude. At the equator, no stretch is required.
+Looking at the Lambert projection,[^4] it can be seen that a different stretch factor is required for each latitude. At the equator, no stretch is required.
 At the 45&deg; parallel only a small amount of upward stretching is required. The objects close to the poles have to be stretched a lot to uncompress them.
 
 This stretch factor can be calculated as follows:
@@ -288,7 +290,7 @@ Therefore a division can be done as follows:
 
 $$ 3764 \div 873 = 2^{11.878} \div 2^{9.770} = 2^{2.108} = 4.311 $$ 
 
-Where $11.878 = log_{2}(3764)$ and $9.770 = log_{2}(873)$
+Where $log_{2}(3764) = 11.878 $ and $log_{2}(873) = 9.770 $
 
 The logarithms again had to be painstakingly calculated through approximation calculations. 
 Napier did this using a kinetic framework. While this idea may be unusual today, it has to do with how Napier originally visualised logarithms.[^Napier]
@@ -305,7 +307,7 @@ A  user could look use such a table to look up a logarithm, with the added benef
 These proved to be very popular - people clearly did not like doing multiplication and division in the past.
 Using addition and subtraction in their place also made calculations less error prone, especially with successive calculations.
 
-Next, mathematicians extended these tables to other trigonometric function[^correction]:
+Next, mathematicians extended these tables to other trigonometric function:[^correction]
 <figure class="post-figure">
 <img class="img-95"
     src="/assets/posts/secant-mercator/APN2002-table3-30deg.png"
@@ -352,14 +354,23 @@ It is an extremely common projection. When I was younger, I had a map of the wor
 However I hope you now fully appreciate its main purpose is navigation.
 Outside of that, it unnecessarily distorts shapes, and in particular makes the Americas and Europe look much larger than they actually are.
 This has been linked, not without rational, to colonialism and racism. 
-For decades, cartographers have bemoaned its use in applications where it really has no right to be[^6].
+For decades, cartographers have bemoaned its use in applications where it really has no right to be.[^6]
 Here is even an amusing clip from a 90's TV show: [www.youtube.com/watch?v=vVX-PrBRtTY](https://www.youtube.com/watch?v=vVX-PrBRtTY).
 
+<figure class="post-figure">
+<img class="img-95"
+    src="/assets/posts/secant-mercator/Robinson&Winkel.png"
+	alt="Robinson and Winkel Triple projections"
+	>
+	<figcaption>Robinson projection (left) and Winkel Triple projection (right). Don't they look so much more natural? Source: <a href="https://en.wikipedia.org/wiki/File:APN2002-table3-30deg.tiff">Wikipedia</a></figcaption>
+</figure>
+
+
 There are many different projections out there, all with their own purpose. 
-My personal favourite is the [Winkel Triple](https://en.wikipedia.org/wiki/Winkel_tripel_projection). 
+My personal favourite is the Winkel Triple. 
 It is the official map of the National Geographic Society.
 It is an elegant compromise between form and scale, in both the final representation and in the mathematics. 
-A more general favourite is the [Robinson Projection](https://en.wikipedia.org/wiki/Robinson_projection).
+A more general favourite is the Robinson Projection.
 It was designed with an "artistic approach". Unlike the other projections, instead of using equations, Arthur H. Robinson manually fixed the scale factors at 5&deg; intervals.
 
 
@@ -367,7 +378,7 @@ It was designed with an "artistic approach". Unlike the other projections, inste
 
 [^1]: If I remember correctly, I was wandering through Wikipedia. Along the way I landed on the page for the [Integral of the secant function][wiki_secant], which includes a very brief history.  
 [^2]: The rate of change of the area with respect to the x-axis is the line (very thin rectangle) $y$. That is, $\frac{dA}{dx}=y \implies A=\int y dx$.
-[^3]: Well, not exactly, but it is close enough to a sphere for most mapping applications. Where more accuracy is required, there are extensions which can account for deviations from a sphere.
+[^3]: The earth is approximated as a sphere for most mapping applications. Where more accuracy is required, there are extensions which can account for its deviations from a sphere.
 [^4]: I am not sure if Mercator knew of this projection. It was only formally described by Johann Heinrich Lambert in 1772. However, I think it is the easiest way to visualise the Mercator projection construction, so I have used it here anyway. There are other constructions for it but I do not think they are helpful. The Mercator just is a very unnatural projection.
 [^6]: There are several popular Coronavirus map trackers that use the Mercator projection. How sad. 
 [^correction]: My original article said that logarithmic trigonometric tables appeared _after_ normal logarithmic tables. However because of Napier's unusual derivation of the approximation formula, this is not true. This was pointed out to me on comments on this post on HackerNews. You can see these [here][hackernews].
