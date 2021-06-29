@@ -362,7 +362,7 @@ Here is even an amusing clip from a 90's TV show: [www.youtube.com/watch?v=vVX-P
     src="/assets/posts/secant-mercator/Robinson&Winkel.png"
 	alt="Robinson and Winkel Triple projections"
 	>
-	<figcaption>Robinson projection (left) and Winkel Triple projection (right). Don't they look so much more natural? Source: <a href="https://en.wikipedia.org/wiki/File:APN2002-table3-30deg.tiff">Wikipedia</a></figcaption>
+	<figcaption>Robinson projection (left) and Winkel Triple projection (right). Don't they look so much more natural? Source: <a href="https://en.wikipedia.org/wiki/List_of_map_projections">Wikipedia</a></figcaption>
 </figure>
 
 
