@@ -49,6 +49,15 @@ OK, where did that come from? My lecturer offered no explanation. It was easy to
 (Paper [2][secant_Rickey] has a more complex proof using only integration.)
 But how had he come up with that?
 
+<figure class="post-figure">
+<img class="img-60"
+    src="/assets/posts/secant-mercator/integral_secant_graph.png"
+	alt="Secant integral graph"
+	>
+	<figcaption>The curve $ln|sec(x) + tan(x)|$ has tangents with a gradient of $sec(x)$. Discovering this fact took 100 years.</figcaption>
+</figure>
+
+
 I think, at this point, most first year calculus students like me have the following fleeting thoughts:
 1. Integration is much harder than differentiation.
 2. Some mathematician must have stumbled on this through differentiation first.
@@ -67,7 +76,6 @@ That is why a teacher was crunching numbers when he serendipitously realised wha
 <img class="img-30"
     src="/assets/posts/secant-mercator/secant_def.png"
 	alt="Definition of the secant"
-	align="right"
 	>
 </figure>
 
@@ -85,11 +93,12 @@ Here are the graphs of the secant and cosine for the angles from $-2\pi$ (-360&d
 <figure class="post-figure">
 <img class="img-60"
     src="/assets/posts/secant-mercator/secant_graph.png"
-	alt="Definition of the secant"
+	alt="Secant graph"
 	>
 </figure>
 
-The integral of the secant can be interpreted as the area under the graph.[^2] This is illustrated by the shaded region.
+The integral of the secant can be interpreted as the area under the graph.[^2] This is illustrated by the shaded region
+
 
 ## An introduction to cartography
 
