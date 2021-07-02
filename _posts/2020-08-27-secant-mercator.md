@@ -45,7 +45,7 @@ But given enough thought, it made sense. Then he said, this is the integral of t
 
 $$ \int sec(x) dx = ln|sec(x) + tan(x)| + c $$
 
-OK, where did that come from? My lecturer offered no explanation. It was easy to verify that it worked by finding the derivative. 
+OK, where did that come from? My lecturer offered no explanation. It was easy to verify that it worked by finding the derivative.[^derivative]
 (Paper [2][secant_Rickey] has a more complex proof using only integration.)
 But how had he come up with that?
 
@@ -76,6 +76,7 @@ That is why a teacher was crunching numbers when he serendipitously realised wha
 <img class="img-30"
     src="/assets/posts/secant-mercator/secant_def.png"
 	alt="Definition of the secant"
+	align="right"
 	>
 </figure>
 
@@ -386,6 +387,25 @@ It was designed with an "artistic approach". Unlike the other projections, inste
 ---
 
 [^1]: If I remember correctly, I was wandering through Wikipedia. Along the way I landed on the page for the [Integral of the secant function][wiki_secant], which includes a very brief history.  
+
+[^derivative]: Here is the proof by differentiation:
+
+	$$  
+	\begin{align} 
+	&\frac{d}{dx}ln|sec(x) + tan(x)| \\
+	&= \frac{d}{dx}ln|z| \quad\quad,\; z=sec(x)+tan(x) \\
+	&= \frac{d}{dz}ln|z| \frac{dz}{dx} \\
+	&= \left(\frac{1}{z}\right)(sec(x)tan(x) + sec^2(x)) \\
+	&= sec(x)\frac{tan(x) + sec(x)}{sec(x) + tan(x)} \\
+	&= sec(x)
+	\end{align}
+	$$
+
+	This uses the chain rule and the assumes the following have been proved:
+	- $\frac{d}{dz}ln(z) = \frac{1}{z}$
+	- $\frac{d}{dx} tan(x) = sec ^2(x)$
+	- $\frac{d}{dx} sec(x) = sec(x)tan(x)$
+
 [^2]: The rate of change of the area with respect to the x-axis is the line (very thin rectangle) $y$. That is, $\frac{dA}{dx}=y \implies A=\int y dx$.
 [^3]: The earth is approximated as a sphere for most mapping applications. Where more accuracy is required, there are extensions which can account for its deviations from a sphere.
 [^4]: I am not sure if Mercator knew of this projection. It was only formally described by Johann Heinrich Lambert in 1772. However, I think it is the easiest way to visualise the Mercator projection construction, so I have used it here anyway. There are other constructions for it but I do not think they are helpful. The Mercator just is a very unnatural projection.
