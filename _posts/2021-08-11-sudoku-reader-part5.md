@@ -72,7 +72,7 @@ grid, centres, probs = read_digits(
 The softmax probability is a useful proxy for how confident the model is in its prediction. On the training data, the confidence for correct predictions is 100%.
 
 {% highlight julia %}
-function prediction(model, image::AbstractArray, pad_ratio=0.2)
+function prediction(model, image::AbstractArray, pad_ratio=0.1)
     image = pad_image(image, pad_ratio=pad_ratio)
     image = imresize(image, (28, 28))
     x = batch([unsqueeze(Float32.(image), 3)])

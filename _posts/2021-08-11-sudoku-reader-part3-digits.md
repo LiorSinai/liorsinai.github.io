@@ -80,15 +80,14 @@ function four_point_transform(image::AbstractArray, corners::AbstractVector)
     maxWidth = destination[2][1] - destination[1][1] 
     maxHeight = destination[3][2] - destination[2][2] 
 
-    M = getPerspectiveMatrix(quad, destination)
+    M = get_perspective_matrix(quad, destination)
     invM = inv(M)
-    transform = perspective_transform(invM)
 
-    warped = warp(image, transform, (1:maxWidth, 1:maxHeight))
+    warped = warp(image, perspective_transform(invM), (1:maxWidth, 1:maxHeight))
     warped, invM
 end
 {% endhighlight %}  
-We need to return the inverse matrix because it is needed for projecting text back on to the grid, which we will do in [part 5][conclusion].
+We need to return the inverse matrix because it is needed for projecting text back on to the grid, which we will do in [part 5][conclusion]. The function `get_perspective_matrix` is detailed in the <b>more detail</b> block below.
 
 
 I've built the `perspective_transform` function with the function composition notation of CoordinateTransformations.jl as follows:
@@ -98,8 +97,8 @@ perspective_transform(M::Matrix) = PerspectiveMap() ∘ LinearMap(M) ∘ extend1
 {% endhighlight %}  
 It is mathematically equivalent to:
 {%highlight julia %}
-function perspective_transform(v::SVector) 
-    U = invM * [v[1], v[2], 1]
+function perspective_transform(v::SVector, M::Matrix) 
+    U = M * [v[1], v[2], 1]
     scale = 1/U[3]
     [U[1] * scale, U[2] * scale]
 end
@@ -124,8 +123,9 @@ Here is the result of the warping:
 <div class="collapse" id="HomographyMatrix">
   <div class="card card-body ">
   
-There is a function I've used in <code>four_point_transform</code> called <code>get_perspective_matrix</code>. This is one I had to write myself, whereas in the Python version it comes with OpenCV. To explain it, I am going to have to explain further what the above code is doing.
-To do that properly, I would need to explain pinhole cameras, projection matrices, rotation matrices and more. Here is a source which does that: <a style="text-decoration:underline" href="https://towardsdatascience.com/estimating-a-homography-matrix-522c70ec4b2c">estimating a homography matrix.</a> 
+
+OpenCV comes with a fuction called <code>getPerspectiveTransform</code>. I had to write the Julia version of this myself.
+To explain it properly, I would need to explain pinhole cameras, projection matrices, rotation matrices and more. Here is a source which does that: <a style="text-decoration:underline" href="https://towardsdatascience.com/estimating-a-homography-matrix-522c70ec4b2c">estimating a homography matrix.</a> 
 For now, all I am going to say is that the calculations reduce to multiplication of every pixel with a special matrix called a homography matrix:
 
 $$
@@ -193,7 +193,7 @@ $$
 
 Here is the code:
 {%highlight julia %}
-function getPerspectiveMatrix(source::AbstractArray, destination::AbstractArray)
+function get_perspective_matrix(source::AbstractArray, destination::AbstractArray)
     if (length(source) != length(destination))
         error("$(length(source))!=$(length(destination)). Source must have the same number of points as destination")
     elseif length(source) < 4
@@ -231,7 +231,7 @@ end
 
 <p>
 Now that we have our matrix, we have a problem: our matrix won't map a set of discrete pixels to another set of discrete pixels. Thankfully the package ImageTransformations.jl handles this for us.
-It uses the backwards algorithm: instead of warping our pixels to the rectangle, it warps pixels back from the rectangle to quadrilateral, and then interpolates a colour from the nearby pixels it lands in. This is why the <code>perspective_transform</code> function uses the inverse matrix <code>invM</code>.
+It uses the backwards algorithm: instead of warping our pixels to the rectangle, it warps pixels back from the rectangle to the quadrilateral, and then interpolates a colour from the nearby pixels it lands in. This is why the <code>perspective_transform</code> function uses the inverse matrix <code>invM</code>.
 </p>
 
 <p>
@@ -385,10 +385,9 @@ function extract_digit(
     threshold::Float64=0.02
     )
     
-    bw_threshold = 0.9
-    image = copy(image_in)
-    image[image .< bw_threshold ] .= 0
-    image[image .> bw_threshold ] .= 1
+    image = copy(image_in) 
+    # have to binarize again because of warping
+    image = binarize(image, Polysegment()) # global binarization algorithm for foreground and background
 
     labels = label_components(image) 
 

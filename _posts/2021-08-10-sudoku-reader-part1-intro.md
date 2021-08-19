@@ -122,7 +122,7 @@ I have written code with TensorFlow, PyTorch and MXNet, and I can easily say Flu
     src="/assets/posts/sudoku-reader/onecold.png"
 	alt="Flux onecold definition"
 	>
-<figcaption>Simple functionality like this that can be taken for granted in Julia simply doesn't exist in Python, because the underlying code is often not written in Python.</figcaption>
+<figcaption>Simple functionality like this that can be taken for granted in Julia often simply doesn't exist in Python, because the underlying code is not written in Python.</figcaption>
 </figure>
 
 A big advantage of the Julia packages is that they are entirely written in Julia.
@@ -230,7 +230,7 @@ There are few large monolithic  packages in Julia. Even the popular packages lik
 
 Julia is built to be modular and to have small packages and it's great. 
 I don't think Python's approach is wrong, but there are definite advantages to Julia's approach in this modern, open-source world.
-I think it is this single reason, more than Julia's speed or slow compile times, more than its syntax and design and compiler and metaprogramming and other features, that will ultimately be the reason Julia one day overtakes Python.
+I think it is this single reason, more than Julia's speed, more than its syntax and design and compiler and metaprogramming and other features, that will ultimately be the reason Julia one day overtakes Python.
 
 One last thing.
 There is a negative aspect to this sharing: packages don't always "play nice" so that they can easily integrate with other packages. For example packages should abide by the following etiquette:

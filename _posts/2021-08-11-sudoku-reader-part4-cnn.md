@@ -91,13 +91,14 @@ Training the model on the Char74k removed this problem.
 
 Going the other way, the a model trained on the Char74k dataset to a 99.1% test accuracy only achieved a 54.1% accuracy on the MNIST data. I found this acceptable because the target is computer fonts not handwritten digits. Its overall performance with the Sudoku images was much better.
 
-Another strategy is to train on both: 10,000 Char74k figures and 10,000 MNIST figures. This model seems to work better on some edge cases in the Sudoku images.
+Another strategy is to train on both: 10,000 Char74k figures and 10,000 MNIST figures. 
 The model has a test accuracy of 98.1%. For the separate datasets (train+test) it is 99.4% on the Char74k data and 98.8% on the MNIST data.
 A flaw of this model is that 42 times it confused 2s for 7s. (Out of 4000 2s and 7s that is acceptable.) Otherwise the second largest value in the confusion matrix (off diagonal) was 12. 
+Overall, this model seems to perform slighlty worse on the Sudoku images.
 
 ## Models
 
-I eventually used the [LeNet5][LeNet5] model originally published in 1998. It has architecture is as follows:
+I eventually used the [LeNet5][LeNet5] model originally published in 1998. Its architecture is as follows:
 <figure class="post-figure">
 <img class="img-95"
     src="/assets/posts/sudoku-reader/LeNet5.png"
@@ -238,9 +239,9 @@ Julia is a young language and is still short on resources and tutorials for Flux
 [Adams]: https://spcman.github.io/getting-to-know-julia/deep-learning/vision/flux-cnn-zoo/
 [Fitzgerald]: http://webpages.csus.edu/fitzgerald/julia-convolutional-neural-network-MNIST-explained/
 
-Firstly these are all the imports we will need:
+I used the digits from the [Char74k][Char74k] dataset, specifically Sample001-Sample010 in EnglishFnt.tgz.
 It is useful to convert the Char74k dataset to the MNIST format so the same model can be used for both datasets.
-Here is that code
+This script will do that (be sure to have the correct `inpath` for your data):
 {% highlight Julia %}
 using FileIO
 using Images
@@ -288,7 +289,7 @@ using Printf
 I also wrote a few helper functions at [ml_utils.jl](https://github.com/LiorSinai/SudokuReader.jl/blob/main/DigitDetection/ml_utils.jl). For example, here is the function to load the data:
 {% highlight Julia %}
 function load_data(inpath)
-    # data is images within a folder with name dir/label/filename.png
+    # data is images within a folder with name inpath/label/filename.png
     digits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
     data = Array{Float32, 3}[] # Flux expects Float32 only, else raises a warning
@@ -435,10 +436,7 @@ function train!(loss, ps, train_data, opt, acc, valid_data; n_epochs=100)
     for e in 1:n_epochs
         print("$e ")
         ps = Flux.Params(ps)
-        idx_batch = 0
-
         for batch_ in train_data
-            idx_batch += 1
             gs = gradient(ps) do
                 loss(batch_...)
             end
@@ -446,7 +444,7 @@ function train!(loss, ps, train_data, opt, acc, valid_data; n_epochs=100)
             print('.')
         end
         # update history
-        train_acc = 0
+        train_acc = 0.0
         n_samples = 0
         for batch_ in train_data
             train_acc += sum(onecold(model(batch_[1])) .== onecold(batch_[2]))
@@ -475,7 +473,7 @@ println("done training")
 @printf "time taken: %.2fs\n" end_time/1e9
 {% endhighlight %}
 
-Here is an example of the training history for LeNet5 trained on both datasets (20,000 samples per epoch):
+Here is an example of the training history for LeNet5 trained on the Char74k dataset:
 <figure class="post-figure">
 <img class="img-95"
     src="/assets/posts/sudoku-reader/history.png"
