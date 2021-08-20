@@ -90,9 +90,13 @@ The machine learning algorithm should not be seen as a black box. It uses [LeNet
 
 [LeNet5]: http://yann.lecun.com/exdb/publis/pdf/lecun-98.pdf
 [Char74K]: http://www.ee.surrey.ac.uk/CVSSP/demos/chars74k/
+[MathWorks]: https://blogs.mathworks.com/deep-learning/2018/11/15/sudoku-solver-image-processing-and-deep-learning/
 
-
-You could perhaps use machine learning for the entire pipeline. This however would require a large dataset of print outs of Sudoku puzzles that I doesn't exist yet. Regardless I think machine learning can be tricky to implement and expensive to train, and should only be reserved for the hardest task. That is, digit classification.
+You could perhaps use machine learning for the entire pipeline. 
+[MathWorks][MathWorks] for example also uses machine learning for image segmentation of the grid.
+However this model trains on only 100 images and I do not know how well it generalises.
+A more general model usually requires a much larger dataset. 
+Personally I think machine learning can be tricky to implement and expensive to train, and should only be reserved for the hardest task. That is, digit classification.
 
 The algorithm is not robust and is prone to false positives. That is, because of the weak assumptions made, anything vaguely representing a grid - a painting or a cupboard - will be identified as the Sudoku grid. The machine learning algorithm is also not robust to noise so it will then "see" numbers in this random object. It is up to the user to avoid these problems by only feeding in well lit, clear images of Sudoku grids.
 

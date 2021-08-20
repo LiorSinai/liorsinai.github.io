@@ -29,10 +29,12 @@ All code is available online at my repository: [github.com/LiorSinai/SudokuReade
 The main goal here is to find contours in the image and assume the largest contour to be the grid.
 A "contour" is a line which defines a boundary between the "background" and an "object". 
 This assumption works well for images where the Sudoku grid dominates the image.[^contour_assumption]
-I found more complicated techniques - e.g. line detections with Hough Transformations - to only add complexity without providing much benefit.
+I found more complicated techniques - e.g. line detections with Hough Transformations - to only add complexity without providing much benefit. 
+Machine learning could also be used for this problem - see [MathWork's blog post][MathWorks]. This requires creating a dataset to train on, which can be a time consuming process, and the training itself will require a largish model and will be slow.
 
-Then a simple four point quadrilateral is fit to the contour, and that is returned as the grid.
+After the largest contour has been found, a simple four point quadrilateral is fit to the contour, and that is returned as the grid.
 
+[MathWorks]: https://blogs.mathworks.com/deep-learning/2018/11/15/sudoku-solver-image-processing-and-deep-learning/
 
 ## Working with images in Julia
 
