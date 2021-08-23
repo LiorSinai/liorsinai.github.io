@@ -28,7 +28,7 @@ All code is available online at my repository: [github.com/LiorSinai/SudokuReade
 ## Straightening the image.
 
 From [part 2][grid_extraction] we have a quadrilateral which represents our grid. 
-We could make mask our image to only have the pixels inside the quadrilateral and crop it to the rectangular borders.
+We could mask our image to exlcude pixels outside the quadrilateral and crop it to the rectangle borders.
 For example:
 <figure class="post-figure">
 <img class="img-95"
@@ -39,14 +39,15 @@ For example:
 </figure>
 
 But we can do one better: we can straighten the whole grid.
-While the grid extraction from the previous section might have been doable with machine learning, I don't think this straightening could be.
+While the grid extraction from the previous section might have been done with machine learning, I don't think this straightening can be.
 
 [PyImageSearch]: https://www.pyimagesearch.com/2014/08/25/4-point-opencv-getperspective-transform-example/
 
 [PyImageSearch][PyImageSearch] has a great Python tutorial on how to do this. 
 I've recreated the code and their explanations here in Julia. It was slightly harder than using OpenCV in Python because I had to write more of the functions myself. 
 
-Firstly our points should be in a consistent order so that we map the top-left point of the quadrilateral to the top-left point of the rectangle and so on. As a sanity check, we can do the following:
+Firstly our points should be in a consistent order.
+This is so that we map the top-left point of the quadrilateral to the top-left point of the rectangle and so on. As a sanity check, we can do the following:
 
 {%highlight julia %}
 function order_points(corners)
@@ -66,8 +67,8 @@ function order_points(corners)
 end
 {% endhighlight %}  
 
-Next we can calculate a four point transformation matrix that will transformation our four quadrilateral points to four rectangular points. We can use the `fit_rectangle` from [part_2][grid_extraction] to get our destination.
-We can use `warp` from ImageTransformations.jl to apply it to our image.
+Next we calculate a four point transformation matrix that will transform our four quadrilateral points to four rectangular points. We can use `fit_rectangle` from [part_2][grid_extraction] to get our destination rectangle.
+We can use `warp` from ImageTransformations.jl to apply the matrix to our image.
 
 {%highlight julia %}
 using ImageTransformations, CoordinateTransformations
@@ -231,12 +232,12 @@ end
 
 <p>
 Now that we have our matrix, we have a problem: our matrix won't map a set of discrete pixels to another set of discrete pixels. Thankfully the package ImageTransformations.jl handles this for us.
-It uses the backwards algorithm: instead of warping our pixels to the rectangle, it warps pixels back from the rectangle to the quadrilateral, and then interpolates a colour from the nearby pixels it lands in. This is why the <code>perspective_transform</code> function uses the inverse matrix <code>invM</code>.
+It uses the backwards algorithm: instead of warping our pixels to the rectangle, it warps pixels back from the rectangle to the quadrilateral and then interpolates a colour from the nearby pixels it lands in. This is why the <code>perspective_transform</code> function uses the inverse matrix <code>invM</code>.
 </p>
 
 <p>
 We can see the effect of the linear interpolation by performing multiple warps.
-This is what the image looks like after warping to and back from the straightened image 50 times:
+This is what the image looks like after warping to and back 50 times:
 </p>
 
 <figure class="post-figure">
@@ -255,9 +256,10 @@ For a single warp however this loss in information is small and not serious.
 
 ## Digit detection and extraction
 
-Now that the grid is a rectangle, we can divide it into 9&times;9 cells - regions of interest - and check whether a digit is present in each cell.
-I've added some padding so that is overlap between each cells. 
- This might be needed if the straightening wasn't done that well. I've separated the check for a digit into three questions:
+Now that the grid is a rectangle we can divide it into 9&times;9 cells - regions of interest - and check whether a digit is present in each cell.
+I've added some padding so that there is overlap between each cells.
+This provides a margin of error for the straightening.
+I've separated the check for a digit into two questions:
 1. Is there a component in the centre of the region of interest? 
 2. If yes, what are the bounds and centre of this component?
 
@@ -269,7 +271,7 @@ function read_digits(
     model; 
     offset_ratio=0.1,
     radius_ratio::Float64=0.25, 
-    detection_threshold::Float64=0.02, 
+    detection_threshold::Float64=0.10, 
     )
     height, width = size(image)
     step_i = ceil(Int, height / 9)
@@ -309,10 +311,10 @@ The next two sections detail the centre component detection and bounding box alg
 
 ### Centre component detection
 
-The following is a simple algorithm to detect whether or not there is a component in the centre:
+Here is a simple algorithm to detect whether or not there is a component in the centre:
 1. Draw a white circle in the middle of a blank image the same size as the region of interest.
 2. Element-wise multiply the circle kernel with the region of interest.
-3. If the ratio of non-zero pixels to the circle area is greater than some threshold, return true, else false.
+3. If the ratio of non-zero pixels to the circle area is greater than some threshold return true, else false.
 
 This is what it looks like:
 <figure class="post-figure">
@@ -325,7 +327,7 @@ This is what it looks like:
 
 Here is the code:
 {%highlight julia %}
-function detect_in_centre(image::AbstractArray; radius_ratio::Float64=0.25, threshold::Float64=0.15)
+function detect_in_centre(image::AbstractArray; radius_ratio::Float64=0.25, threshold::Float64=0.10)
     height, width = size(image)
     radius = min(height, width) * radius_ratio
     kernel = make_circle_kernel(height, width, radius)
@@ -336,7 +338,7 @@ end
 {% endhighlight %}
 
 The ratio for the digits lies between 15%-50% so I've set the threshold at a conservative 10%.
-The assumption is that the machine learning model will be able to distinguish between random artefacts that are found and true digits; we're just removing the most obviously empty cells.
+The assumption is that the machine learning model will be able to distinguish between random artefacts and true digits; we're just removing the most obviously empty cells.
 
 Lastly, here is code to make a circle with discrete pixels:
 {%highlight julia %}
@@ -363,10 +365,10 @@ end
 Once we are sure the region of interest is not empty, we can extract the digit. 
 We could use the same contour algorithm as in [part 2][grid_extraction].
 However we want all the digit's pixels not just the border.
-A more efficient approach is use a different algorithm based on the concept of connected components, where each connected component is made up of non-zero pixels that are direct neighbours of each other.
-The simplest algorithm is a floodfill approach - find one pixel, then determine its neighbours and those neighbours' neighbours and so on. I've used a more complex and efficient algorithm provided by ImageMorphology.jl called `label_components`. 
+A better approach is the concept of connected components, where each connected component is made up of non-zero pixels that are neighbours of each other.
+The simplest of these algorithms is a floodfill approach: find one pixel, then determine its neighbours and those neighbours' neighbours and so on. I've used a more complex and efficient algorithm provided by ImageMorphology.jl called `label_components`. 
 I must confess, I don't fully understand it. You may inspect the source code [here][label_components].
-This returns a matrix where each component's pixels have a unique index, starting from 1. 
+This function returns a matrix where each component's pixels have a unique index, starting from 1. 
 For example, here is a label map for the whole image:
 <figure class="post-figure">
 <img class="img-95"
@@ -376,18 +378,18 @@ For example, here is a label map for the whole image:
 <figcaption>Source code: <code>heatmap(labels, yflip=true, c=:turbo, border=:none)</code></figcaption>
 </figure>
 
-Doing this for each small region of interest allows us to extract the digits with a tight bounding box while removing all other components. 
-Here is the full code:
+Doing this for each small region of interest allows us to extract the digits with a tight bounding box while removing all other components.
+Here is the full code:[^binarization]
 {%highlight julia %}
 function extract_digit(
     image_in::AbstractArray; 
     radius_ratio::Float64=0.25, 
-    threshold::Float64=0.02
+    threshold::Float64=0.10
     )
     
     image = copy(image_in) 
     # have to binarize again because of warping
-    image = binarize(image, Polysegment()) # global binarization algorithm for foreground and background
+    image = binarize(image, Otsu()) # global binarization
 
     labels = label_components(image) 
 
@@ -407,7 +409,7 @@ function extract_digit(
                 stats.left + Int(round(width_label/2))
             )
 
-            # make square and pad
+            # make square
             top = max(1, floor(Int, centre[1] - length_/2))
             left = max(1, floor(Int,centre[2] - length_/2))
             bottom = min(height, ceil(Int, centre[1] + length_/2))
@@ -465,3 +467,8 @@ end
 Now that we have individual digits we can pass them to our machine learning function.
 This is explained next in [part 4][machine_learning].
 
+---
+
+[^binarization]: We need to binarize again to remove distortions from warping. Originally I used the AdaptiveThreshold method which applies different threholds thorought the image. This is needed for a large complex image. Here we have much smaller images so a more straightforward algorithm called [Otsu's method][Otsu] can be used. This automatically calculates and applies a single threhold for the whole image. This threhold minimises the intra-class variance - it attempts to set a threshold such that all the pixels within each class (background and foreground) have the most similar values possible.
+
+[Otsu]: https://en.wikipedia.org/wiki/Otsu%27s_method

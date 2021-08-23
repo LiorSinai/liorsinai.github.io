@@ -26,7 +26,7 @@ All code is available online at my repository: [github.com/LiorSinai/SudokuReade
 # Part 2 - grid extraction
 ## Overall process
 
-The main goal here is to find contours in the image and assume the largest contour to be the grid.
+The main goal here is to find contours in the image. The largest contour is then assumed to be the grid.
 A "contour" is a line which defines a boundary between the "background" and an "object". 
 This assumption works well for images where the Sudoku grid dominates the image.[^contour_assumption]
 I found more complicated techniques - e.g. line detections with Hough Transformations - to only add complexity without providing much benefit. 
@@ -34,24 +34,24 @@ I found more complicated techniques - e.g. line detections with Hough Transforma
 [MathWorks]: https://blogs.mathworks.com/deep-learning/2018/11/15/sudoku-solver-image-processing-and-deep-learning/
 
 Machine learning could also be used for this problem.
-For example, [MathWork's blog post][MathWorks] trained a model to segment an area around the grid.
-However it only trains on only 100 images and I do not know how well it generalises.
-A more general model usually requires a much larger dataset which could be time consuimg to make.
+For example, [MathWorks][MathWorks] trained a model to segment an area around the grid.
+It only trains on 100 images so I do not know how well it generalises.
+A more general model usually requires a much larger dataset. That could be time consuimg to make.
 
-After the largest contour has been found, a simple four point quadrilateral is fit to the contour, and that is returned as the grid.
+After the largest contour has been found, a quadrilateral is fit to the contour, and that is returned as the grid.
 
 [MathWorks]: https://blogs.mathworks.com/deep-learning/2018/11/15/sudoku-solver-image-processing-and-deep-learning/
 
 ## Working with images in Julia
 
-The main packaged used in this code is [JuliaImages.jl][JuliaImages]. 
+The main package used in this code is [JuliaImages.jl][JuliaImages]. 
 An image in Julia is an $h\times w$ matrix, where $h$ is the height and $w$ is the width. Its most general type is an `AbstractArray`. 
 Each element of the array is a pixel, which can be a native type such as `Int` or `Float64`, or a `Colorant` type such as `Gray` (1 channel), `RGB` (3 channels) or `RGBA` (4 channels). 
 At the time of publication, JuliaImages.jl defines 18 `Color` subtypes and 36 `TransparentColor` subtypes.
 This format is convenient  because an image can always be expected to be 2D and extra dimensions are handled by the pixel type.
 
-Machine learning often uses a $h\times w \times c$ format, where $c$ is the number of channels.  
-The function `channelview` can be used to convert it to $c \times h\times w$ array, and then `permutedims` can convert it to a $h\times w \times c$ array:
+Machine learning often uses an $h\times w \times c$ format, where $c$ is the number of channels.  
+The function `channelview` can convert it to a $c \times h\times w$ array, and then `permutedims` can convert it to a $h\times w \times c$ array:
  {%highlight julia %}
 image_CHW = channelview(img_rgb)
 image_HCW = permutedims(img_CHW, (2, 3, 1))
@@ -91,7 +91,7 @@ end
 
 The next step is to convert the image to black and white. 
 This is because it simplifies the calculations greatly for classic image processing techniques.
-This is in contrast to machine learning, which can easily handle multiple colour channels and where more information is encouraged.
+This is in contrast to machine learning which can easily handle multiple colour channels and where more information is encouraged.
 
 <figure class="post-figure">
 <img class="img-95"
@@ -112,8 +112,9 @@ This is a standard grayscale conversion where the green spectrum is more heavily
 [Colors.jl]: https://github.com/JuliaGraphics/Colors.jl/blob/9c55e4a5f787771239eb6bff5c0ec061029c4f00/src/conversions.jl#L777
 
 All the pixels now have a value between 0 and 1. Next we need to threshold values so that the values are either 0 or 1. 
-We could apply a simple threshold over the whole picture e.g. `blackwhite = gray .< 0.8`. 
-A more intelligent method is to use the adaptive thresholding technique provided by the [ImageBinarization.jl][ImageBinarization.jl] package.
+We could apply a single threshold over the whole picture e.g. `blackwhite = gray .< 0.8`. 
+A better method is the adaptive thresholding technique provided by the [ImageBinarization.jl][ImageBinarization.jl] package. 
+This does an intelligent local thresholding.
 From the documentation:
 > If the value of a pixel is $t$ percent less than the average of an $s×s$ window of pixels centered around the pixel, then the pixel is set to black, otherwise it is set to white.
 
@@ -140,7 +141,7 @@ Firstly there is a lot of noise - it would be better if we could remove all thos
 Secondly, for the contour detection we need the contours to be white (have a value of 1) and the background to be black (have a value of 0).
 
 To reduce noise, we can apply an image filter with a Gaussian Kernel from [ImageFiltering.jl][ImageFiltering.jl].
-In simpler words, every pixel will become a weighted sum of it and its neighbours based on a kernel we give it.
+After this, every pixel will be weighted sum of it and its neighbours based on a kernel we give it.
 The net effect is a blurring of the image.
 
 [ImageFiltering.jl]: https://juliaimages.org/ImageFiltering.jl/stable/
@@ -163,7 +164,7 @@ gray = imfilter(gray, kernel)
 <figcaption>Left: Original image. Middle: blurred. Right: Gaussian kernel</figcaption>
 </figure>
 
-As can be seen in the image, the blurring affect is slight. Things do look smoother. Of course if we changed the parameters, say `σ = 5` and 
+As can be seen in the image, the blurring affect is slight. Of course if we changed the parameters, say `σ = 5` and 
 `window_size=21`, the effects could be more dramatic:
 
 
@@ -185,7 +186,7 @@ The slight blurring however does have a big effect on the thresholding:
 <figcaption>black and white image with blurring</figcaption>
 </figure>
 
-Inverting the image is rather simple. Remember in Julia `for` loops are fast:
+Inverting the image is rather simple. In Julia `for` loops are fast:
 {%highlight julia %}
 function invert_image(image)
     image_inv = Gray.(image)
@@ -210,11 +211,11 @@ The result:
 
 ## Contour Detection
 
-We can finally start looking for contours. The de facto algorithm for doing this is highly specialised, so I will not go into more detail here. For more information, please see the 1987 paper by [Suzuki and Abe][Suzuki1987].
+We can finally start looking for contours. The de facto algorithm for doing this is highly specialised, so I will not go into more detail here. For more information please see the 1987 paper by [Suzuki and Abe][Suzuki1987].
 
-I couldn't find a package with this algorithm (a common occurrence for a young language like Julia)
-but thankfully the people at JuliaImages.jl wrote a Julia port of it: [contour_detection][contour_detection].
-I copied this code and modified it slightly to (1) better follow Julia Conventions and (2) have the option to only return external contours. The code is available here: [Contours.jl][Contours.jl]. Please note: this is a work in progress. The `fill_contour!` fuction will fail for complex shapes. Also I am very proud of the `point_in_polygon` function, which uses a very robust method from a fairly recent [paper][Galetzka2012]. 
+I couldn't find a package with this algorithm (a common occurrence for a young language like Julia).
+However thankfully the people at JuliaImages.jl wrote a Julia port of it: [contour_detection][contour_detection].
+I copied this code and modified it slightly to (1) better follow Julia Conventions and (2) have the option to only return external contours. The code is available here: [Contours.jl][Contours.jl]. Please note: this is work in progress. The `fill_contour!` fuction will fail for complex shapes. Also I am very proud of the `point_in_polygon` function, which uses a very robust method from a fairly recent [paper][Galetzka2012]. 
 
 [Suzuki1987]: https://www.sciencedirect.com/science/article/abs/pii/0734189X85900167
 [Galetzka2012]: https://arxiv.org/abs/1207.3502

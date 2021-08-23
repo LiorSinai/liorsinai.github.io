@@ -26,9 +26,9 @@ All code is available online at my repository: [github.com/LiorSinai/SudokuReade
 # Part 5
 
 Thank you for following along until now. This final part is split into the following sections:
-- Integrating code from the previous parts.
-- Presenting the result.
-- Reflection on the approach.
+- [Integrating code from the previous parts](#integrating-code).
+- [Presenting the result](#presenting-the-result).
+- [Reflection on the approach](#reflection).
 
 ## Integrating code
 
@@ -65,7 +65,8 @@ grid, centres, probs = read_digits(
     warped, model,
     offset_ratio=0.1, 
     radius_ratio=0.25, 
-    detection_threshold=0.1);
+    detection_threshold=0.1
+    );
 {% endhighlight %}
 
 `read_digits` uses a function called `prediction`. It provides a wrapper around the output of the model, which are logits.
@@ -87,7 +88,7 @@ end
 ## Presenting the result
 
 The output of `read_digits` is three 9&times;9 matrices: grid, centres and probabilities.
-The grid has the numbers, the centres has the co-ordinates of the centres of the bounding box in the warped image, and the probabilities has the maximum probability which are zero if no prediction was made.
+The grid has the numbers, the centres has the co-ordinates of the centres of the bounding boxes in the warped image, and the probabilities has the maximum probability. The latter are zero if no prediction was made.
 
 Drawing text over the original numbers is easy if we use Plots.jl. We will need the `perspective_transform` function from [part 3][digit_extraction] to unwarp the centres back to their positions in the original image.
 {% highlight julia %}
@@ -190,9 +191,11 @@ But I'll stop here 🙂.
 ## Reflection
 
 This application used several algorithms, some rather complex, to do a task that humans consider trivial. 
-This is not to downplay the effort - the task is a complex one, and it is only because our brains have exquistively adapted to it can we consider it trivial.
+This is not to downplay the effort. The task is a complex one, and we only consider it trivial because our brains have exquistively adapted to it.
 
-We've used several algorithms along the way. It is worth taking stock of all of them and all the parameters that are needed. Some of these parameters are fixed, whether set explicitly or implied. For example, the blurring is done the same in the horizontal and vertical directions and so one parameter is fixed. Here is a table with an overview of all fixed and free parameters:[^LeNet5]
+We've used several algorithms along the way. It is worth taking stock of all of them and all the parameters that are needed. Some of these parameters are fixed, whether set explicitly or implied. For example, the blurring is done the same in the horizontal and vertical directions and so one parameter is fixed. 
+Others are free and may require hand tuning.
+Here is a table with an overview of all fixed and free parameters:[^LeNet5]
 
 <table>
 <thead>
@@ -267,13 +270,11 @@ We've used several algorithms along the way. It is worth taking stock of all of 
 </table>
 
 For the image processing algorithms there are 9 free parameters. 
-Some are subsets of more diverse algorithms:
-- AdaptiveThreshold is part of a family of binarization algorithms.
-- Warping is a type of image transformation using homography matrices.
-Others are more bespoke and are optimised specifically for one use case, such as contour detection and labelling components.
+Some are subsets of more diverse algorithms.
+Others are more bespoke and are optimised specifically for one use case. 
 
 For machine learning, there are 44,426 free parameters.
-The model however is more general and can be repurposed (retrained) for other tasks such as recognising alphabet letters.
+Compared to the hand crafted image processing algorithms, it is more general and can be repurposed (retrained) for other tasks such as recognising alphabet letters.
 
 As with everything, one does not need to understand these algorithms in depth. But you do need sufficient knowledge of each in order to be able to integrate and fine tune them.
 

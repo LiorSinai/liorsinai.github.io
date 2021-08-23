@@ -26,8 +26,8 @@ All code is available online at my repository: [github.com/LiorSinai/SudokuReade
 # Introduction
 
 My [sudoku solver][SudokuSolver] post from a year ago remains the most popular post on this website by a wide margin.
-That post describes the levels of Sudoku difficulty and details an efficient algorithm that can solve all of them. It then implements one in Python. 
-It is quite neat if I do say so myself and it can solve any hard Sudoku puzzle in under a second (if it is solvable).
+That post describes the levels of Sudoku difficulty and details an algorithm that can solve all of them. It then implements one in Python. 
+It is quite neat if I do say so myself. It can solve any Sudoku puzzle in under a second (if it is solvable).
 
 <figure class="post-figure">
 <img class="img-95"
@@ -37,7 +37,7 @@ It is quite neat if I do say so myself and it can solve any hard Sudoku puzzle i
 <figcaption>An example output of this program.</figcaption>
 </figure>
 
-I had already seen people take this concept one step further, such as Raghav Virmani's awesome [LinkedIn post][raghav] on a optical character recognition (OCR) reader and solver. In his post he places a print-out of a Sudoku puzzle in front of his camera, solves it in real time and projects the solution back on to the grid. Naturally I thought this was awesome and implemented it myself (although I struggled to get it to work in real time). I did not write a blog post on it because there are many great blog posts already: see [PyImageSearch's article][PyImage] or the series of articles at [AI Shack][AiShack].
+I had already seen people take this concept one step further, such as Raghav Virmani's awesome [LinkedIn post][raghav] on a optical character recognition (OCR) reader and solver. In his post he places a print-out of a Sudoku puzzle in front of his camera, solves it in real time and projects the solution back on to the grid. Naturally I thought this was awesome and implemented it myself in Python. I did not write a blog post on it because there are many great blog posts already: see [PyImageSearch's article][PyImage] or the series of articles at [AI Shack][AiShack].
 
 Then 2 weeks back it was the [Julia conference] [JuliaCon] which I really enjoyed. I am a big fan of Julia.
 While I still like Python, I much prefer Julia. I find it to be a much more robust, stable and clean programming language.
@@ -96,7 +96,7 @@ The machine learning algorithm should not be seen as a black box. It uses [LeNet
 [MathWorks]: https://blogs.mathworks.com/deep-learning/2018/11/15/sudoku-solver-image-processing-and-deep-learning/
 
 You could perhaps use machine learning for the more parts of the pipeline. 
-See for examples [MathWorks][MathWorks] posts.
+See for examples [MathWorks'][MathWorks] posts.
 Personally I think machine learning can be tricky to implement and expensive to train, and should only be reserved for the hardest task. That is, digit classification.
 
 The algorithm is not robust and is prone to false positives. That is, because of the weak assumptions made, anything vaguely representing a grid - a painting or a cupboard - will be identified as the Sudoku grid. The machine learning algorithm is also not robust to noise so it will then "see" numbers in this random object. It is up to the user to avoid these problems by only feeding in clear, well lit images of Sudoku grids.
@@ -115,7 +115,7 @@ For an indepth explanation of each step, please see the folowing posts:
 
 Having done it first in Python gave me perspective. Firstly, I think Python is a better choice for this task. 
 That is a negative way to start off a series that is supposed to promote Julia. But Julia does have an infamous "first time to plot" problem, and this task is mostly about plotting and processing single images. Julia imposes an upfront cost of an initial slow compile time for enhanced performace afterwards. It can take 2 and a half minutes to run the code base from start to finish the first time. After that it takes a few seconds but that's already too late. Meanwhile in Python it takes a few seconds to run through the whole pipeline every time.
-However I still think this application is worthwhile as a learning exercise.
+That said, I still think this application is worthwhile as a learning exercise.
 
 The machine learning is where Julia really shined. Julia is built for scientific programming and number crunching.
 This is what it excels at it.

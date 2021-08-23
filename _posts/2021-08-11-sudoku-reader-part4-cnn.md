@@ -42,7 +42,7 @@ I'll now delve further into each of these issues.
 [LeNet5]: http://yann.lecun.com/exdb/publis/pdf/lecun-98.pdf
 [Char74K]: http://www.ee.surrey.ac.uk/CVSSP/demos/chars74k/
 
-The [Modified National Institute of Standards and Technology database (MNIST)][MNIST] is a large set of 70,000 labelled handwritten digits. Here is a sample of the digits:[^7s][^zero]
+The [Modified National Institute of Standards and Technology database (MNIST)][MNIST] is a large set of 70,000 labelled handwritten digits. Here is a sample of the digits:[^centroids]<sup>,</sup>[^zero]
 
 <figure class="post-figure">
 <img class="img-95"
@@ -52,8 +52,7 @@ The [Modified National Institute of Standards and Technology database (MNIST)][M
 <figcaption>MNIST dataset.</figcaption>
 </figure>
 
-I trained my model and then discovered very quickly that despite a 99% test accuracy, it was not the best dataset for a model that will mostly be aimed at computer printed digits. To understand why, let us look at the [Char74K][Char74K] dataset which is a based off computer fonts:
-
+I trained my model and then discovered very quickly that despite a 99% test accuracy, it was not the best dataset for a model that will mostly be aimed at computer printed digits. To understand why, let us look at a different dataset, the [Char74K][Char74K] dataset. It is based on computer fonts:
 <figure class="post-figure">
 <img class="img-95"
     src="/assets/posts/sudoku-reader/char74k_sample.png"
@@ -87,14 +86,14 @@ As an experiment, I trained the LeNet5 model (detailed below) on the MNIST datas
 
 As expected, 7, 1 and 2 are often confused. So was 6s with 5s and - to a less a extent - 6s with 0s. 
 This sort of confusion also appeared with the few Sudoku images I tried.
-Training the model on the Char74k removed this problem.
+Training the model on the Char74k data removed this problem.
 
-Going the other way, the a model trained on the Char74k dataset to a 99.1% test accuracy only achieved a 54.1% accuracy on the MNIST data. I found this acceptable because the target is computer fonts not handwritten digits. Its overall performance with the Sudoku images was much better.
+Going the other way, a model trained on the Char74k dataset to a 99.1% test accuracy only achieved a 54.1% accuracy on the MNIST data. I found this acceptable because the target is computer fonts not handwritten digits. Its overall performance with the Sudoku images was much better.
 
 Another strategy is to train on both: 10,000 Char74k figures and 10,000 MNIST figures. 
-The model has a test accuracy of 98.1%. For the separate datasets (train+test) it is 99.4% on the Char74k data and 98.8% on the MNIST data.
-A flaw of this model is that 42 times it confused 2s for 7s. (Out of 4000 2s and 7s that is acceptable.) Otherwise the second largest value in the confusion matrix (off diagonal) was 12. 
-Overall, this model seems to perform slighlty worse on the Sudoku images.
+This model has a test accuracy of 98.1%. For the separate datasets (train &test) it is 99.4% on the Char74k data and 98.8% on the MNIST data.
+A flaw of this model is that 42 times it confused 2s for 7s. (Out of 4000 2s and 7s that is acceptable.) Otherwise the second largest off-diagonal value in the confusion matrix was 12. 
+Overall, this model seemed to perform slighlty worse on the Sudoku images.
 
 ## Models
 
@@ -125,7 +124,7 @@ model = Chain(
 
 This was not the first model I encountered. 
 Instead that was huge a 1.2 million parameter model on a blog post.
-It worked, but I thought it is unnecesary large and slow. It is built as follows:
+It worked, but it is unnecesary large and slow. It is built as follows:
 {% highlight Julia %}
 model = Chain(
 	Conv((3, 3), 1=>32, stride=1, pad=0, relu),
@@ -227,6 +226,7 @@ model = Chain(
 This model is prone to errors because it does not take the structure of the image to account. So very weirdly, you can swap rows and columns and not affect the prediction. Clearly this limits the overall accuracy of the model.
 
 LeNet5 is a good balance between slow convolutions with few parameters and large but fast fully connected layers.
+It reduces the feature space by a factor of 3 from 784 pixels to 256 kernel pixels before classification.
 I still think it is too large - the smallest model in the table is 1/8th its size. 
 But for 183kB against 28kB, I think it's a reasonable tradeoff for a 1% increase in accuracy.
 
@@ -234,7 +234,7 @@ But for 183kB against 28kB, I think it's a reasonable tradeoff for a 1% increase
 ## The code
 
 I followed the tutorials of [Nigel Adams][Adams] and [Clark Fitzgerald][Fitzgerald].
-Julia is a young language and is still short on resources and tutorials for Flux, so I am glad these two ventured into the unknown early with their articles.
+Julia is a young language and is still short on resources and tutorials for Flux.  I am therefore glad these two ventured into the unknown early with their articles.
 
 [Adams]: https://spcman.github.io/getting-to-know-julia/deep-learning/vision/flux-cnn-zoo/
 [Fitzgerald]: http://webpages.csus.edu/fitzgerald/julia-convolutional-neural-network-MNIST-explained/
@@ -247,7 +247,7 @@ using FileIO
 using Images
 
 inpath = "..\\..\\datasets\\74k_numbers"
-outpath = inpath *"_28x28"
+outpath = inpath * "_28x28"
 include("..\\utilities\\invert_image.jl");
 
 if !isdir(outpath)
@@ -495,8 +495,8 @@ We can now go to the final section where we can see the results of our model: [p
 
 ---
 
-[^7s]: The 7s and 9s in the MNIST data are lowered with respect to the top of the image. I presume this is because when this data was processed the centroid was used as the centre of image. I believe a better choice would have been to use the centre of the bounding box as the centre of the image. This is what the digit extraction does in part 3.
+[^centroids]: In the MNIST data, the 7s and 9sx are lowered with respect to the top of the image and the 6s are slightly raised. I presume this is because when this data was processed the centroid was used as the centre of image. I believe a better choice would have been to use the centre of the bounding box. This is what the digit extraction does in part 3.
 
-[^zero]: One can argue that you don't need to train with zero because there should never be a zero in Sudoku. For the user experience I'd argue it is worth the marginal effort. If the user does have a zero in their image, for whatever reason, it will make the model appear very incompotent if it cannot classify zeros. Anyway, this is your personal preference.
+[^zero]: One can argue that you don't need to train with zero because there should never be a zero in Sudoku. For the user experience I'd argue it is worth the marginal effort. If the user does have a zero in their image, for whatever reason, it will make the model appear very incompotent if it cannot classify zeros. But this is your personal preference.
 
 [^flatten]: Flatten is exported by both DataFrames and Flux and therefore needs to be qualified.
