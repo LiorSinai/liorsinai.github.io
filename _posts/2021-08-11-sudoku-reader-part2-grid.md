@@ -54,7 +54,7 @@ Machine learning often uses an $h\times w \times c$ format, where $c$ is the num
 The function `channelview` can convert it to a $c \times h\times w$ array, and then `permutedims` can convert it to a $h\times w \times c$ array:
  {%highlight julia %}
 image_CHW = channelview(img_rgb)
-image_HCW = permutedims(img_CHW, (2, 3, 1))
+image_HWC = permutedims(img_CHW, (2, 3, 1))
 {% endhighlight %}
 For grayscale images, calling `Float64.(image)` converts the image directly to a `Float64` array.
 

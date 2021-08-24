@@ -243,7 +243,7 @@ One last thing.
 There is a negative aspect to this sharing: packages don't always "play nice" so that they can easily integrate with other packages. For example packages should abide by the following etiquette:
 - Type safe functions that will throw errors if nonsensical types are passed.
 - Extensions where appropriate of useful Base functions such as `zero`, `first` and `size`.
-- No exports of commonly used words. Base itself is a frequent but tolerated offender. Worse offenders are NNlib.jl which reserves σ for the sigmoid function - [Wikipedia][wiki_sigma] lists at least 25 uses for the lower case σ letter - and Images.jl which reserves the ubiquitous keyword data. Thankfully at least sense has prevailed at ImagesMetaData.jl, and `data` has been deprecated in favour of `arraydata`.
+- No exports of commonly used words. Base itself is a frequent but tolerated offender. Worse offenders are NNlib.jl which reserves σ for the sigmoid function[^sigma] and Images.jl which reserves the ubiquitous keyword data. Thankfully at least sense has prevailed at ImagesMetaData.jl, and `data` has been deprecated in favour of `arraydata`.
 - Minimal restrictions on package requirements or frequent updates to packages. If a package from 2 years ago is going to force my Flux to be stuck 8 versions behind the current version, that package is going to go. (As a user you can mitigate this by creating package environments.)
 
 # Next section
@@ -255,6 +255,8 @@ The coding tutorial starts next at [part 2][grid_extraction].
 
 
 ---
+
+[^sigma]: [Wikipedia][wiki_sigma] lists at least 25 uses for the lower case σ letter.
 
 [^package_extra]:  
     Even the popular packages like Images.jl and Flux.jl are mostly composed of smaller packages. This is fundamentally different to the way OpenCV and TensorFlow are composed of smaller parts, because those smaller packages can and are used separately to the main packages.

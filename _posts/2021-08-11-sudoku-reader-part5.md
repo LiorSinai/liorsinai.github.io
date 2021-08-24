@@ -73,15 +73,26 @@ grid, centres, probs = read_digits(
 The softmax probability is a useful proxy for how confident the model is in its prediction. On the training data, the confidence for correct predictions is 100%.
 
 {% highlight julia %}
-function prediction(model, image::AbstractArray, pad_ratio=0.1)
+using Flux: softmax, batch, unsqueeze
+using Images: imresize
+
+function prediction(model, image::AbstractArray, pad_ratio=0.2)
     image = pad_image(image, pad_ratio=pad_ratio)
     image = imresize(image, (28, 28))
     x = batch([unsqueeze(Float32.(image), 3)])
     logits = model(x)
-    probabilites = softmax(logits)
-    idx = argmax(probabilites)
+    probabilities = softmax(logits)
+    idx = argmax(probabilities)
     ŷ = idx[1] - 1
-    ŷ, probabilites[idx]
+    ŷ, probabilities[idx]
+end
+
+function pad_image(image::AbstractArray{T}; pad_ratio=0.2) where T
+    height, width = size(image)
+    pad = floor(Int, pad_ratio * max(height, width))
+    imnew = zeros(T, (height + 2pad, width + 2pad))
+    imnew[(pad + 1):(pad + height), (pad + 1):(pad + width)] = image
+    imnew
 end
 {% endhighlight %}
 
