@@ -215,12 +215,12 @@ We can finally start looking for contours. The de facto algorithm for doing this
 
 I couldn't find a package with this algorithm (a common occurrence for a young language like Julia).
 However thankfully the people at JuliaImages.jl wrote a Julia port of it: [contour_detection][contour_detection].
-I copied this code and modified it slightly to (1) better follow Julia Conventions and (2) have the option to only return external contours. The code is available here: [Contours.jl][Contours.jl]. Please note: this is work in progress. The `fill_contour!` fuction will fail for complex shapes. Also I am very proud of the `point_in_polygon` function, which uses a very robust method from a fairly recent [paper][Galetzka2012]. 
+I copied this code and modified it slightly to (1) better follow Julia Conventions and (2) have the option to only return external contours. The code is available here: [Contours.jl][Contours.jl]. Please note: this is work in progress. Also I am very proud of the `point_in_polygon` function, which uses a very robust method from a fairly recent [paper][Galetzka2012]. 
 
 [Suzuki1987]: https://www.sciencedirect.com/science/article/abs/pii/0734189X85900167
 [Galetzka2012]: https://arxiv.org/abs/1207.3502
 [contour_detection]: https://juliaimages.org/stable/democards/examples/contours/contour_detection/#Contour-Detection-and-Drawing
-[Contours.jl]: https://github.com/LiorSinai/SudokuReader.jl/blob/main/utilities/Contours.jl
+[Contours.jl]: https://github.com/LiorSinai/SudokuReader.jl/tree/main/Contours.jl
 
 
 Here is the result of calling `find_contours(blackwhite)`:
@@ -232,10 +232,10 @@ Here is the result of calling `find_contours(blackwhite)`:
 <figcaption>Contours in the image. Blue: external contours. Red: hole contours.</figcaption>
 </figure>
 
-Now we're getting somewhere! The grid is clearly the largest contour in the image, which we're going to assume is the general case. With the `calc_area_contour` function that I also provide, it takes three lines to extract it:
+Now we're getting somewhere! The grid is clearly the largest contour in the image, which we're going to assume is the general case. With the `area_contour` function that I also provide, it takes three lines to extract it:
 {%highlight julia %}
 contours = find_contours(blackwhite, external_only=true)
-idx_max = argmax(map(calc_area_contour, contours))
+idx_max = argmax(map(area_contour, contours))
 contour _max = contours[idx_max]
 {% endhighlight %}  
 
