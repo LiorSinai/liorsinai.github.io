@@ -11,6 +11,13 @@ tags:	cartography mathematics
 
 _The integral of the secant is well known to any beginners calculus student. Yet this integral was once a major outstanding maths problem. It was first introduced by Geradus Mercator, who needed it to make his famous map, in 1569. He couldn't find it, and used an approximation instead. The exact solution was found accidently 86 years later without calculus in 1645. It then took another two decades until a formal proof was given in 1668, 99 years after Mercator first proposed the problem._ 
 
+_Update 13 March 2021: correction that logarithm trignometry tables appeared before normal logarithm tables, because of how Napier calculated them. This was pointed out on discussion of this post on [HackerNews][hackernews]._
+
+_Update 10 October 2021: the great circle and rhumb line images are now made with a script that uses [Cartopy][Cartopy]. Previously they were made with a Matlab application. You can see the new script at my [Github repository][repo] and enter your co-ordinates to generate your own lines._
+
+[Cartopy]: https://scitools.org.uk/cartopy/docs/latest/
+[repo]: https://github.com/LiorSinai/Navigation
+
 As this [comic][smbc] by SMBC rightly teases, the history of mathematics is often not so straightforward. 
 Theorems, formulas and notation that are routinely discussed in class, were once insights or accidents themselves.
 This is the story of one such formula, the integral of the secant. 
@@ -196,7 +203,7 @@ For example, here is the rhumb line through modern day New York and Cape Town:
     src="/assets/posts/secant-mercator/NY_to_CPT.png"
 	alt="Arcs from NY to CPT"
 	>
-	<figcaption>Made with software from <a href="https://imaginary.org/program/rhumb-lines-and-spirals">imaginary.org/program/rhumb-lines-and-spirals</a> and Inkscape </figcaption>
+	<figcaption>Orthographic map with great circle and rhumb line. Source code: <a href="https://github.com/LiorSinai/Navigation">link</a></figcaption>
 </figure>
 
 At each point along the rhumb line, the angle $\theta$ with the meridian is 48.56&deg;, which corresponds to a bearing of 311&deg;26'18'' from Cape Town to New York. 
@@ -252,7 +259,7 @@ This is a modern rendering of the final result:
     src="/assets/posts/secant-mercator/mercator_NY_to_CPT.png"
 	alt="Mercator map"
 	>
-	<figcaption>Mercator map. Edited from <a href="https://map-projections.net/single-view/mercator-84">map-projections.net/singleviewp/mercator-84</a> </figcaption>
+	<figcaption>Mercator map with great circle and rhumb line. Source code: <a href="https://github.com/LiorSinai/Navigation">link</a></figcaption>
 </figure>
 
 This map is very heavily distorted. Greenland now looks larger than Africa. The great circles lie along strange curves. But the rhumb lines are straight!
@@ -304,7 +311,7 @@ Where $log_{2}(3764) = 11.878 $ and $log_{2}(873) = 9.770 $
 
 The logarithms again had to be painstakingly calculated through approximation calculations. 
 Napier did this using a kinetic framework. While this idea may be unusual today, it has to do with how Napier originally visualised logarithms.[^Napier]
-His final table related numbers to logarithms and their sines. Here is an example:
+His final table related numbers to logarithms and their sines.[^correction] Here is an example:
 <figure class="post-figure">
 <img class="img-80"
     src="/assets/posts/secant-mercator/Napiertable.png"
@@ -317,7 +324,7 @@ A  user could look use such a table to look up a logarithm, with the added benef
 These proved to be very popular - people clearly did not like doing multiplication and division in the past.
 Using addition and subtraction in their place also made calculations less error prone, especially with successive calculations.
 
-Next, mathematicians extended these tables to other trigonometric function:[^correction]
+Next, mathematicians extended these tables to other trigonometric function:
 <figure class="post-figure">
 <img class="img-95"
     src="/assets/posts/secant-mercator/APN2002-table3-30deg.png"
