@@ -11,7 +11,7 @@ tags:	cartography mathematics
 
 _The integral of the secant is well known to any beginners calculus student. Yet this integral was once a major outstanding maths problem. It was first introduced by Geradus Mercator, who needed it to make his famous map, in 1569. He couldn't find it, and used an approximation instead. The exact solution was found accidently 86 years later without calculus in 1645. It then took another two decades until a formal proof was given in 1668, 99 years after Mercator first proposed the problem._ 
 
-_Update 13 March 2021: correction that logarithm trignometry tables appeared before normal logarithm tables, because of how Napier calculated them. This was pointed out on discussion of this post on [HackerNews][hackernews]._
+_Update 13 March 2021: added a note on how Napier calculated logarithm trignometry tables. This was prompted by a correction raised in a discussion of this post on [HackerNews][hackernews]._
 
 _Update 10 October 2021: the great circle and rhumb line images are now made with a script that uses [Cartopy][Cartopy]. Previously they were made with a Matlab application. You can see the new script at my [Github repository][repo] and enter your co-ordinates to generate your own lines._
 
