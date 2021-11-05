@@ -17,9 +17,6 @@ In between my bachelors and masters, I worked for the national telecommunication
 
 For a current list of posts, see [here]({{ "/posts" | relative_url }}). 
 Here is a list of possible future posts:
-+ **Quaternions**: these strange 4-dimensional objects were never part of any of my engineering courses. However, they are incredibly useful for 3D rotations, and are used in most
-3D renders (for games and graphics). I'm self-taught in them, but I had to rely on several sources. I'd like to explain them in a full detail here, along with 
-comparisons to other 3D rotation systems.
 + **Electromagnetic waves and the internet**: working in telecommunications taught me much about the infrastructure behind the internet. I'd like to explain that here. 
 It always amuses me how people know that wi-fi doesn't work several meters away from the router, but at the same time, are surprised to learn that most of the internet is not
 transmitted via wi-fi all the way from satellites in space!

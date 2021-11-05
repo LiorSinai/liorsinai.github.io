@@ -1,0 +1,50 @@
+
+div.plot3d-container {
+    padding: 1em;
+    border: 1px solid black;
+}
+.plotly{
+    height: 25em;
+    margin: auto;
+}
+
+.sliderContainer{
+    height: 4em;
+    width: 60%;
+    padding: 0em 1em 0em 1em;
+    margin: 0.4em;
+    /*border: 1px solid black;*/
+    display:flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    position: relative;
+}
+
+.slider {
+    position: relative;
+    width: 80%;
+}
+
+.sliderValue{
+    position:absolute;
+}
+
+.sliderValue.left{
+    left: 0.5em;
+}
+
+.sliderValue.right{
+    right: 0.5em;
+}
+
+.grid-container {
+    display: grid;
+    grid-template-columns: 6em 1em 4em 1em 4em 1em 4em;
+    grid-column-gap: 0.3em;
+    grid-row-gap: 0.3em;
+  }
+
+input {
+    text-align: right;
+}
