@@ -3,10 +3,16 @@ div.plot3d-container {
     padding: 1em;
     border: 1px solid black;
 }
+
 .plotly{
     height: 25em;
     margin: auto;
 }
+@media only screen and (max-width: 600px) {
+    .plotly{
+        height: 15em;
+    }
+}  
 
 .sliderContainer{
     height: 4em;

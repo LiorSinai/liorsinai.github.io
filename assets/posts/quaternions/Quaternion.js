@@ -91,6 +91,19 @@ class Quaternion{
         return [qr.v1, qr.v2, qr.v3]
     }
 
+    static rotateAxisAngle = (v, axis, angle) => {
+        let n_norm = Math.sqrt(axis[0] * axis[0] + axis[1] * axis[1] + axis[2] * axis[2])
+        let n = [axis[0]/n_norm, axis[1]/n_norm, axis[2]/n_norm]
+        let sinHalfTheta = Math.sin(angle/2);
+        let q = new Quaternion(
+            Math.cos(angle/2),
+            sinHalfTheta * n[0],
+            sinHalfTheta * n[1],
+            sinHalfTheta * n[2],
+        );
+        return Quaternion.rotateVector(v, q)
+    }
+
     static rotateMatrix = (m, q) => {
         let ncols  = m[0].length;
         let out = [...Array(3)].map(e => Array(ncols).fill(0))
