@@ -17,7 +17,7 @@ This is part of a series. The other articles are:
 
 [introduction]: {{ "mathematics/2021/11/05/quaternion-1-intro" | relative_url }}
 [2Drotations]: {{ "mathematics/2021/11/28/quaternion-2-2d" | relative_url }}
-[quaternions]: {{ "mathematics/2021/11/28/quaternion-3" | relative_url }}
+[quaternions]: {{ "mathematics/2021/12/03/quaternion-3" | relative_url }}
 [interpolation]: {{ "mathematics/2021/11/28/quaternion-4" | relative_url }}
 
 
@@ -123,8 +123,8 @@ The negative angle relation will not hold in 3D, but $R^{-1}=R^T$ is a useful re
 
 Complex numbers are a completely different way to represent rotations. 
 They are also called imaginary numbers, which is a historical misnomer.
-These were originally discovered by mathematicians while solving cubic equations of the form $x^3+bx^2+cx+d=0$.
-[In 1572, Rafael Bombelli][history] introduced the imaginary unit $i=\sqrt{-1}$ while solving the equation:
+These were originally discovered by mathematicians while solving cubic equations.
+[In 1572, Rafael Bombelli][history] introduced the imaginary unit $\sqrt{-1}$ while solving the equation:
 
 [history]: https://www.math.uri.edu/~merino/spring06/mth562/ShortHistoryComplexNumbers2006.pdf
 
@@ -139,29 +139,44 @@ But in terms of spatial geometry, negative values have the valid interpretation 
 and imaginary numbers have the interpretation as a value orthogonal to the original direction.
 They are no more imaginary than north is to east or left is to forward.
 
+A complex number $z$ is defined as:
+
+$$ z = x + yi \; ; \; x, y \in \mathbb{R}$$
+
+where $i=\sqrt{-1}$ as defined by Euler.
+
 These numbers can be plotted on the complex plane:
 
 <figure class="post-figure">
 <img class="img-40"
-    src="/assets/posts/quaternions/complex_plane.png"
+    src="/assets/posts/quaternions/complex_plane_0.png"
 	alt="the complex plane"
 	>
 <figcaption>the complex plane</figcaption>
 </figure>
 
 The multiplication of $1 \cdot i = i$ moves a point in a 90&deg; anti-clockwise arc from $1$ to $i$. 
-Hence multiplication by $i$ is intepreted as a 90&deg; rotation. Following the same logic, a further 90&deg; rotation from $i$ will land back on the original axis at $-1$, hence:
+Hence multiplication by $i$ is interpreted as a 90&deg; rotation. Following the same logic, a further 90&deg; rotation from $i$ will land back on the original axis at $-1$, hence:
 
 $$i\cdot i = i^2=-1$$
 
-What if we multiply the vector $2 + 2i$ by $i$? 
+We can plot a vector on this plane, such as $2 + 2i \equiv (2, 2)$:
+<figure class="post-figure">
+<img class="img-40"
+    src="/assets/posts/quaternions/complex_plane_1.png"
+	alt="the complex plane with vector 2+2i"
+	>
+<figcaption></figcaption>
+</figure>
+
+If a single number multiplied by $i$ is rotated 90&deg; what will happen if multiply the vector $2 + 2i$ by $i$? 
 
 $$ i(2+2i) = 2i + 2i^2 = 2i - 2 $$
 
 <figure class="post-figure">
 <img class="img-40"
     src="/assets/posts/quaternions/complex_plane_2.png"
-	alt="the complex plane"
+	alt="the complex plane with vector -2+2i"
 	>
 <figcaption></figcaption>
 </figure>
@@ -169,14 +184,13 @@ $$ i(2+2i) = 2i + 2i^2 = 2i - 2 $$
 This is indeed the same vector rotated 90&deg;.
 
 What if we multiply it by a vector with both a real and an imaginary part? 
-We will assume the normal rules of algebraic associativity apply:
 
 $$ (0.5 + i)(2+2i) = 0.5(2 + 2i) + i(2+2i) = -1 + 3i$$
 
 <figure class="post-figure">
 <img class="img-40"
     src="/assets/posts/quaternions/complex_plane_3.png"
-	alt="the complex plane"
+	alt="the complex plane with vector -1 + 3i"
 	>
 <figcaption></figcaption>
 </figure>
@@ -232,8 +246,21 @@ Euler's number is a calculus constant, so it is natural that a proof can be prov
   </div>
 </div>
 
-This formula allows us to prove complex relations using the properties of exponentials.
-For example, de Moivre's formula:
+This formula allows us to prove identities using the properties of exponentials.
+
+As a basic example, multiplying two complex numbers has the same affect as adding their rotation angles and multiplying their magnitudes:
+
+$$ 
+\begin{align}
+z_1 z_2 &= (r_1cos\theta + i r_1sin\theta)(r_2cos\beta + i r_2sin\beta) \\
+        &= (r_1e^{i\theta})(r_2e^{i\beta}) \\
+        &= r_1r_2e^{i(\theta + \beta)} \\
+        &= r_1r_2(cos(\theta + \beta) + i sin(\theta + \beta))
+\end{align}
+$$
+
+
+A more complex relation is de Moivre's formula:
 
 $$ 
 \begin{align}
@@ -243,11 +270,15 @@ $$
 \end{align}
 $$
 
+Finally, the inverse of this exponential function can be defined as:
+
+$$ log(re^{i\theta}) = log(r) + i\theta log(e) = log(r) + i\theta $$
+
 
 ## Conclusion
 
 This post has now primed us for quaternions which were very much inspired by complex numbers.
-However there are important differences, most notably the non-commutivity resulting from the order dependent nature of rotations in 3D.
+However there are important differences, most notably the non-commutativity resulting from the order dependent nature of rotations in 3D.
 
 Please join me in the next [section][quaternions] where I describe quaternions in depth.
 

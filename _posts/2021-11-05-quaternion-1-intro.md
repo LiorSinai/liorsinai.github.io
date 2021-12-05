@@ -21,7 +21,7 @@ This is part of a series. The other articles are:
 
 [introduction]: {{ "mathematics/2021/11/05/quaternion-1-intro" | relative_url }}
 [2Drotations]: {{ "mathematics/2021/11/28/quaternion-2-2d" | relative_url }}
-[quaternions]: {{ "mathematics/2021/11/28/quaternion-3" | relative_url }}
+[quaternions]: {{ "mathematics/2021/12/03/quaternion-3" | relative_url }}
 [interpolation]: {{ "mathematics/2021/11/28/quaternion-4" | relative_url }}
 
 [EulerAngles.js]: {{ "assets/posts/quaternions/EulerAngles.js" | relative_url }}
