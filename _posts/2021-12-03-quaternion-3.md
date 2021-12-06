@@ -18,10 +18,22 @@ This is part of a series. The other articles are:
 [introduction]: {{ "mathematics/2021/11/05/quaternion-1-intro" | relative_url }}
 [2Drotations]: {{ "mathematics/2021/11/28/quaternion-2-2d" | relative_url }}
 [quaternions]: {{ "mathematics/2021/12/03/quaternion-3" | relative_url }}
-[interpolation]: {{ "mathematics/2021/11/28/quaternion-4" | relative_url }}
+[interpolation]: {{ "mathematics/2021/12/06/quaternion-4-interpolation" | relative_url }}
 
 
 ### Table of Contents
+- [Extending the complex numbers](#extending-the-complex-numbers)
+- [Quaternion foundations](#quaternion-foundations)
+- [Properties of quaternions](#properties-of-quaternions)
+	- [Addition and subtraction](#addition-and-subtraction)
+	- [Multiplication](#multiplication)
+	- [Inner product](#inner-product)
+	- [Conjugation](#conjugation)
+	- [Inverse and division](#inverse-and-division)
+	- [Unit quaternions](#unit-quaternions)
+	- [Exponential, logarithm, and power functions](#exponential-logarithm-and-power-functions)
+- [Rotations with quaternions](#rotations-with-quaternions)
+- [Conclusion](#conclusion)
 
 
 # Quaternions
@@ -39,7 +51,7 @@ Hamilton had already tried to do this for 10 years. The obvious idea was to try 
 $$ z = a + bi+ cj \;,\; i^2=j^2=-1 $$
 
 This however leads to an inconsistent algebra.
-Without going deep into the theory, a mathematical algbera needs to be consistent so that we can use logic to unambiguously derive more conclusions.
+Without going deep into the theory, a mathematical algebra needs to be consistent so that we can use logic to unambiguously derive more conclusions.
 For example, in real number algebra there is only one number that can satisfy $xx^{-1}=1$ for a given $x$ because every number has a unique inverse. If $x=6$, then $x^{-1}$ can only be $\tfrac{1}{6}$.[^ambiguities]
 
 <div class="card">
@@ -56,7 +68,7 @@ For example, in real number algebra there is only one number that can satisfy $x
 		\therefore 0    &= (ac - b) + i (a + bc) + j (c^2+1)
 		\end{align}
 		$$
-		This requires that all co-efficients equal zero, but then $c^2=-1$ and thus $c$ must also be imaginary.
+		This requires that all coefficients equal zero, but then $c^2=-1$ and thus $c$ must also be imaginary.
 		This is a contradiction because $c$ must be real.
 	</p>
   </div>
@@ -137,11 +149,11 @@ Here is a definition of these quaternions:
 Like with the imaginary number $i$, each of the basis units corresponds to a 90&deg; rotation about an axis.
 Consider $ij=k$. This has two interpretations:
 - The point $i$ post-multiplied by $j$, resulting in a clockwise rotation about the $j$ axis to the point $k$ (red solid line).
-- The point $j$ pre-multipled by $i$, resulting in an anti-clockwise rotation about the $i$ axis to the point $k$ (green dashed line).
+- The point $j$ pre-multiplied by $i$, resulting in an anti-clockwise rotation about the $i$ axis to the point $k$ (green dashed line).
 
 Similarly for $ji=-k$:
 - The point $j$ post-multiplied by $i$, resulting in a clockwise rotation about the $i$ axis to the point $-k$ (green solid line).
-- The point $i$ pre-multipled by $j$, resulting in an anti-clockwise rotation about the $j$ axis to the point $-k$ (red dashed line).
+- The point $i$ pre-multiplied by $j$, resulting in an anti-clockwise rotation about the $j$ axis to the point $-k$ (red dashed line).
 
 In general, pre-multiplication results in anti-clockwise rotations and post-multiplication in clockwise rotations. 
 
@@ -152,7 +164,7 @@ Unlike complex numbers, $i^2=j^2=k^2=-1$ has no direct interpretation because th
 
 ### Addition and subtraction
 
-Additon and subtraction are done using normal algebra rules:
+Addition and subtraction are done using normal algebra rules:
 
 $$
 \begin{align}
@@ -178,18 +190,12 @@ Multiplication by a quaternion is also done with the distributive law:
 $$
 \begin{align}
 	q_1   q_2 =& (s_1 + x_1i+y_1j + z_1k) (s_2 + x_2i+y_2j + z_2k) \\
-			  =&  s_1 (s_2 + x_2i+y_2j + z_2k) + \\
-			   &  x_1i (s_2 + x_2i+y_2j + z_2k) + \\
-			   &  y_1j (s_2 + x_2i+y_2j + z_2k) + \\
-			   &  z_1k (s_2 + x_2i+y_2j + z_2k)  \\
-			  =&  s_1s_2 + s_1x_2i+s_1y_2j + s_1z_2k + \\
-			   &  x_1s_2i - x_1x_2 + x_1y_2 k - x_1z_2j + \\
-			   &  y_1s_2j - y_1x_2k - y_1y_2 + y_1z_2 i + \\ 
-			   &  z_1s_2k + z_1x_2j - z_1y_2i - z_1z_2 \\ 
-			  =&  (s_1s_2 - x_1x_2 - y_1y_2 - z_1z_2 ) + \\  
-			   &  (s_1x_2 + x_1s_2 + y_1x_z - z_1y_2 )i + \\
-			   &  (s_1y_2 - x_1z_2 + y_1s_2 + z_1x_2 )j + \\
-			   &  (s_1z_2 + x_1y_2 - y_1x_2 + z_1s_2 )k
+			  =&  s_1 (s_2 + x_2i+y_2j + z_2k) + x_1i (s_2 + x_2i+y_2j + z_2k) + \\
+			   &  y_1j (s_2 + x_2i+y_2j + z_2k) + z_1k (s_2 + x_2i+y_2j + z_2k)  \\
+			  =&  s_1s_2 + s_1x_2i+s_1y_2j + s_1z_2k + x_1s_2i - x_1x_2 + x_1y_2 k - x_1z_2j + \\
+			   &  y_1s_2j - y_1x_2k - y_1y_2 + y_1z_2 i + z_1s_2k + z_1x_2j - z_1y_2i - z_1z_2 \\ 
+			  =&  (s_1s_2 - x_1x_2 - y_1y_2 - z_1z_2 ) + (s_1x_2 + x_1s_2 + y_1x_z - z_1y_2 )i + \\
+			   &  (s_1y_2 - x_1z_2 + y_1s_2 + z_1x_2 )j + (s_1z_2 + x_1y_2 - y_1x_2 + z_1s_2 )k
 \end{align}
 $$
 
@@ -201,7 +207,28 @@ This was done in the [code][Quaternion.js] for the quaternion in [part 1][part1]
 [part1]:  {{ "mathematics/2021/11/05/quaternion-1-intro#2-an-axis-and-an-angle" | relative_url }}
 [Quaternion.js]: {{ "assets/posts/quaternions/Quaternion.js" | relative_url }}
 
-### Conjugation and magnitude
+### Inner product
+
+The [inner product][wiki_inner] is another type of multiplication that is useful.
+It is defined as the sum of the product of corresponding co-ordinates:
+
+$$ q_1 \cdot q_2 = s_1s_2 + x_1x_2 + y_1y_2 + z_1z_2 $$
+
+The inner product of a quaternion with itself is its magnitude:
+
+$$ q \cdot q = \| q \| ^2 = s^2 + x^2 + y^2 + z^2 $$
+
+In 2 or 3 dimensions the inner product can be directly related to the angle $\Omega$ between two vectors.
+We can simply extend this formula to quaternions even though we cannot visualise an angle between 4D vectors:
+
+$$ q_1 \cdot q_2 =  \| q_1 \|  \| q_2 \| cos\Omega $$
+
+In [part 4][interpolation] this will be used to make a smooth function for interpolation.
+
+[wiki_inner]: https://en.wikipedia.org/wiki/Dot_product
+
+
+### Conjugation
 
 For convenience, the conjugate $q^{*}$ of a quaternion is defined as:
 
@@ -209,19 +236,19 @@ $$ q^{*} = (s + xi + yj + zk)^{*} = s - xi - yj - zk $$
 
 The conjugate can be used to calculate the magnitude of a quaternion:
 
-$$ \lvert q \rvert ^2 = q q^{*} = s^2 + x^2 + y^2 + z^2 $$
+$$ \| q \| ^2 = q q^{*} = s^2 + x^2 + y^2 + z^2 $$
 
 ### Inverse and division
 
-The inverse of a quarternion $q^{-1}$ is the unique quaternion that satisfies $qq^{-1} = 1 + 0i + 0j +0k $.
+The inverse of a quaternion $q^{-1}$ is the unique quaternion that satisfies $qq^{-1} = 1 + 0i + 0j +0k $.
 This quaternion is given by:
 
-$$ q^{-1} = \frac{q^{*}}{\lvert q \rvert ^2 }$$
+$$ q^{-1} = \frac{q^{*}}{\| q \| ^2 }$$
 
 Proof:
 
 $$
-qq^{-1} = q\frac{q^{*}}{\lvert q \rvert ^2 } = \frac{\lvert q \rvert ^2}{\lvert q \rvert ^2} = 1
+qq^{-1} = q\frac{q^{*}}{\| q \| ^2 } = \frac{\| q \| ^2}{\| q \| ^2} = 1
 $$
 
 Division is then equivalent to multiplication by the inverse of a quaternion: 
@@ -236,7 +263,7 @@ However we can get a feel of it through values:
 
 | $ \|q\| < 1     $         | $\|q\| = 1     $                | $ \|q\| > 1     $        |
 |---------------------------|---------------------------------|--------------------------|
-|$ 0 $                      | $  1    $                       | $2    $                  |
+|$ 0 $                      | $  1    $                       | $10   $                  |
 | $0.8i  $                  | $1i $                           | $    1i + 2j + 3k      $ |
 |$ 0.1 + 0.1i + 0.1j + 0.1k $ | $0.5 + 0.5i + 0.5j + 0.5k  $  | $0.9 + 0.9i + 0.9j +0.9k$|
 |$ 0.1 + 0.2i + 0.3j + 0.4k$| $0.4 + 0.5i + 0.6j+\sqrt{0.23}k$| $0.5 + 0.6i + 0.7j +0.8k$|
@@ -245,7 +272,7 @@ However we can get a feel of it through values:
 
 For a unit quaternion, the inverse is $q^{-1} = q^{*}$.
 
-Using a normal vector $\hat{n}=n_xi + n_yj + n_zk$ with magnitude $\lvert \hat{n} \rvert = 1$, the following unit quaternion can always be constructed:
+Using a normal vector $\hat{n}=n_xi + n_yj + n_zk$ with magnitude $\| \hat{n} \| = 1$, the following unit quaternion can always be constructed:
 
 $$ q = cos(\theta) + \hat{n} sin(\theta) $$
 
@@ -261,7 +288,7 @@ $$ log(cos(\theta) + \hat{n} sin(\theta)) = log(e^{\hat{n}\theta}) = \hat{n}\the
 
 We can then find a similar formula to de Moivre's formula:
 
-$$ q^t = (e^{\hat{n}\theta})^t = e^{\hat{n}\theta t} = cos(\theta t) + \hat{n} sin(\theta t) \; , \; \lvert q \rvert = 1 $$
+$$ q^t = (e^{\hat{n}\theta})^t = e^{\hat{n}\theta t} = cos(\theta t) + \hat{n} sin(\theta t) \; , \; \| q \| = 1 $$
 
 Please see this [Wikipedia][wiki_exp] article for formulas with non-unit quaternions.
 Please see [Quaternions, Interpolation and Animation by  Dam, Koch and Lillholm][Dam1998]
@@ -274,13 +301,13 @@ for more formal proofs of powers with quaternions.
 
 Finally, we have enough knowledge of quaternions to calculate rotations.
 
-Multipyling a 3D vector by a 4D quaternion will result in a rotation and scaling in 4 dimensions.
+Multiplying a 3D vector by a 4D quaternion will result in a rotation and scaling in 4 dimensions.
 To avoid scaling, we can use a unit quaternion.
 To avoid a 4th dimension, we pre-multiply by the unit quaternion and post-multiply by its conjugate:
 
 $$ v_r = qvq^{*} $$
 
-This type of operation which uses an operater and then its inverse is called a commutator. 
+This type of operation which uses an operator and then its inverse is called a commutator. 
 
 This formula works because 
 1. Pre-multiplying rotates a vector anti-clockwise and post-multiplying rotates it clockwise.
@@ -288,15 +315,15 @@ This formula works because
 
 When we combine these effects, post-multiplying with a negative axes (because of the conjugate) rotates the vector anti-clockwise, but the 4th dimension part is still rotated clockwise and hence cancels out with the pre-multiplication.
 
-Here is a more formal proof. I like this proof because working through it gives some further insight into problem:
+Here is a more formal proof. This is a nice proof because working through it gives further insight into problem:
 
 <div class="card">
   <div class="card-body">
     <h5 class="card-title">Proof of rotation formula</h5>
     <p class="card-text">
 		Consider a vector $v=xi+yj+zk$ rotated by a quaternion $q = cos\theta + \hat{n}sin\theta$.
-		Because the co-ordinate axes is arbitrary, define a new axis in line with the normal axis $\hat{n}$
-		so that $k' = \hat{n}$. We can transform $v$ to be represented in these new co-ordinates, $v=x'i'+y'j'+z'k'$.
+		The co-ordinate axes is arbitrary, so define a new axis in line with the normal axis $\hat{n}$
+		so that $k' = \hat{n}$. $v$ can be represented in these new co-ordinates as $v=x'i'+y'j'+z'k'$.
 		<p>
 	<a class="btn" data-toggle="collapse" href="#transform" role="button" aria-expanded="false" aria-controls="collapseExample">
 		More detail: transformation of co-ordinates &#8681;
@@ -343,7 +370,7 @@ Here is a more formal proof. I like this proof because working through it gives 
 			k
 			\end{bmatrix}
 			$$
-			Reversing the transform requires using $R^{-1} = R^T$:
+			Reversing the transform is done with $R^{-1} = R^T$:
 			$$
 			\begin{bmatrix}
 			i \\
@@ -371,11 +398,11 @@ Here is a more formal proof. I like this proof because working through it gives 
 				& z(0 + cos\beta j' + sin \beta k') \\
 				=& (-xsin\alpha + ycos\alpha) i' + \\
 				& (-xsin\beta cos\alpha + ysin\beta sin\alpha + z cos\beta) j' + \\
-				& (+xcos\beta cos\alpha + y cos\beta sin\alpha + z cos\beta) k' \\
+				& (+xcos\beta cos\alpha + y cos\beta sin\alpha + z sin\beta) k' \\
 				=& x'i' + y'j' + z'k' 
 			\end{align}
 			$$
-			It's much easier to do this in the abstract!
+			It's much easier to keep this abstract!
 		</div>
 		</div>
 		Then:
@@ -384,15 +411,13 @@ Here is a more formal proof. I like this proof because working through it gives 
 			qvq^{*} =& (cos\theta + k'\sin\theta)(x'i'+y'j'+z'k')(cos\theta - k'\sin\theta) \\
 			        =& (cos\theta(x'i'+y'j'+z'k') + sin\theta(x'j'-y'i'-z))(cos\theta - k'\sin\theta) \\
 					=& (-z'sin\theta + (x'cos\theta - y' sin\theta)i' + (x'sin\theta + y'cos\theta)j' + z'cos\theta k')  (cos\theta - k'\sin\theta) \\
-					=& -z' cos\theta sin\theta + z' cos\theta sin\theta +\\
-					 & (x'(cos^2\theta - sin^2\theta ) -2y'sin\theta cos\theta) i' +\\
-					 & (2x'sin\theta cos\theta) + y'(cos^2\theta - sin^2\theta ) )j' +\\
-					 & z(cos^2\theta + sin^2\theta) k' \\
-					=& 0 + (x'cos2\theta - ysin2\theta)i' + (x'sin2\theta + y'cos2\theta)j' + z'k'		 
+					=& -z' cos\theta sin\theta + z' cos\theta sin\theta + (x'(cos^2\theta - sin^2\theta ) -2y'sin\theta cos\theta) i' +\\
+					 & (2x'sin\theta cos\theta + y'(cos^2\theta - sin^2\theta ) )j' + z'(cos^2\theta + sin^2\theta) k' \\
+					=& 0 + (x'cos2\theta - y'sin2\theta)i' + (x'sin2\theta + y'cos2\theta)j' + z'k'		 
 		\end{align}
 		$$
-		This formula should be recognisable from <a href="/mathematics/2021/11/28/quaternion-2-2d">part 2</a>. It is the vector $v$ rotated by the angle $2\theta$ about the axis $\hat{n} =k'$. Note that $z'$ which is parallel to $'k$ is unchanged.
-		Also note that on line 3 the rotation is correct for $i'$ and $j'$, but the parallel part is partly rotated into the 4th dimension. Hence we need to mulitply by $q^{*}$ to correct this.
+		This formula should be recognisable from <a href="/mathematics/2021/11/28/quaternion-2-2d">part 2</a>. It is the vector $v$ rotated by the angle $2\theta$ about the axis $\hat{n} =k'$. Note that $z'$ which is parallel to $k'$ is unchanged.
+		Also note that on line 3 the rotation is correct for $i'$ and $j'$, but the parallel part is partly rotated into the 4th dimension. Hence we need to multiply by $q^{*}$ to correct this.
 	</p>
   </div>
 </div>
@@ -404,8 +429,9 @@ $$ q= cos(\tfrac{\theta}{2}) + \hat{n}sin(\tfrac{\theta}{2})$$
 ## Conclusion
 
 Congratulations for reaching this far. 
-I hope you now know the basiscs of quaternions.
+I hope you now know the basics of quaternions.
 There is enough detail here to write a fully functioning quaternion implementation.
+Most of these functions can be found in the [code][Quaternion.js] for the graph in [part 1][part1].
 The next and last section focuses on interpolations for animations, and in particular using quaternions for those interpolations.
 
 ---

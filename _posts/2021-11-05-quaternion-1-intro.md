@@ -22,7 +22,7 @@ This is part of a series. The other articles are:
 [introduction]: {{ "mathematics/2021/11/05/quaternion-1-intro" | relative_url }}
 [2Drotations]: {{ "mathematics/2021/11/28/quaternion-2-2d" | relative_url }}
 [quaternions]: {{ "mathematics/2021/12/03/quaternion-3" | relative_url }}
-[interpolation]: {{ "mathematics/2021/11/28/quaternion-4" | relative_url }}
+[interpolation]: {{ "mathematics/2021/12/06/quaternion-4-interpolation" | relative_url }}
 
 [EulerAngles.js]: {{ "assets/posts/quaternions/EulerAngles.js" | relative_url }}
 [Quaternion.js]: {{ "assets/posts/quaternions/Quaternion.js" | relative_url }}
@@ -34,8 +34,8 @@ This is a mathematical series and the following prerequisites are recommended: t
 - [Mathematical representations of rotations in 3D](#mathematical-representations-of-rotations-in-3d)
 	- [1. Three angles and an order](#1-three-angles-and-an-order)
 	- [2. An axis and an angle](#2-an-axis-and-an-angle)
-		- [Other forms of axis-angle rotations](#other-forms-of-axis-angle-rotations)
 - [Outline](#outline)
+- [Extra: Other forms of axis-angle rotations](#extra-other-forms-of-axis-angle-rotations)
 - [References](#references)
 
 # Quaternions
@@ -145,7 +145,7 @@ There are many different conventions for Euler angles depending on the axes and 
 For the interactive graph I have used the Tait-Bryan angle representation, which is often used in engineering.
 Here is an illustration:
 <figure class="post-figure">
-<img class="img-60"
+<img class="img-50"
     src="/assets/posts/quaternions/Plane_ZYX.png"
 	alt="Tait-Bryran angles"
 	>
@@ -477,7 +477,51 @@ and apply the rotation formula. Done.
 In general the expression for $q_t$ is more complex, but comparable to similar equations in 2D.
 But I hope this example gives a sense of the power of quaternions. 
 
-#### Other forms of axis-angle rotations
+For physics simulations, it is straightforward to calculate the normal vector and angle from angular velocities. There are no equations with singularities that represent gimbol lock.
+
+<p>
+  <a class="btn" data-toggle="collapse" href="#axisAngleVelocity" role="button" aria-expanded="false" aria-controls="collapseExample">
+    More detail: axis-angle formulas from angular velocities &#8681;
+  </a>
+</p>
+<div class="collapse" id="axisAngleVelocity">
+  <div class="card card-body ">
+		An angular velocity $\vec{\omega}$ represents the angular velocities that an object rotates about the axes of the world frame. The combined effect is to rotate about a circle with a normal axis parallel to $\vec{\omega}$. So the normal vector is $\hat{n} = \frac{\vec{\omega}}{\lvert \vec{\omega} \rvert}$. $\theta$ is a measure of the magnitude of this rotation. $ \theta = \lvert \vec{\omega} \rvert \Delta t = \sqrt{ \omega_x^2  + \omega_y^2  + \omega_z^2 }\Delta t $. 
+  </div>
+</div>
+
+
+
+## Outline 
+
+Using quaternions for 3D rotations is a very sensible choice for animation software.
+They are essentially an array of four numbers with the normal rules for addition and subtraction and some special rules for multiplication involving minus signs. Encode that, and you get rotation functions and stateless, fast, interpolations almost for free.
+
+I hope this post has illuminated some of their properties and advantages.
+If you wish to learn more, the rest of the series will expand more on the mathematics of quaternions. 
+- [Part 2][2Drotations] describes rotations in 2D. It uses both matrix and complex number representations.
+It is a crash course in complex numbers, which can be seen as a simpler kind of quaternion. 
+Some prior experience with complex numbers will help.
+- [Part 3][quaternions] describes the fundamentals of quaternions and their mathematics. A few proofs of their properties are given. This is the longest section.
+- [Part 4][interpolation] focuses on interpolation. Interpolation formulas are derived in 2D and transferred to 3D.
+An interactive graph with a stick aeroplane in place of the Unity Spaceship is presented.
+
+To get the most out of this series, you should be comfortable with trigonometry, algebra, complex numbers, Euclidean geometry and linear algebra (matrices).
+This maths was covered in my first year of engineering.
+
+This series is the kind I would have liked to see.
+When I first learnt about quaternions I found that I had to consult many sources to understand them properly.
+Nearly every source began with a story of an Irish mathematician, a bridge, and an epiphany that caused him to carve the fundamental formula of quaternions into the stone. It's a nice story but it is a confusing one to begin with. 
+Why did he have this epiphany? What "magic" did he grasp that day and can we also?
+In [part 3][quaternions] I do tell this story properly, but at a point where sufficient mathematics has been discussed so we can somewhat approximate the mathematician's thoughts that day. Instead I chose to lead with a different story; one about why quaternions are still relevant 178 years later. I hope this was appreciated.
+
+This series is written from the perspective of an engineer. 
+I try to introduce ideas and justify them in as intuitive a way as possible.
+Mathematical proofs are only done for identities where that is difficult.
+I also do not explore how quaternions fit into the general context of mathematical fields and algebras,
+or more general versions of quaternion algebra.
+
+## Extra: Other forms of axis-angle rotations
 
 Identical rotations could also be accomplished with other formulas, namely the Rodrigues' formulas for axis-angle rotations and with Pauli matrices.
 I will give the formulas without going into detail; this is only to compare forms.
@@ -528,49 +572,7 @@ For a comparison of all formulas in Julia, please see this repository: [Rotation
 
 Quaternions are best for interpolations and hence animations.
 But any of these methods will work for physics simulations.
-It is straightforward to calculate the normal vector and angle from angular velocities.
 Personally, I have successfully used the Rodrigues matrix formula on simulations of complex 3D robots.
-
-<p>
-  <a class="btn" data-toggle="collapse" href="#axisAngleVelocity" role="button" aria-expanded="false" aria-controls="collapseExample">
-    More detail: axis-angle formulas from angular velocities &#8681;
-  </a>
-</p>
-<div class="collapse" id="axisAngleVelocity">
-  <div class="card card-body ">
-		An angular velocity $\vec{\omega}$ represents the angular velocities that an object rotates about the axes of the world frame. The combined effect is to rotate about a circle with a normal axis parallel to $\vec{\omega}$. So the normal vector is $\hat{n} = \frac{\vec{\omega}}{\lvert \vec{\omega} \rvert}$. $\theta$ is a measure of the magnitude of this rotation. $ \theta = \lvert \vec{\omega} \rvert \Delta t = \sqrt{ \omega_x^2  + \omega_y^2  + \omega_z^2 }\Delta t $. These values can then be used directly in any of the axis-angle formulas.
-  </div>
-</div>
-
-
-## Outline 
-
-Using quaternions for 3D rotations is a very sensible choice for animation software.
-They are essentially an array of four numbers with the normal rules for addition and subtraction and some special rules for multiplication involving minus signs. Encode that, and you get rotation functions and stateless, fast, interpolations almost for free.
-
-I hope this post has illuminated some of their properties and advantages.
-If you wish to learn more, the rest of the series will expand more on the mathematics of quaternions. 
-- [Part 2][2Drotations] describes rotations in 2D. It uses both matrix and complex number representations.
-It is a crash course in complex numbers, which can be seen as a simpler kind of quaternion. 
-Some prior experience with complex numbers will help.
-- [Part 3][quaternions] describes the fundamentals of quaternions and their mathematics. A few proofs of their properties are given. This is the longest section.
-- [Part 4][interpolation] focuses on interpolation. Interpolation formulas are derived in 2D and transferred to 3D.
-An interactive graph with a stick aeroplane in place of the Unity Spaceship is presented.
-
-To get the most out of this series, you should be comfortable with trigonometry, algebra, complex numbers, Euclidean geometry and linear algebra (matrices).
-This maths was covered in my first year of engineering.
-
-This series is the kind I would have liked to see.
-When I first learnt about quaternions I found that I had to consult many sources to understand them properly.
-Nearly every source began with a story of an Irish mathematician, a bridge, and an epiphany that caused him to carve the fundamental formula of quaternions into the stone. It's a nice story but it is a confusing one to begin with. 
-Why did he have this epiphany? What "magic" did he grasp that day and can we also?
-In [part 3][quaternions] I do tell this story properly, but at a point where sufficient mathematics has been discussed so we can somewhat approximate the mathematician's thoughts that day. Instead I chose to lead with a different story; one about why quaternions are still relevant 178 years later. I hope this was appreciated.
-
-This series is written from the perspective of an engineer. 
-I try to introduce ideas and justify them in as intuitive a way as possible.
-Mathematical proofs are only done for identities where that is difficult.
-I also do not explore how quaternions fit into the general context of mathematical fields and algebras,
-or more general versions of quaternion algebra.
 
 ## References
 
