@@ -1,6 +1,6 @@
 "use strict";
 
-import { Quaternion } from './quaternion.js';
+import { Quaternion } from './Quaternion.js';
 import { linspace, sliderChange, updateTextInput } from './utils.js';
 
 const CANVAS = document.getElementById('canvas-q');
