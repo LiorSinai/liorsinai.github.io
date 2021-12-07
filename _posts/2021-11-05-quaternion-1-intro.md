@@ -1,13 +1,13 @@
 ---
 layout: post
-title:  "Quaternions: Part 1 (WIP)"
+title:  "Quaternions: Part 1"
 date:   2021-11-05
 author: Lior Sinai
 categories: mathematics
 tags: mathematics quaternions unity rotation 3d
 ---
 
-_Introduction to quaternions._ 
+_Introduction to quaternions and rotations in 3D._ 
 
 
 <script src="https://cdn.plot.ly/plotly-gl3d-2.5.1.min.js"> </script>
@@ -42,7 +42,7 @@ This is a mathematical series and the following prerequisites are recommended: t
 ## Animating in 3D
 
 A common problem in computer animations is rotating an object in fully 3D space. 
-Think balls, spaceships and heroes tumbling and turning in complex sequences.
+Think objects, spaceships and heroes tumbling and turning in complex sequences.
 This is usually accomplished with an arcane mathematical object called a quaternion.[^quarternion]
 For example, here is a spaceship rotating in [Unity][Unity], a popular game engine that is often used to make mobile games:
 
@@ -54,22 +54,20 @@ For example, here is a spaceship rotating in [Unity][Unity], a popular game engi
 <figcaption>Space Cruiser 1 by <a href="https://assetstore.unity.com/packages/3d/vehicles/air/space-cruiser-1-124172">Gamer Squid</a></figcaption>
 </figure>
 
-[Rotate.cs]: {{ "assets/posts/quaternions/Rotate.cs" | relative_url }}
 [Unity]: https://unity.com/
 
-The [code][Rotate.cs] to implement this uses Unity's inbuilt `Quaternion`, making it very succinct: 
+The code to implement this uses Unity's inbuilt `Quaternion`, making it very succinct: 
 
 {%highlight csharp %}
 var t = Time.time * speed;
 transform.rotation = Quaternion.Slerp(init.rotation, final.rotation, t);
 {% endhighlight %}
 
-The `rotation` property returns a quaternion. 
-In Unity's UI, the `init` and `final` rotations are specified by three angles, which are then transformed into quaternions in the backend. This means that printing a rotation will result in four numbers, not three.
+In Unity's UI the `init` and `final` rotations are specified by three angles, which are then transformed into quaternions in the backend. This means that printing a rotation will result in four numbers, not three.
 
-What are these four numbers? Unity's own [documentation][unity] is very elusive on what quaternions are. It is worth quoting it:
+What are these four numbers? Unity's own [documentation][unity_quat] is very elusive on what quaternions are. It is worth quoting it:
 
-[unity]: https://docs.unity3d.com/ScriptReference/Quaternion.html
+[unity_quat]: https://docs.unity3d.com/ScriptReference/Quaternion.html
 
 <blockquote>
 	<p>
@@ -92,20 +90,18 @@ I did not encounter quaternions in all my years of engineering, although a lectu
 They are frowned upon in favour of more intuitive and versatile vectors and matrices.
 Those can also be used to calculate 3D rotations and that is an approach that I did use in engineering, especially in my masters.
 
-So why then are computer game developers and animators left to battle with this obscure mathematics that engineers won't touch? Unity gives good reasons above: compactness (4 numbers vs 9 in a matrix), numerical stability ("don't suffer from Gimbol lock") and interpolation (easy to find rotations between other rotations).[^interpolation]
-These are significant differentiating factors in computer games and animations, which need to compute many thousands of rotations every frame (especially with regards to light rays).
+So why then are computer game developers and animators left to battle with this obscure mathematics that engineers won't touch? Unity gives good reasons: compactness (4 numbers), numerical stability ("don't suffer from Gimbol lock") and interpolation (easy to find rotations between other rotations).[^interpolation]
+These are significant differentiating factors in computer games and animations, which may need to compute many thousands of rotations every frame.
 
 This series of posts seeks to illuminate quaternions so that you are one of those people who knows them "inside out".
-As you will see, quaternions have a mathematical elegance to them that translates directly to a simplicity in code and superior computational performance. 
 Later posts will build the logical foundations for quaternions and describe the mathematics in detail.
-The rest of this post will be an interactive review of rotation methods in 3D.
-It presents results and formulas without proofs.
+For the meantime, the rest of this post will be an interactive review of rotation methods in 3D.
 
 ## Mathematical representations of rotations in 3D
 
-There are two method to describe 3D rotations in mathematics:
-1. Three angles and an order: a single 3D rotation can be thought as of the net result of three 2D rotations done around three separate axes in a particular order.
-2. An axis with three co-ordinates and an angle: a single 2D rotation can be described around an axis orientated in 3D space. 
+There are two main methods to describe 3D rotations:
+1. Three angles and an order.
+2. An axis with three co-ordinates and an angle.
 
 In both cases four quantities are used to describe the rotation, but usually one degree of freedom is fixed.
 For three angles, the order is fixed. For the axis-angle representation, the axis is set to have a unit length, so it can only exist on the unit sphere and hence two numbers are sufficient to describe it (latitude and longitude).
@@ -140,7 +136,7 @@ In either case, there are three remaining degrees of freedom.
 	</div>
 </div>
 
-An intuitive way to describe a rotation is with three separate angles. These are known as the Euler angles, after the great mathematician Leonhard Euler who first described them. 
+An intuitive way to describe a rotation is with three separate angles. These are known as the Euler angles after the great mathematician Leonhard Euler.
 There are many different conventions for Euler angles depending on the axes and orders chosen.
 For the interactive graph I have used the Tait-Bryan angle representation, which is often used in engineering.
 Here is an illustration:
@@ -153,7 +149,7 @@ Here is an illustration:
 </figure>
 The three angles are:
 - $\psi$: yaw, about the $z$ axis.
-- $\theta$: pitch, about the $y'$ axis (Note: $z'$ points downwards so that positive $\theta$ is clockwise).
+- $\theta$: pitch, about the $y'$ axis[^pitch]
 - $\phi$: roll, about the $x''$ axis.
 
 The order used is yaw-pitch-roll, also called $\psi$-$\theta$-$\phi$ or $z$-$y'$-$x''$ or ZYX. 
@@ -169,7 +165,7 @@ On the left, the cruiser first rotates 30&deg; to the left and then rolls on its
 On the right, the cruiser rolls on it side first, so that a pilot sitting inside would perceive his left as _up_, and hence the yaw rotation results in a 30&deg; movement upwards.
 This is why the order needs to be specified.
 
-Given this order, each angle can be used to construct a 3&times;3 rotation matrix $R_{\alpha}$ which reprents a 2D rotation about an axis. See [part 2][2Drotations] for more detail.
+Given the order, each angle can be used to construct a 3&times;3 rotation matrix $R_{\alpha}$ which represents a 2D rotation about an axis. See [part 2][2Drotations] for more detail.
 Then the rotated vector $v_r$ is obtained from $v$ by multiplying each matrix in order:
 
 $$ v_r = R_{\phi}R_{\theta}R_{\psi}v$$
@@ -213,7 +209,7 @@ The JavaScript code can be found [here][EulerAngles.js] or with your browser's i
 
 If you do follow the order, the base will rotate about one circle of the gimbol at the time.
 But what if you don't follow it?
-For example, you move $\theta$ and $\phi$ before $\phi$?
+For example, you move $\theta$ and $\phi$ before $\psi$?
 Go back and try this if you haven't already.
 The answer is, the whole gimbol rotates to the orientation _where it would have been_ if the rotation order of $z$-$y'$-$x''$ was respected.
 This path cannot be represented with the angles $\psi$, $\theta$ or $\phi$. (It can be with other Euler angles but that only shifts the problem.)
@@ -228,8 +224,8 @@ Given the angles for the first and final rotation, how would you find the rotati
 	>
 <figcaption></figcaption>
 </figure>
-We need to find a circle that connects the nose of the cruiser from its starting position to its final position.
-Then for each point on the arc of the circle, we need to find some $\psi$, $\theta$ and $\phi$ applied in that order that will result in a rotation to that point.
+First make a circle that connects the nose of the cruiser from its starting position to its final position.
+Then for each point on the arc of the circle, find some $\psi$, $\theta$ and $\phi$ applied in that order that will result in a rotation to that point.
 This requires adjusting three angles simultaneously. 
 One can imagine an algorithm where you adjust $\psi$, then $\theta$ then $\phi$ and if the point doesn't fall on the circle where it is supposed to go, start from the beginning at $\psi$ again.
 A better algorithm is provided below, but it is still constrained by the same underlying process.
@@ -256,11 +252,9 @@ We'll see shortly that the quaternion algorithm is much, much simpler.
 				We can use $t=0.5$ to find the middle vector.
 			</li>
 			<li>
-				With (2) there is enough information to create the animation, but what if we want the rotations to be stateless? That is, independent of the starting and final position? 
-				For example, we want to display the angles back to the user throughout the animation?
+				With (2) there is enough information to create the animation, but what if we want the angles?
 				This requires solving 3 highly non-linear trigonometric equations from $p_t=R_{\phi}R_{\theta}R_{\psi}p_0$.
-				An alternative is to calculate the axis-angle rotation matrix from the Rodrigues formula below,
-				with $\hat{n} = \hat{x} \times \hat{y}$ and $\theta = \alpha t$. Then compare terms with the Euler rotation matrix.
+				An alternative is to calculate an axis-angle rotation matrix with $\hat{n} = \hat{x} \times \hat{y}$ and $\theta = \alpha t$. Then compare terms with the Euler rotation matrix.
 			</li>
 		</ol>
   </div>
@@ -279,7 +273,7 @@ For this reason, Euler angles should never be used in physics simulations - I sp
 </p>
 <div class="collapse" id="gimbollock">
   <div class="card card-body ">
-  The symbol $\omega$ is used to denote an angular velocity e.g. $\omega_\alpha = \frac{d\alpha}{dt}$, measured in radians/second. In physics problems we often have the angular velocity in the world frame, $\omega^0$. From this we need to calculate the angular velocities of the Euler angles so that we can integrate them to get the angles and hence calculate the rotation matrix. These angular velocities are related as follows:
+  The symbol $\omega$ is used to denote an angular velocity e.g. $\omega_\alpha = \frac{d\alpha}{dt}$, measured in radians/second. In physics problems we often have the angular velocity in the world frame, $\omega^0$ but we need the angular velocities of the Euler angles to integrate to get the Euler angles. These angular velocities are related as follows:
 		\[
 		\begin{align}
 		\vec{\omega}^0
@@ -409,14 +403,12 @@ Thankfully the next method does work well in the latter case.
 	</div>
 </div>
 
-Note that $\theta$ can rotate fully around a circle in both the clockwise and anti-clockwise direction.
-Therefore every point on the circle can be reached twice: through the clockwise rotation or through the anti-clockwise rotation.
+Note that every point on the circle can be reached twice: through the clockwise rotation or through the anti-clockwise rotation.
 This is known as the double cover property.
 
 There are multiple ways to calculate the axis-angle representation. 
 This graph uses a quaternion. 
 See the source code [here][Quaternion.js] or with your browser's inspection tools.
-Other methods are briefly presented in the next section.
 
 What is a quaternion? Here is a mathematical definition: 
 <div class="card">
@@ -427,12 +419,11 @@ What is a quaternion? Here is a mathematical definition:
 		A quaternion is a number of the form $$s + xi+yj + zk \; ; \; s, x, y, z \in 	\mathbb{R}$$
 		where the basis elements $i$, $j$ and $k$ obey the following rules of multiplication: 
 		$$i^2 = j^2 = k^2 = ijk = -1 \;,\; ij=k \;,\; ji=-k$$
-		By definition multiplication is in general non-commutative: $pq\neq qp$. Otherwise, normal distributive and associative rules of algebra apply.
 	</p>
   </div>
 </div>
 It may be unusual that $ij=k$ but $ji=-k$, but this should not be surprising after the Euler angles section.
-3D rotations are themselves non-commutative - they depend on order - and hence any mathematics that represents them must be non-commutative.
+3D rotations depend on order and hence any mathematics that represents them must depend on order.
 [Part 3][quaternions] will provide further physical justifications for this abstract definition.
 
 The quaternion is calculated from the normal vector and $\theta$ as follows:
@@ -453,8 +444,7 @@ $$
 \end{aligned}
 $$
 
-As already mentioned, there are other ways to calculate this rotation.
-Other methods are intriguing in that they are based on 3D geometrical constructions, while quaternions are 4D, which means we cannot properly visualise them.
+Euler angles are 3D which we can visualise, while quaternions are 4D which means we cannot.
 Why then should we prefer quaternions?
 Their main advantage comes with interpolations.
 Here again is the problem of finding the middle rotation between the starting and final rotations in the GIF:
@@ -474,37 +464,19 @@ $$ q_{0.5} = \frac{q_{0.0} + q_{1.0}}{2}$$
 
 and apply the rotation formula. Done.
 
-In general the expression for $q_t$ is more complex, but comparable to similar equations in 2D.
-But I hope this example gives a sense of the power of quaternions. 
-
-For physics simulations, it is straightforward to calculate the normal vector and angle from angular velocities. There are no equations with singularities that represent gimbol lock.
-
-<p>
-  <a class="btn" data-toggle="collapse" href="#axisAngleVelocity" role="button" aria-expanded="false" aria-controls="collapseExample">
-    More detail: axis-angle formulas from angular velocities &#8681;
-  </a>
-</p>
-<div class="collapse" id="axisAngleVelocity">
-  <div class="card card-body ">
-		An angular velocity $\vec{\omega}$ represents the angular velocities that an object rotates about the axes of the world frame. The combined effect is to rotate about a circle with a normal axis parallel to $\vec{\omega}$. So the normal vector is $\hat{n} = \frac{\vec{\omega}}{\lvert \vec{\omega} \rvert}$. $\theta$ is a measure of the magnitude of this rotation. $ \theta = \lvert \vec{\omega} \rvert \Delta t = \sqrt{ \omega_x^2  + \omega_y^2  + \omega_z^2 }\Delta t $. 
-  </div>
-</div>
-
-
+In general the expression for $q_t$ is more complex. But I hope this example gives a sense of the power of quaternions. 
 
 ## Outline 
 
 Using quaternions for 3D rotations is a very sensible choice for animation software.
-They are essentially an array of four numbers with the normal rules for addition and subtraction and some special rules for multiplication involving minus signs. Encode that, and you get rotation functions and stateless, fast, interpolations almost for free.
+They are essentially an array of four numbers with the normal rules for addition and subtraction and some special rules for multiplication. Encode that, and you get rotation functions and stateless, fast, interpolations almost for free.
 
 I hope this post has illuminated some of their properties and advantages.
 If you wish to learn more, the rest of the series will expand more on the mathematics of quaternions. 
-- [Part 2][2Drotations] describes rotations in 2D. It uses both matrix and complex number representations.
-It is a crash course in complex numbers, which can be seen as a simpler kind of quaternion. 
-Some prior experience with complex numbers will help.
-- [Part 3][quaternions] describes the fundamentals of quaternions and their mathematics. A few proofs of their properties are given. This is the longest section.
-- [Part 4][interpolation] focuses on interpolation. Interpolation formulas are derived in 2D and transferred to 3D.
-An interactive graph with a stick aeroplane in place of the Unity Spaceship is presented.
+- [Part 2][2Drotations] describes rotations in 2D. It describes complex numbers, which can be thought of as a simpler type of quaternion.
+- [Part 3][quaternions] describes the fundamentals of quaternions and their mathematics. A few proofs of their properties are given.
+- [Part 4][interpolation] focuses on interpolation. 
+An interactive graph with a stick aeroplane in place of the Unity space cruiser is presented.
 
 To get the most out of this series, you should be comfortable with trigonometry, algebra, complex numbers, Euclidean geometry and linear algebra (matrices).
 This maths was covered in my first year of engineering.
@@ -513,7 +485,7 @@ This series is the kind I would have liked to see.
 When I first learnt about quaternions I found that I had to consult many sources to understand them properly.
 Nearly every source began with a story of an Irish mathematician, a bridge, and an epiphany that caused him to carve the fundamental formula of quaternions into the stone. It's a nice story but it is a confusing one to begin with. 
 Why did he have this epiphany? What "magic" did he grasp that day and can we also?
-In [part 3][quaternions] I do tell this story properly, but at a point where sufficient mathematics has been discussed so we can somewhat approximate the mathematician's thoughts that day. Instead I chose to lead with a different story; one about why quaternions are still relevant 178 years later. I hope this was appreciated.
+In [part 3][quaternions] I do tell this story, but at a point where sufficient mathematics has been discussed so we can somewhat approximate the mathematician's thoughts that day. Instead I chose to lead with a different story; one about why quaternions are still relevant 178 years later. I hope this was appreciated.
 
 This series is written from the perspective of an engineer. 
 I try to introduce ideas and justify them in as intuitive a way as possible.
@@ -523,7 +495,7 @@ or more general versions of quaternion algebra.
 
 ## Extra: Other forms of axis-angle rotations
 
-Identical rotations could also be accomplished with other formulas, namely the Rodrigues' formulas for axis-angle rotations and with Pauli matrices.
+Identical rotations could also be accomplished with other formulas, namely the Rodrigues' formulas and with Pauli matrices.
 I will give the formulas without going into detail; this is only to compare forms.
 
 The Rodrigues' formulas are as follows:
@@ -563,8 +535,7 @@ $$
 \end{aligned}
 $$
 
-We now have four different formulas which are based on four different branches of mathematics (Euclidean geometry, linear algebra and complex numbers, quaternions) with multiple different types of multiplications (scalar multiplication, quaternion multiplication, dot products, vector cross products and matrix multiplication), yet these formulas all represent the same physical rotation and will result in identical vectors $\vec{v}_r$. 
-It is possible through tedious calculations to show that these compact formulas are all equal by using the definitions of the various types of multiplications and expanding them out. This fact can also be numerically verified.
+These are four different formulas which are based on four different branches of mathematics (Euclidean geometry, linear algebra and complex numbers, quaternions) with multiple different types of multiplications (scalar multiplication, quaternion multiplication, dot products, vector cross products and matrix multiplication), yet these formulas all represent the same physical rotation and will result in identical vectors $\vec{v}_r$. 
 
 For a comparison of all formulas in Julia, please see this repository: [Rotations.jl][RotationsLior].
 
@@ -574,13 +545,24 @@ Quaternions are best for interpolations and hence animations.
 But any of these methods will work for physics simulations.
 Personally, I have successfully used the Rodrigues matrix formula on simulations of complex 3D robots.
 
+<p>
+  <a class="btn" data-toggle="collapse" href="#axisAngleVelocity" role="button" aria-expanded="false" aria-controls="collapseExample">
+    More detail: axis-angle formulas from angular velocities &#8681;
+  </a>
+</p>
+<div class="collapse" id="axisAngleVelocity">
+  <div class="card card-body ">
+	It is straightforward to calculate the normal vector and angle from angular velocities.
+	An object with an angular velocity $\vec{\omega}$ rotates about an axis parallel to $\vec{\omega}$. So the normal vector is $\hat{n} = \frac{\vec{\omega}}{\lvert \vec{\omega} \rvert}$. $\theta$ is a measure of the magnitude of this rotation: $ \theta = \lvert \vec{\omega} \rvert \Delta t = \sqrt{ \omega_x^2  + \omega_y^2  + \omega_z^2 }\Delta t $. Then apply any  of the axis-angle formulas.
+  </div>
+</div>
+
 ## References
 
 There are many sources I used to learn about quaternions.
-I have tried to make this series as comprehensive as I could, but I still recommend reading these.
 Each provides more detail in some area, whether it be animations, mathematical formulas, or visualisations.
 - [Quaternions, Interpolation and Animation by Erik B. Dam, Martin Koch and Martin Lillholm (1998)][Dam1998]: a comprehensive guide of quaternion mathematics and how to use them in animations. The main source material for this series.
-- [Quaternion Algebras by John Voight (2021)][Voight2021]: a complete textbook on Quaternion Algebras. It shows that quaternions as used in animations are a choice within a larger group of similar algebras. It presents many elegant proofs for the properties of quaternions. But it quickly goes beyond normal quaternions and most certainly this author's knowledge.
+- [Quaternion Algebras by John Voight (2021)][Voight2021]: a complete textbook on Quaternion Algebras. It shows that quaternions as used in animations are a choice within a larger group of similar algebras. It presents many elegant proofs for the properties of quaternions. It quickly goes beyond normal quaternions and most certainly this author's knowledge.
 - [Representing Attitude: Euler Angles, Unit Quaternions, and Rotation Vectors by James Diebel (2006)][Deibel2006]: a concise guide to Euler angles and quaternions, with formulas for many different kinds and conversion formulas between each type. 
 - [Visualizing quaternion by Grant Sanderson and Ben Eater][Sanderson2018]: a stunning interactive website with tutorials on visualising 4 dimensional quaternions in 3 dimensions through stereographic projections.
 - [Dirac's belt trick, Topology, and Spin ½ particles by Noah Miller][Miller2021]: an interesting video on the applications of 3D rotations in quantum mechanics. I encountered the Pauli matrices rotation formula for the first time in this video.
@@ -602,3 +584,5 @@ Each provides more detail in some area, whether it be animations, mathematical f
 [^interpolation]: Interpolation between rotations imposes kinematics without regards to the physics. In engineering it is often the other way round: physics defines the kinematics. In other words, an applied force changes the orientation of an object. This often follows a highly non-linear profile. For example, a strong jerk might cause the object to twist suddenly from one rotation to the next. Interpolation meanwhile sets the rotations, like an invisible hand guiding the object, often with linear schemes resulting in smooth animations.
 
 [^plotly_rotations]: Let's get meta for a moment. Plotly itself gives you the ability to rotate the entire plot. How does it 	do that? It uses the Tait-Bryan angles with the same order used here. The relevant functions from the [source code](https://github.com/plotly/plotly.js/tree/master/stackgl_modules) are `rotateX`, `rotateY` and `rotateZ`.
+
+[^pitch]: Note: $z'$ points downwards so that positive $\theta$ is clockwise.

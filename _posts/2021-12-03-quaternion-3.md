@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Quaternions: Part 3 (WIP)"
+title:  "Quaternions: Part 3"
 date:   2021-12-03
 author: Lior Sinai
 categories: mathematics
@@ -77,7 +77,7 @@ For example, in real number algebra there is only one number that can satisfy $x
 Another problem is that multiplication must preserve length. 
 With complex numbers, we take it for granted that:
 
-$$ \lvert z_1 \rvert ^2 \lvert z_2 \rvert ^2 = \lvert z_1 z_2 \rvert ^2 $$
+$$ \| z_1 \| ^2 \| z_2 \| ^2 = \| z_1 z_2 \| ^2 $$
 
 This is because multiplying two complex numbers results in a third complex number:
 
@@ -88,7 +88,7 @@ For example:
 
 $$ (0^2 + 1^2 + 2^2)(2^2 + 2^2 + 2^2)=60=4(8 + 7)$$
 
-Hence we have a number that is a product of two sums of three squares, but it cannot be written as a sum of three squares, and so cannot be the magnitude of a 3D integer complex number.[^3squares]
+Hence we have a number that is a product of two sums of three squares, but it cannot be written as a sum of three squares, and so cannot be the magnitude of a 3D complex number.[^3squares]
 
 [legendre]: https://en.wikipedia.org/wiki/Legendre%27s_three-square_theorem
 
@@ -133,7 +133,6 @@ Here is a definition of these quaternions:
 		A quaternion is a number of the form $$s + xi+yj + zk \; ; \; s, x, y, z \in 	\mathbb{R}$$
 		where the basis elements $i$, $j$ and $k$ obey the following rules of multiplication: 
 		$$i^2 = j^2 = k^2 = ijk = -1 \;,\; ij=k \;,\; ji=-k$$
-		By definition multiplication is in general non-commutative: $pq\neq qp$. Otherwise, normal distributive and associative rules of algebra apply.
 	</p>
   </div>
 </div>
@@ -157,7 +156,7 @@ Similarly for $ji=-k$:
 
 In general, pre-multiplication results in anti-clockwise rotations and post-multiplication in clockwise rotations. 
 
-Unlike complex numbers, $i^2=j^2=k^2=-1$ has no direct interpretation because these numbers lie in the fourth dimension.
+Unlike complex numbers, $i^2=j^2=k^2=-1$ has no direct interpretation because these numbers lie in the fourth dimension.[^irony]
 
 ## Properties of quaternions
 
@@ -251,14 +250,14 @@ $$
 qq^{-1} = q\frac{q^{*}}{\| q \| ^2 } = \frac{\| q \| ^2}{\| q \| ^2} = 1
 $$
 
-Division is then equivalent to multiplication by the inverse of a quaternion: 
+Division is equivalent to multiplication by the inverse of a quaternion: 
 
 $$ q_1/q_2 = q_1q_2^{-1} $$
 
 ### Unit quaternions
 
 A quaternion with magnitude 1 is called a unit quaternion. 
-Unit quaternion lie on a hypersphere of 4 dimensions, which is not possible to visualise.
+Unit quaternions lie on a hypersphere of 4 dimensions, which is not possible to visualise.
 However we can get a feel of it through values:
 
 | $ \|q\| < 1     $         | $\|q\| = 1     $                | $ \|q\| > 1     $        |
@@ -272,13 +271,13 @@ However we can get a feel of it through values:
 
 For a unit quaternion, the inverse is $q^{-1} = q^{*}$.
 
-Using a normal vector $\hat{n}=n_xi + n_yj + n_zk$ with magnitude $\| \hat{n} \| = 1$, the following unit quaternion can always be constructed:
+Using a normal vector $\hat{n}=n_xi + n_yj + n_zk$ with magnitude $ \| \hat{n} \| = 1$, the following unit quaternion can always be constructed:
 
 $$ q = cos(\theta) + \hat{n} sin(\theta) $$
 
 ### Exponential, logarithm, and power functions
 
-If we take a unit quaternion, we can define an exponential-like function similar to the complex number exponential, which will have similar properties:
+We can define an exponential-like function for unit quaternions similar to the complex number exponential, which will have similar properties:
 
 $$ e^{\hat{n}\theta} = cos(\theta) + \hat{n} sin(\theta) $$
 
@@ -302,8 +301,8 @@ for more formal proofs of powers with quaternions.
 Finally, we have enough knowledge of quaternions to calculate rotations.
 
 Multiplying a 3D vector by a 4D quaternion will result in a rotation and scaling in 4 dimensions.
-To avoid scaling, we can use a unit quaternion.
-To avoid a 4th dimension, we pre-multiply by the unit quaternion and post-multiply by its conjugate:
+To avoid scaling, we use only unit quaternions.
+To avoid a 4th dimension, we pre-multiply by the quaternion and post-multiply by its conjugate:
 
 $$ v_r = qvq^{*} $$
 
@@ -405,19 +404,18 @@ Here is a more formal proof. This is a nice proof because working through it giv
 			It's much easier to keep this abstract!
 		</div>
 		</div>
-		Then:
+		Therefore without loss of generalization, we consider only $\hat{n}=k$:
 		$$ 
 		\begin{align}
-			qvq^{*} =& (cos\theta + k'\sin\theta)(x'i'+y'j'+z'k')(cos\theta - k'\sin\theta) \\
-			        =& (cos\theta(x'i'+y'j'+z'k') + sin\theta(x'j'-y'i'-z))(cos\theta - k'\sin\theta) \\
-					=& (-z'sin\theta + (x'cos\theta - y' sin\theta)i' + (x'sin\theta + y'cos\theta)j' + z'cos\theta k')  (cos\theta - k'\sin\theta) \\
-					=& -z' cos\theta sin\theta + z' cos\theta sin\theta + (x'(cos^2\theta - sin^2\theta ) -2y'sin\theta cos\theta) i' +\\
-					 & (2x'sin\theta cos\theta + y'(cos^2\theta - sin^2\theta ) )j' + z'(cos^2\theta + sin^2\theta) k' \\
-					=& 0 + (x'cos2\theta - y'sin2\theta)i' + (x'sin2\theta + y'cos2\theta)j' + z'k'		 
+			qvq^{*} =& (cos\theta + k\sin\theta)(xi+yj+zk)(cos\theta - k\sin\theta) \\
+					=& (-zsin\theta + (xcos\theta - y sin\theta)i + (xsin\theta + ycos\theta)j + zcos\theta k)  (cos\theta - k\sin\theta) \\
+					=& -z cos\theta sin\theta + z cos\theta sin\theta + (x(cos^2\theta - sin^2\theta ) -2ysin\theta cos\theta) i +\\
+					 & (2xsin\theta cos\theta + y(cos^2\theta - sin^2\theta ) )j + z(cos^2\theta + sin^2\theta) k \\
+					=& 0 + (xcos2\theta - ysin2\theta)i + (xsin2\theta + ycos2\theta)j + zk		 
 		\end{align}
 		$$
-		This formula should be recognisable from <a href="/mathematics/2021/11/28/quaternion-2-2d">part 2</a>. It is the vector $v$ rotated by the angle $2\theta$ about the axis $\hat{n} =k'$. Note that $z'$ which is parallel to $k'$ is unchanged.
-		Also note that on line 3 the rotation is correct for $i'$ and $j'$, but the parallel part is partly rotated into the 4th dimension. Hence we need to multiply by $q^{*}$ to correct this.
+		This formula should be recognisable from <a href="/mathematics/2021/11/28/quaternion-2-2d">part 2</a>. It is the vector $v$ rotated by the angle $2\theta$ about the axis $\hat{n} =k$. Note that $z$ which is parallel to $k$ is unchanged.
+		Also note that on line 2 the rotation is correct for $i$ and $j$, but the parallel part is partly rotated into the 4th dimension. Hence we need to multiply by $q^{*}$ to correct this.
 	</p>
   </div>
 </div>
@@ -432,10 +430,12 @@ Congratulations for reaching this far.
 I hope you now know the basics of quaternions.
 There is enough detail here to write a fully functioning quaternion implementation.
 Most of these functions can be found in the [code][Quaternion.js] for the graph in [part 1][part1].
-The next and last section focuses on interpolations for animations, and in particular using quaternions for those interpolations.
+The next and last section focuses on using interpolations for animations with quaternions.
 
 ---
 
 [^ambiguities]: Some ambiguities do exist through multi-valued functions. For example if $x^2=1$ , then $x$ can be $1$ or $-1$. But these ambiguities can be dealt with if the underlying algebra is consistent.
 
 [^3squares]: A solution can be constructed if we allow non-integers, for example $4^2 + 6^2 + \sqrt{8}^2 = 60$. However then the solution is not closed under addition and multiplication, which hinders efforts to make a consistent algebra.
+
+[^irony]: An irony of quaternions is that the real part is in the 4th dimension and is therefore more "imaginary" than the three imaginary parts $i$, $j$ and $k$.

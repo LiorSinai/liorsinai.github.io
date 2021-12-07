@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Quaternions: Part 2 (WIP)"
+title:  "Quaternions: Part 2"
 date:   2021-11-28
 author: Lior Sinai
 categories: mathematics
@@ -22,21 +22,21 @@ This is part of a series. The other articles are:
 
 
 ### Table of Contents
-- [Cartesian formula](#cartesian-formula)
+- [Polar and Cartesian formula](#polar-and-cartesian-formula)
 - [Complex numbers](#complex-numbers)
 - [Conclusion](#conclusion)
 
 # Rotations in 2D
 
-Rotations in 2D are simple, but they help prepare for 3D rotations.
+Rotations in 2D are simple and will help prepare us for 3D rotations.
 There are three methods to accomplish rotations in 2D:
 - Polar co-ordinates and angles.
 - Cartesian matrix formula.
 - Complex numbers.
 
-This post gives a quick overview of all these methods.
+This post gives an overview of all these methods.
 
-## Cartesian formula
+## Polar and Cartesian formula
 
 Rotations in 2 dimensional space can be represented with cartesian co-ordinates $(x, y)$ or polar co-ordinates $(r, \theta$).
 
@@ -45,11 +45,10 @@ Rotations in 2 dimensional space can be represented with cartesian co-ordinates 
     src="/assets/posts/quaternions/rotation_2d_proof.png"
 	alt="Rotation formula construction"
 	>
-<figcaption>Rotation formula construction</figcaption>
+<figcaption>Rotation formula construction. This is also a geometric proof of the addition and subtraction formulas for sine and cosine. </figcaption>
 </figure>
 
-This figure serves as a geometric proof of the addition and subtraction formulas for sine and cosine.
-Using these, the rotated co-ordinate $x_r$ is related to $x$ with the angle $\beta$ by:
+From the figure, the rotated co-ordinate $x_r$ is related to $x$ with the angle $\beta$ by:
 
 $$ 
 \begin{align}
@@ -110,9 +109,9 @@ The negative angle relation will not hold in 3D, but $R^{-1}=R^T$ is a useful re
   <div class="card-body">
     <h5 class="card-title">Proof of the rotation matrix inverse</h5>
     <p class="card-text">
-		A vector $v$'s magnitude can be found as $v^Tv=|v|$, where $v$ is a column vector.
+		A vector $v$'s magnitude can be found as $v^Tv=\|v\|$, where $v$ is a column vector.
         The rotated vector should have the same magnitude: 
-        $$ (Rv)^T(Rv)=v^T R^T Rv = v^Tv =|v|$$
+        $$ (Rv)^T(Rv)=v^T R^T Rv = v^Tv =\|v\|$$
         This requires that $R^T R =I $ and hence $R^T=R^{-1}$.
 	</p>
   </div>

@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Quaternions: Part 4 (WIP)"
+title:  "Quaternions: Part 4"
 date:   2021-12-06
 author: Lior Sinai
 categories: mathematics
@@ -34,7 +34,7 @@ This is part of a series. The other articles are:
 # Interpolation with Quaternions
 ## Introduction
 
-This is a demo of the two interpolation methods that will be described in this article: lerp and slerp.
+This is a demo of the two interpolation methods that will be described in this article.
 Using the default button sets the stick aeroplane to the same settings as the space cruiser in [part 1][introduction]. See the source code [here][Quaternion.js].
 
 [Quaternion.js]: {{ "assets/posts/quaternions/Quaternion.js" | relative_url }}
@@ -75,26 +75,26 @@ Using the default button sets the stick aeroplane to the same settings as the sp
 </div>
 
 In [part 1][introduction] the problem of finding a satisfying rotation halfway between two other rotations was presented.
-We now extend this problem statement to any time: given an initial rotation at time $t=0$ and a final rotation at $t=1$ find a smooth formula for a rotation at time $t$ where $0 \leq t \leq 1$.
+We now extend this problem statement to any fraction: given an initial rotation at time $t=0$ and a final rotation at $t=1$ find a smooth formula for a rotation at time $t$ where $0 \leq t \leq 1$.
 
 This post will describe two solutions which give slightly different results:
-- Lerp: Linear interpolation.
+- Lerp: linear interpolation.
 - Slerp: spherical linear interpolation.
 
 The equation for lerp is simpler but slerp has a smoother profile. 
 This however is hardly noticeable in above demo.
 
-This whole post is based on [Quaternions, Interpolation and Animation by Erik B. Dam, Martin Koch and Martin Lillholm][Dam1998]. Please see this book for more detail on using quaternions in animations and the formulas presented in this post.
+This post is based on [Quaternions, Interpolation and Animation by Erik B. Dam, Martin Koch and Martin Lillholm][Dam1998]. Please see this book for more detail on using quaternions in animations and the formulas presented in this post.
 
 [Dam1998]: https://web.mit.edu/2.998/www/QuaternionReport1.pdf
 
 ## Lerp
 
-Because quaternions encode rotations it is possible to linear interpolate between the initial quaternion $q_0$ and the final quaternion $q_1$:
+Because quaternions encode rotations it is possible to linearly interpolate between the initial quaternion $q_0$ and the final quaternion $q_1$:
 
 $$ \text{lerp}(q_0, q_1, t) = q_0 (1 - t) + q_1 t $$
 
-The resulting quaternion has no guarantee of being a unit quaternion, so the quaternion needs to be scaled by its magnitude.
+The resulting quaternion has no guarantee of being a unit quaternion, so it needs to be scaled by its magnitude.
 
 $$ \text{lerp}(q_0, q_1, t) = \frac{q_0 (1 - t) + q_1 t }{\left\| q_0 (1 - t) + q_1 t  \right \|} $$
 
@@ -103,14 +103,14 @@ In other words, the animation will appear to go faster in the middle than at the
 
 ## Slerp
 
-In 2D the angle $\Omega$ between two unit vectors $z_0$ and $z_1$ can be linearly interpolated with $t\Omega$.  
+In 2D the angle $\Omega$ between two unit vectors $z_0$ and $z_1$ is linearly interpolated with $t\Omega$.  
 A simple formula for $z_t$ is:
 
-$$ z_t = cos(\theta_0 + \Omega t) +  sin(\theta_0 + \Omega t) i $$
+$$ z_t = z_0 (cos(t\Omega  ) + i sin(t\Omega )) = cos(\theta_0 + t\Omega ) +  sin(\theta_0 + t\Omega ) i $$
 
 The angular velocity will have a constant magnitude of $\Omega $ rad/s.
 
-Two other formulas can also be derived for the same interpolation which do not depend on $\theta_0$. These are more useful because they can be extended to 3D.
+Two other formulas can also be derived for the same interpolation. These are more useful because they can be extended to 3D.
  
 ### Formula 1 
 
@@ -189,13 +189,13 @@ $$ \text{slerp}(q_0, q_1, t) = q_0 (q_0^{-1} q_1)^t = q_0 (q_0^{*} q_1)^t $$
 		\begin{align}
 			\text{slerp}(q_0, q_1, t) &=  q_0 (q_0^{*} q_1)^t \\
 				&= (cos\theta_0 + sin\theta_0 \hat{n}_0)((cos\theta_0 - sin\theta_0 \hat{n}_0)(cos\theta_1 + sin\theta_1 \hat{n}_1))^t \\
-				&= (cos\theta_0 + sin\theta_0 \hat{n}_0)(cos\Omega + sin\Omega v')^t \\
-				&= (cos\theta_0 + sin\theta_0 \hat{n}_0)(cos(t\Omega) + sin(t\Omega) v')
+				&= (cos\theta_0 + sin\theta_0 \hat{n}_0)(cos\Omega + v \: sin\Omega )^t \\
+				&= (cos\theta_0 + sin\theta_0 \hat{n}_0)(cos(t\Omega) + v \: sin(t\Omega))
 		\end{align}
 		$$
 		where:
-		$$ sin\Omega v' = cos\theta_0 sin\theta_1 \hat{n}_1 - cos\theta_1 sin\theta_0 \hat{n}_0 - sin\theta_0 sin\theta_1 \hat{n}_0 \times \hat{n}_1 $$
-		Substitute in for $v'$ and simplify. The end result will be the other slerp formula.
+		$$ v \: sin\Omega  = cos\theta_0 sin\theta_1 \hat{n}_1 - cos\theta_1 sin\theta_0 \hat{n}_0 - sin\theta_0 sin\theta_1 \hat{n}_0 \times \hat{n}_1 $$
+		Substitute in for $v$ and simplify. The end result will be the other slerp formula.
   </div>
 </div>
 
@@ -203,7 +203,7 @@ $$ \text{slerp}(q_0, q_1, t) = q_0 (q_0^{-1} q_1)^t = q_0 (q_0^{*} q_1)^t $$
 
 If you've made it this far, thank you for following me along this journey.
 
-I hope you've enjoyed this dive into the weird mathematics of quaternions.
+I hope you've enjoyed this dive into the fascinating mathematics of quaternions.
 
 ---
 
