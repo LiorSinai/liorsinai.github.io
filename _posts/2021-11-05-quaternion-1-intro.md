@@ -134,6 +134,7 @@ In either case, there are three remaining degrees of freedom.
 	<div id="canvas-tb" class="plotly">
 		<script src="/assets/posts/quaternions/plotTaitBryan.js" type="module"></script>
 	</div>
+	<span class="uxMessege"> For the best user experience, use a large monitor. </span>
 </div>
 
 An intuitive way to describe a rotation is with three separate angles. These are known as the Euler angles after the great mathematician Leonhard Euler.
@@ -401,6 +402,7 @@ Thankfully the next method does work well in the latter case.
 	<div id="canvas-q" class="plotly">
 		<script src="/assets/posts/quaternions/plotQuaternion.js" type="module"></script>
 	</div>
+	<span class="uxMessege"> For the best user experience, use a large monitor. </span>
 </div>
 
 Note that every point on the circle can be reached twice: through the clockwise rotation or through the anti-clockwise rotation.

@@ -48,6 +48,7 @@ Using the default button sets the stick aeroplane to the same settings as the sp
 		<input type="number" id="thetaStartNumber" min="-360" max="360" value="0">
 		<label for="psiNumber">&phi;</label>
 		<input type="number" id="phiStartNumber" min="-360" max="360" value="0">
+		<label> &deg;</label>
 		End position:
 		<label for="psiNumber">&psi;</label>
 		<input type="number" id="psiEndNumber" min="-360" max="360" value="0">
@@ -55,6 +56,7 @@ Using the default button sets the stick aeroplane to the same settings as the sp
 		<input type="number" id="thetaEndNumber" min="-360" max="360" value="0">
 		<label for="psiNumber">&phi;</label>
 		<input type="number" id="phiEndNumber" min="-360" max="360" value="0">
+		<label> &deg;</label>
 	</form>
 	<div class="sliderContainer">
 		<p class="sliderValue left">t</p>
@@ -72,6 +74,7 @@ Using the default button sets the stick aeroplane to the same settings as the sp
 	<div id="canvas" class="plotly">
 		<script src="/assets/posts/quaternions/plotInterpolation.js" type="module"></script>
 	</div>
+	<span class="uxMessege"> For the best user experience, use a large monitor. </span>
 </div>
 
 In [part 1][introduction] the problem of finding a satisfying rotation halfway between two other rotations was presented.
