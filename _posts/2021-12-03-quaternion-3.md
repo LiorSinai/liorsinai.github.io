@@ -445,6 +445,12 @@ There is enough detail here to write a fully functioning quaternion implementati
 Most of these functions can be found in the [code][Quaternion.js] for the graph in [part 1][part1].
 The next and last section focuses on using interpolations for animations with quaternions.
 
+For the curious minded, the algebraic group that includes the real numbers, complex numbers and quaternions includes one another number system: the octonions. 
+These have eight basis units, made of one real part and seven imaginary parts. 
+They are non-cummutative ($ab \neq ba $) and non-associative ($(ab)c \neq a(bc)$). 
+It has been proven that no other consistent algebras of this type can be constructed.
+For more detail, a good starting point is the Wikipedia page: [Octonions](https://en.wikipedia.org/wiki/Octonion).
+
 ---
 
 [^ambiguities]: Some ambiguities do exist through multi-valued functions. For example if $x^2=1$ , then $x$ can be $1$ or $-1$. But these ambiguities can be dealt with if the underlying algebra is consistent.

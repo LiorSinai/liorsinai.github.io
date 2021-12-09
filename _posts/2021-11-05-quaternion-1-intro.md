@@ -569,7 +569,7 @@ Each provides more detail in some area, whether it be animations, mathematical f
 - [Visualizing quaternion by Grant Sanderson and Ben Eater][Sanderson2018]: a stunning interactive website with tutorials on visualising 4 dimensional quaternions in 3 dimensions through stereographic projections.
 - [Dirac's belt trick, Topology, and Spin ½ particles by Noah Miller][Miller2021]: an interesting video on the applications of 3D rotations in quantum mechanics. I encountered the Pauli matrices rotation formula for the first time in this video.
 - [Wikipedia][Wikipedia]: comprehensive articles on quaternions and related subjects.
-
+- [Wired article][Wired] on quaternions: a brief history of quaternions, their old rivalry with vectors and their impact.
 
 
 [Voight2021]: https://link.springer.com/book/10.1007/978-3-030-56694-4
@@ -578,6 +578,7 @@ Each provides more detail in some area, whether it be animations, mathematical f
 [Sanderson2018]: https://eater.net/quaternions
 [Miller2021]: https://www.youtube.com/watch?v=ACZC_XEyg9U
 [Wikipedia]: https://en.wikipedia.org/wiki/Quaternion
+[Wired]: https://www.wired.com/story/meet-the-four-dimensional-numbers-that-led-to-modern-algebra/
 
 ---
 
