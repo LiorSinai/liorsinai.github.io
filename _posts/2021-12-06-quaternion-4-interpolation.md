@@ -156,9 +156,7 @@ $$
 
 This formula is used in the graph at the top and is the most common formula in quaternion animations. Please see the [reference][dam1998] for a formal proof.
 
-My informal explanation is: this formula can be seen as the linear addition of four parts: real, $i$, $j$ and $k$. The real part will cancel out in $qvq^{*}$. The other parts will undergo the same transformation as the 2D complex part $iy$ in $\vec{v} \equiv z = x + iy$, and combined form the interpolation across a sphere.
-
-If you have a better explanation, please let me know.
+My informal explanation is: this formula can be seen as the linear addition of four parts: real, $i$, $j$ and $k$. The real part will cancel out in $qvq^{*}$. The other parts will undergo the same transformation as the 2D complex part $iy$ in $\vec{v} \equiv z = x + iy$, resulting in three circular interpolations that combined form the interpolation across a sphere.
 
 ### Formula 2
 
@@ -204,9 +202,12 @@ $$ \text{slerp}(q_0, q_1, t) = q_0 (q_0^{-1} q_1)^t = q_0 (q_0^{*} q_1)^t $$
 
 ## Conclusion
 
-If you've made it this far, thank you for following me along this journey.
+Thank you for following me along this journey into the fascinating mathematics of quaternions.
+I hope you've enjoyed it and are fully comfortable with using them in animations now.
 
-I hope you've enjoyed this dive into the fascinating mathematics of quaternions.
+Please explore the references in [part 1][refs] for more information.
+
+[refs]:{{ "mathematics/2021/11/05/quaternion-1-intro#references" | relative_url }}
 
 ---
 

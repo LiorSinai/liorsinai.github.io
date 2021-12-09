@@ -83,7 +83,8 @@ This is because multiplying two complex numbers results in a third complex numbe
 
 $$ (a_1 + b_1i)(a_2 + b_2i) = (a_1a_2 - b_1b_2) + (a_1b_2+b_1a_2)i$$
 
-For the 3D complex number this is not always possible, because [Legendre's three-square theorem][legendre] states that integers of the form $n=4^a(8b+7)$ cannot be represented as the sum of three squares of integers.
+For the 3D complex number this is not always possible.
+This can be proved for complex numbers with only integers through [Legendre's three-square theorem][legendre] which states that integers of the form $n=4^a(8b+7)$ cannot be represented as the sum of three squares of integers.
 For example:
 
 $$ (0^2 + 1^2 + 2^2)(2^2 + 2^2 + 2^2)=60=4(8 + 7)$$
@@ -118,7 +119,7 @@ The final problem is that rotations in 3D are ordered. Therefore the mathematics
 
 Owing to the above problems, Sir William Rowan Hamilton had difficulties multiplying triples, as he called them.
 But on 16 October 1843, as he was walking past a canal in Dublin, Hamilton had the great insight that he needed a fourth dimension to describe 3D rotations. 
-From [Quaternion Algebra by Voight][Voight2021]: One number describes the size of the scaling, one the number of degrees to be rotated, and the last two numbers give the plane in which the vector should be rotated.
+Three independent axes and a fourth to describe the size of the scaling.
 Overcome with euphoria, Hamilton carved the fundamental equation $ijk=-1$ into the Broom bridge (also called Brougham Bridge). The engraving faded but a plaque has been put in its place.
 
 [Voight2021]: https://link.springer.com/book/10.1007/978-3-030-56694-4
@@ -155,6 +156,18 @@ Similarly for $ji=-k$:
 - The point $i$ pre-multiplied by $j$, resulting in an anti-clockwise rotation about the $j$ axis to the point $-k$ (red dashed line).
 
 In general, pre-multiplication results in anti-clockwise rotations and post-multiplication in clockwise rotations. 
+
+I like to use the following mnemonic to remember the rules:
+
+<figure class="post-figure">
+<img class="img-20"
+    src="/assets/posts/quaternions/mnemonic.png"
+	alt="Mnemonic for rules for i, j and k."
+	>
+<figcaption></figcaption>
+</figure>
+
+Going anti-clockwise with the arrows results in postive products, such as $ jk = i$, but going clockwise against the arrows results in negative products, like $kj = -i$.
 
 Unlike complex numbers, $i^2=j^2=k^2=-1$ has no direct interpretation because these numbers lie in the fourth dimension.[^irony]
 
@@ -322,7 +335,7 @@ Here is a more formal proof. This is a nice proof because working through it giv
     <p class="card-text">
 		Consider a vector $v=xi+yj+zk$ rotated by a quaternion $q = cos\theta + \hat{n}sin\theta$.
 		The co-ordinate axes is arbitrary, so define a new axis in line with the normal axis $\hat{n}$
-		so that $k' = \hat{n}$. $v$ can be represented in these new co-ordinates as $v=x'i'+y'j'+z'k'$.
+		so that $k' = \hat{n}$. Then $v$ can be represented in these new co-ordinates as $v=x'i'+y'j'+z'k'$.
 		<p>
 	<a class="btn" data-toggle="collapse" href="#transform" role="button" aria-expanded="false" aria-controls="collapseExample">
 		More detail: transformation of co-ordinates &#8681;
@@ -408,7 +421,7 @@ Here is a more formal proof. This is a nice proof because working through it giv
 		$$ 
 		\begin{align}
 			qvq^{*} =& (cos\theta + k\sin\theta)(xi+yj+zk)(cos\theta - k\sin\theta) \\
-					=& (-zsin\theta + (xcos\theta - y sin\theta)i + (xsin\theta + ycos\theta)j + zcos\theta k)  (cos\theta - k\sin\theta) \\
+					=& ((xcos\theta - y sin\theta)i + (xsin\theta + ycos\theta)j + zcos\theta k -zsin\theta)  (cos\theta - k\sin\theta) \\
 					=& -z cos\theta sin\theta + z cos\theta sin\theta + (x(cos^2\theta - sin^2\theta ) -2ysin\theta cos\theta) i +\\
 					 & (2xsin\theta cos\theta + y(cos^2\theta - sin^2\theta ) )j + z(cos^2\theta + sin^2\theta) k \\
 					=& 0 + (xcos2\theta - ysin2\theta)i + (xsin2\theta + ycos2\theta)j + zk		 
@@ -436,6 +449,6 @@ The next and last section focuses on using interpolations for animations with qu
 
 [^ambiguities]: Some ambiguities do exist through multi-valued functions. For example if $x^2=1$ , then $x$ can be $1$ or $-1$. But these ambiguities can be dealt with if the underlying algebra is consistent.
 
-[^3squares]: A solution can be constructed if we allow non-integers, for example $4^2 + 6^2 + \sqrt{8}^2 = 60$. However then the solution is not closed under addition and multiplication, which hinders efforts to make a consistent algebra.
+[^3squares]: A solution can be constructed if we allow non-integers, for example $4^2 + 6^2 + \sqrt{8}^2 = 60$. However then the solution is not closed under addition and multiplication (because we have use a square root), which hinders efforts to make a consistent algebra.
 
 [^irony]: An irony of quaternions is that the real part is in the 4th dimension and is therefore more "imaginary" than the three imaginary parts $i$, $j$ and $k$.

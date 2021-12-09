@@ -120,9 +120,15 @@ The negative angle relation will not hold in 3D, but $R^{-1}=R^T$ is a useful re
 
 ## Complex numbers
 
-Complex numbers are a completely different way to represent rotations. 
+Complex numbers are a completely different way to represent rotations.
+A complex number $z$ is defined as:
+
+$$ z = x + yi \; ; \; x, y \in \mathbb{R}$$
+
+where $i=\sqrt{-1}$ as defined by Euler.
+
 They are also called imaginary numbers, which is a historical misnomer.
-These were originally discovered by mathematicians while solving cubic equations.
+This is because they were originally discovered by mathematicians while solving cubic equations.
 [In 1572, Rafael Bombelli][history] introduced the imaginary unit $\sqrt{-1}$ while solving the equation:
 
 [history]: https://www.math.uri.edu/~merino/spring06/mth562/ShortHistoryComplexNumbers2006.pdf
@@ -133,25 +139,19 @@ Which has a root at:
 
 $$ x= \sqrt[3]{2 + \sqrt{-121}} + \sqrt[3]{2 - \sqrt{-121}} = 4$$
 
-Cubic euqations originally had a geometric meaning, and in terms of geometry, the "square root of -1" has no meaning, because no square can have negative lengths. 
+Cubic euqations were solved with a geometric meaning in mind, and in terms of geometry, the "square root of -1" has no meaning, because no square can have negative lengths. 
 But in terms of spatial geometry, negative values have the valid interpretation as the "opposite direction"
-and imaginary numbers have the interpretation as a value orthogonal to the original direction.
+and the imaginary number $i$ has the interpretation as a value orthogonal to the original direction.
 They are no more imaginary than north is to east or left is to forward.
-
-A complex number $z$ is defined as:
-
-$$ z = x + yi \; ; \; x, y \in \mathbb{R}$$
-
-where $i=\sqrt{-1}$ as defined by Euler.
 
 These numbers can be plotted on the complex plane:
 
 <figure class="post-figure">
 <img class="img-40"
     src="/assets/posts/quaternions/complex_plane_0.png"
-	alt="the complex plane"
+	alt="The complex plane"
 	>
-<figcaption>the complex plane</figcaption>
+<figcaption>The complex plane</figcaption>
 </figure>
 
 The multiplication of $1 \cdot i = i$ moves a point in a 90&deg; anti-clockwise arc from $1$ to $i$. 
@@ -168,7 +168,7 @@ We can plot a vector on this plane, such as $2 + 2i \equiv (2, 2)$:
 <figcaption></figcaption>
 </figure>
 
-If a single number multiplied by $i$ is rotated 90&deg; what will happen if multiply the vector $2 + 2i$ by $i$? 
+If a single number multiplied by $i$ is rotated 90&deg; what will happen if we multiply the vector $2 + 2i$ by $i$? 
 
 $$ i(2+2i) = 2i + 2i^2 = 2i - 2 $$
 
