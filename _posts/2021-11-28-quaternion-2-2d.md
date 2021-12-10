@@ -52,10 +52,10 @@ From the figure, the rotated co-ordinate $x_r$ is related to $x$ with the angle 
 
 $$ 
 \begin{align}
-x_r &= rcos(\beta + \theta) \\
-    &= \color{green}{rcos\beta cos\theta} - \color{red}{rsin\beta sin\theta} \\
-    &=  (r\cos\theta)cos\beta - (rsin\theta)sin\beta \\
-    &= (x)cos\beta - (y)sin\beta 
+x_r &= r\cos(\beta + \theta) \\
+    &= \color{green}{r\cos\beta \cos\theta} - \color{red}{r\sin\beta \sin\theta} \\
+    &=  (r\\cos\theta)\cos\beta - (r\sin\theta)\sin\beta \\
+    &= (x)\cos\beta - (y)\sin\beta 
 \end{align}
 $$
 
@@ -63,10 +63,10 @@ Similarly for $y_r$:
 
 $$ 
 \begin{align}
-y_r &= rsin(\beta + \theta) \\
-    &= \color{red}{rsin\beta cos\theta} + \color{green}{rcos\beta sin\theta} \\
-    &=  (r\cos\theta)sin\beta + (rsin\theta)cos\beta \\
-    &= (x)sin\beta + (y)cos\beta 
+y_r &= r\sin(\beta + \theta) \\
+    &= \color{red}{r\sin\beta \cos\theta} + \color{green}{r\cos\beta \sin\theta} \\
+    &=  (r\cos\theta)\sin\beta + (r\sin\theta)\cos\beta \\
+    &= (x)\sin\beta + (y)\cos\beta 
 \end{align}
 $$
 
@@ -79,8 +79,8 @@ $$
 \end{bmatrix}
 =
 \begin{bmatrix}
-    cos\beta & -sin\beta \\
-    sin\beta & \phantom{+}cos\beta 
+    \cos\beta & -\sin\beta \\
+    \sin\beta & \phantom{+}\cos\beta 
 \end{bmatrix}
 \begin{bmatrix}
     x \\
@@ -98,8 +98,8 @@ $$
 R(-\theta) = R^{-1} = R^T  
 =
 \begin{bmatrix}
-    \phantom{+}cos\beta & sin\beta \\
-    -sin\beta & cos\beta 
+    \phantom{+}\cos\beta & \sin\beta \\
+    -\sin\beta & \cos\beta 
 \end{bmatrix}
 $$
 
@@ -200,17 +200,17 @@ In general, a multiplication with a complex number rotates and scales a vector.
 To avoid scaling, we are limited to vectors which lie on the unit circle. 
 They can be parameterised with an angle $\theta$ as follows:
 
-$$z = cos(\theta) + isin(\theta)$$
+$$z = \cos(\theta) + i\sin(\theta)$$
 
 This gives an alternative to calculate rotations. 
 Here is proof that this is the same formula as the matrix formula above:
 
 $$ 
 \begin{align}
-    z (x + iy) &= ( cos(\beta) + isin(\beta)) (x + iy) \\
-                &= cos(\beta)(x + iy) + isin(\beta) (x + iy) \\
-                &= cos(\beta)(x + iy) + sin(\beta)(ix - y) \\
-                &= (cos(\beta)x - sin(\beta)y) + i(sin(\beta)x + cos(\beta)y) \\
+    z (x + iy) &= ( \cos(\beta) + i \sin(\beta)) (x + iy) \\
+                &= \cos(\beta)(x + iy) + i\sin(\beta) (x + iy) \\
+                &= \cos(\beta)(x + iy) + \sin(\beta)(ix - y) \\
+                &= (\cos(\beta)x - \sin(\beta)y) + i(\sin(\beta)x + \cos(\beta)y) \\
                 &= x_r + iy_r
 \end{align}
 $$
@@ -218,7 +218,7 @@ $$
 It is sufficient to stop here, but there is another more powerful formula for rotations with complex numbers.
 It is:
 
-$$ e^{i\theta} = cos(\theta) + isin(\theta) $$
+$$ e^{i\theta} = \cos(\theta) + i\sin(\theta) $$
 
 This surprising formula is known as Euler's formula.
 It is a very famous formula and there are many explanations for it.
@@ -233,9 +233,9 @@ Euler's number is a calculus constant, so it is natural that a proof can be prov
     <h5 class="card-title">Proof of Euler's formula</h5>
     <p class="card-text">
 		Consider a particle travelling along the path parameterised with time $t$ as
-        $$s = cos(t) + isin(t)$$
+        $$s = \cos(t) + i\sin(t)$$
         The object will move in a circle.
-        The velocity is $$\frac{ds}{dt} = -sin(t) + icos(t) = i(cos(t) + isin(t))=is $$
+        The velocity is $$\frac{ds}{dt} = -\sin(t) + i\cos(t) = i(\cos(t) + i\sin(t))=is $$
         It is a well known fact that the velocity of an object moving in a circle is at 90&deg; to the cirlce with an acceleration directed inwards to the centre.
         Now consider a path $$s=e^{it}$$
         The velocity is:
@@ -251,10 +251,10 @@ As a basic example, multiplying two complex numbers has the same affect as addin
 
 $$ 
 \begin{align}
-z_1 z_2 &= (r_1cos\theta + i r_1sin\theta)(r_2cos\beta + i r_2sin\beta) \\
+z_1 z_2 &= (r_1\cos\theta + i r_1\sin\theta)(r_2\cos\beta + i r_2\sin\beta) \\
         &= (r_1e^{i\theta})(r_2e^{i\beta}) \\
         &= r_1r_2e^{i(\theta + \beta)} \\
-        &= r_1r_2(cos(\theta + \beta) + i sin(\theta + \beta))
+        &= r_1r_2(\cos(\theta + \beta) + i \sin(\theta + \beta))
 \end{align}
 $$
 
@@ -263,9 +263,9 @@ A more complex relation is de Moivre's formula:
 
 $$ 
 \begin{align}
-(cos(\theta) + isin(\theta))^n &= (e^{i\theta})^n \\
+(\cos(\theta) + i\sin(\theta))^n &= (e^{i\theta})^n \\
                                &= e^{i(\theta n)} \\
-                               &= cos(n\theta) + isin(n\theta)
+                               &= \cos(n\theta) + i\sin(n\theta)
 \end{align}
 $$
 

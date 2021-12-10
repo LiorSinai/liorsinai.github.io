@@ -233,7 +233,7 @@ $$ q \cdot q = \| q \| ^2 = s^2 + x^2 + y^2 + z^2 $$
 In 2 or 3 dimensions the inner product can be directly related to the angle $\Omega$ between two vectors.
 We can simply extend this formula to quaternions even though we cannot visualise an angle between 4D vectors:
 
-$$ q_1 \cdot q_2 =  \| q_1 \|  \| q_2 \| cos\Omega $$
+$$ q_1 \cdot q_2 =  \| q_1 \|  \| q_2 \| \cos\Omega $$
 
 In [part 4][interpolation] this will be used to make a smooth function for interpolation.
 
@@ -286,21 +286,21 @@ For a unit quaternion, the inverse is $q^{-1} = q^{*}$.
 
 Using a normal vector $\hat{n}=n_xi + n_yj + n_zk$ with magnitude $ \| \hat{n} \| = 1$, the following unit quaternion can always be constructed:
 
-$$ q = cos(\theta) + \hat{n} sin(\theta) $$
+$$ q = \cos(\theta) + \hat{n} \sin(\theta) $$
 
 ### Exponential, logarithm, and power functions
 
 We can define an exponential-like function for unit quaternions similar to the complex number exponential, which will have similar properties:
 
-$$ e^{\hat{n}\theta} = cos(\theta) + \hat{n} sin(\theta) $$
+$$ e^{\hat{n}\theta} = \cos(\theta) + \hat{n} \sin(\theta) $$
 
 With an inverse logarithm-like function:
 
-$$ log(cos(\theta) + \hat{n} sin(\theta)) = log(e^{\hat{n}\theta}) = \hat{n}\theta $$
+$$ log(\cos(\theta) + \hat{n} \sin(\theta)) = log(e^{\hat{n}\theta}) = \hat{n}\theta $$
 
 We can then find a similar formula to de Moivre's formula:
 
-$$ q^t = (e^{\hat{n}\theta})^t = e^{\hat{n}\theta t} = cos(\theta t) + \hat{n} sin(\theta t) \; , \; \| q \| = 1 $$
+$$ q^t = (e^{\hat{n}\theta})^t = e^{\hat{n}\theta t} = \cos(\theta t) + \hat{n} \sin(\theta t) \; , \; \| q \| = 1 $$
 
 Please see this [Wikipedia][wiki_exp] article for formulas with non-unit quaternions.
 Please see [Quaternions, Interpolation and Animation by  Dam, Koch and Lillholm][Dam1998]
@@ -333,7 +333,7 @@ Here is a more formal proof. This is a nice proof because working through it giv
   <div class="card-body">
     <h5 class="card-title">Proof of rotation formula</h5>
     <p class="card-text">
-		Consider a vector $v=xi+yj+zk$ rotated by a quaternion $q = cos\theta + \hat{n}sin\theta$.
+		Consider a vector $v=xi+yj+zk$ rotated by a quaternion $q = \cos\theta + \hat{n}\sin\theta$.
 		The co-ordinate axes is arbitrary, so define a new axis in line with the normal axis $\hat{n}$
 		so that $k' = \hat{n}$. Then $v$ can be represented in these new co-ordinates as $v=x'i'+y'j'+z'k'$.
 		<p>
@@ -349,7 +349,7 @@ Here is a more formal proof. This is a nice proof because working through it giv
 			$$ 
 			\begin{align}
 			k' &= \hat{n} = n_x i + n_y  j + n_z k \\
-						&= cos(\beta) cos(\alpha) i + cos(\beta) sin(\alpha) j + \sin(\beta) k
+						&= \cos(\beta) \cos(\alpha) i + \cos(\beta) \sin(\alpha) j + \sin(\beta) k
 			\end{align}
 			$$
 			For the $i'$ axis we can choose any vector on the unit circle perpendicular to $k'$. 
@@ -358,11 +358,11 @@ Here is a more formal proof. This is a nice proof because working through it giv
 			$$ 
 			\begin{align}
 			i' \cdot k'  &= a n_x + b n_y + 0 \\
-			\therefore \; a &= -sin(\alpha) \;, \; b = cos(\alpha)
+			\therefore \; a &= -\sin(\alpha) \;, \; b = \cos(\alpha)
 			\end{align}
 			$$
 			Then using the definiton of a quaternion, $j'=k'i'$:
-			$$ j' = -sin(\beta)cos(\alpha)i - sin(\beta)sin(\alpha)j + cos(\beta)k$$
+			$$ j' = -\sin(\beta)\cos(\alpha)i - \sin(\beta)\sin(\alpha)j + \cos(\beta)k$$
 			As verfication, $i'j'=k'$. The transformation is then:
 			$$
 			\begin{bmatrix}
@@ -372,9 +372,9 @@ Here is a more formal proof. This is a nice proof because working through it giv
 			\end{bmatrix}
 			=
 			\begin{bmatrix}
-			-sin\alpha & cos\alpha & 0 \\
-			-sin\beta cos\alpha & -sin\beta sin\alpha & cos\beta \\
-			\phantom{+}cos\beta cos\alpha & \phantom{+}cos\beta sin\alpha & sin \beta
+			-\sin\alpha & \cos\alpha & 0 \\
+			-\sin\beta \cos\alpha & -\sin\beta \sin\alpha & \cos\beta \\
+			\phantom{+}\cos\beta \cos\alpha & \phantom{+}\cos\beta \sin\alpha & \sin \beta
 			\end{bmatrix}
 			\begin{bmatrix}
 			i \\
@@ -391,9 +391,9 @@ Here is a more formal proof. This is a nice proof because working through it giv
 			\end{bmatrix}
 			=
 			\begin{bmatrix}
-			-sin\alpha & -sin\beta cos\alpha & cos\beta cos\alpha \\
-			\phantom{+}cos\alpha  & -sin\beta sin\alpha & cos\beta sin\alpha  \\
-			0       & cos\beta           & sin \beta
+			-\sin\alpha & -\sin\beta \cos\alpha & \cos\beta \cos\alpha \\
+			\phantom{+}\cos\alpha  & -\sin\beta \sin\alpha & \cos\beta \sin\alpha  \\
+			0       & \cos\beta           & \sin \beta
 			\end{bmatrix}
 			\begin{bmatrix}
 			i' \\
@@ -405,12 +405,12 @@ Here is a more formal proof. This is a nice proof because working through it giv
 			$$
 			\begin{align}
 				v =& xi + yj + zk \\
-				=& x(-sin\alpha i' -sin\beta cos\alpha j' + cos\beta cos\alpha k' ) +\\
-				& y(cos\alpha  i' -sin\beta sin\alpha j' + cos\beta sin\alpha k')  + \\
-				& z(0 + cos\beta j' + sin \beta k') \\
-				=& (-xsin\alpha + ycos\alpha) i' + \\
-				& (-xsin\beta cos\alpha + ysin\beta sin\alpha + z cos\beta) j' + \\
-				& (+xcos\beta cos\alpha + y cos\beta sin\alpha + z sin\beta) k' \\
+				=& x(-\sin\alpha i' -\sin\beta \cos\alpha j' + \cos\beta \cos\alpha k' ) +\\
+				& y(\cos\alpha  i' -\sin\beta \sin\alpha j' + \cos\beta \sin\alpha k')  + \\
+				& z(0 + \cos\beta j' + \sin \beta k') \\
+				=& (-x\sin\alpha + y\cos\alpha) i' + \\
+				& (-x\sin\beta \cos\alpha + y\sin\beta \sin\alpha + z \cos\beta) j' + \\
+				& (+x\cos\beta \cos\alpha + y \cos\beta \sin\alpha + z \sin\beta) k' \\
 				=& x'i' + y'j' + z'k' 
 			\end{align}
 			$$
@@ -420,11 +420,11 @@ Here is a more formal proof. This is a nice proof because working through it giv
 		Therefore without loss of generalization, we consider only $\hat{n}=k$:
 		$$ 
 		\begin{align}
-			qvq^{*} =& (cos\theta + k\sin\theta)(xi+yj+zk)(cos\theta - k\sin\theta) \\
-					=& ((xcos\theta - y sin\theta)i + (xsin\theta + ycos\theta)j + zcos\theta k -zsin\theta)  (cos\theta - k\sin\theta) \\
-					=& -z cos\theta sin\theta + z cos\theta sin\theta + (x(cos^2\theta - sin^2\theta ) -2ysin\theta cos\theta) i +\\
-					 & (2xsin\theta cos\theta + y(cos^2\theta - sin^2\theta ) )j + z(cos^2\theta + sin^2\theta) k \\
-					=& 0 + (xcos2\theta - ysin2\theta)i + (xsin2\theta + ycos2\theta)j + zk		 
+			qvq^{*} =& (\cos\theta + k\sin\theta)(xi+yj+zk)(\cos\theta - k\sin\theta) \\
+					=& ((x\cos\theta - y \sin\theta)i + (x\sin\theta + y\cos\theta)j + z\cos\theta k -z\sin\theta)  (\cos\theta - k\sin\theta) \\
+					=& -z \cos\theta \sin\theta + z \cos\theta \sin\theta + (x(\cos^2\theta - \sin^2\theta ) -2y\sin\theta \cos\theta) i +\\
+					 & (2x\sin\theta \cos\theta + y(\cos^2\theta - \sin^2\theta ) )j + z(\cos^2\theta + \sin^2\theta) k \\
+					=& 0 + (x\cos2\theta - y\sin2\theta)i + (x\sin2\theta + y\cos2\theta)j + zk		 
 		\end{align}
 		$$
 		This formula should be recognisable from <a href="/mathematics/2021/11/28/quaternion-2-2d">part 2</a>. It is the vector $v$ rotated by the angle $2\theta$ about the axis $\hat{n} =k$. Note that $z$ which is parallel to $k$ is unchanged.
@@ -435,7 +435,7 @@ Here is a more formal proof. This is a nice proof because working through it giv
 
 Because the vector is rotated by twice the angle, $q$ is usually chosen to rotate half an angle, so that $qvq^{*}$ rotates one angle:
 
-$$ q= cos(\tfrac{\theta}{2}) + \hat{n}sin(\tfrac{\theta}{2})$$
+$$ q= \cos(\tfrac{\theta}{2}) + \hat{n}\sin(\tfrac{\theta}{2})$$
 
 ## Conclusion
 

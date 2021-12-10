@@ -109,7 +109,7 @@ In other words, the animation will appear to go faster in the middle than at the
 In 2D the angle $\Omega$ between two unit vectors $z_0$ and $z_1$ is linearly interpolated with $t\Omega$.  
 A simple formula for $z_t$ is:
 
-$$ z_t = z_0 (cos(t\Omega  ) + i sin(t\Omega )) = cos(\theta_0 + t\Omega ) +  sin(\theta_0 + t\Omega ) i $$
+$$ z_t = z_0 (\cos(t\Omega  ) + i \sin(t\Omega )) = \cos(\theta_0 + t\Omega ) +  \sin(\theta_0 + t\Omega ) i $$
 
 The angular velocity will have a constant magnitude of $\Omega $ rad/s.
 
@@ -129,8 +129,8 @@ From the diagram:
 
 $$ 
 \begin{align}
-\vec{v}_1 &= \color{red}{cos\Omega \vec{v}_0 + sin\Omega \vec{v}_{\perp}} \\
-\therefore \vec{v}_{\perp} &= \frac{1}{sin\Omega} (\vec{v}_1 - cos\Omega \vec{v}_0)
+\vec{v}_1 &= \color{red}{\cos\Omega \vec{v}_0 + \sin\Omega \vec{v}_{\perp}} \\
+\therefore \vec{v}_{\perp} &= \frac{1}{\sin\Omega} (\vec{v}_1 - \cos\Omega \vec{v}_0)
 \end{align}
 $$
 
@@ -138,10 +138,10 @@ Substitute in the expression for $\vec{v}_t$:
 
  $$ 
 \begin{align}
-\vec{v}_t &= \color{green}{cos (t \Omega )\vec{v}_0 + sin (t\Omega ) \vec{v}_{\perp}} \\
-          &= cos (t \Omega )\vec{v}_0 + \frac{ sin (t\Omega )}{sin\Omega}(\vec{v}_1 - cos\Omega \vec{v}_0) \\
-		  &= \frac{ 1 }{sin\Omega}((cos (t \Omega )sin\Omega  -sin (t\Omega )cos\Omega )\vec{v}_0 + sin (t\Omega ) \vec{v}_1 )\\
-		  &= \frac{ 1 }{sin\Omega}(sin(\Omega -t\Omega)\vec{v}_0 + sin (t\Omega ) \vec{v}_1 )
+\vec{v}_t &= \color{green}{\cos (t \Omega )\vec{v}_0 + \sin (t\Omega ) \vec{v}_{\perp}} \\
+          &= \cos (t \Omega )\vec{v}_0 + \frac{ \sin (t\Omega )}{\sin\Omega}(\vec{v}_1 - \cos\Omega \vec{v}_0) \\
+		  &= \frac{ 1 }{\sin\Omega}((\cos (t \Omega )\sin\Omega  -\sin (t\Omega )\cos\Omega )\vec{v}_0 + \sin (t\Omega ) \vec{v}_1 )\\
+		  &= \frac{ 1 }{\sin\Omega}(\sin(\Omega -t\Omega)\vec{v}_0 + \sin (t\Omega ) \vec{v}_1 )
 \end{align}
 $$
 
@@ -149,8 +149,8 @@ To convert this formula to 3D, replace the vectors with quaternions. That is all
 
 $$ 
 \begin{align}
-\text{slerp}(q_0, q_1, t) &= \frac{ 1 }{sin\Omega}(sin(\Omega -t\Omega)q_0 + sin (t\Omega ) q_1 ) \\
-cos\Omega &= q_0 \cdot q_1 = s_0s_1 + x_0x_1 + y_0y_1 + z_0z_1
+\text{slerp}(q_0, q_1, t) &= \frac{ 1 }{\sin\Omega}(\sin(\Omega -t\Omega)q_0 + \sin (t\Omega ) q_1 ) \\
+\cos\Omega &= q_0 \cdot q_1 = s_0s_1 + x_0x_1 + y_0y_1 + z_0z_1
 \end{align}
 $$
 
@@ -189,13 +189,13 @@ $$ \text{slerp}(q_0, q_1, t) = q_0 (q_0^{-1} q_1)^t = q_0 (q_0^{*} q_1)^t $$
 		$$
 		\begin{align}
 			\text{slerp}(q_0, q_1, t) &=  q_0 (q_0^{*} q_1)^t \\
-				&= (cos\theta_0 + sin\theta_0 \hat{n}_0)((cos\theta_0 - sin\theta_0 \hat{n}_0)(cos\theta_1 + sin\theta_1 \hat{n}_1))^t \\
-				&= (cos\theta_0 + sin\theta_0 \hat{n}_0)(cos\Omega + v \: sin\Omega )^t \\
-				&= (cos\theta_0 + sin\theta_0 \hat{n}_0)(cos(t\Omega) + v \: sin(t\Omega))
+				&= (\cos\theta_0 + \sin\theta_0 \hat{n}_0)((\cos\theta_0 - \sin\theta_0 \hat{n}_0)(\cos\theta_1 + \sin\theta_1 \hat{n}_1))^t \\
+				&= (\cos\theta_0 + \sin\theta_0 \hat{n}_0)(\cos\Omega + v \: \sin\Omega )^t \\
+				&= (\cos\theta_0 + \sin\theta_0 \hat{n}_0)(\cos(t\Omega) + v \: \sin(t\Omega))
 		\end{align}
 		$$
 		where:
-		$$ v \: sin\Omega  = cos\theta_0 sin\theta_1 \hat{n}_1 - cos\theta_1 sin\theta_0 \hat{n}_0 - sin\theta_0 sin\theta_1 \hat{n}_0 \times \hat{n}_1 $$
+		$$ v \: \sin\Omega  = \cos\theta_0 \sin\theta_1 \hat{n}_1 - \cos\theta_1 \sin\theta_0 \hat{n}_0 - \sin\theta_0 \sin\theta_1 \hat{n}_0 \times \hat{n}_1 $$
 		Substitute in for $v$ and simplify. The end result will be the other slerp formula.
   </div>
 </div>
