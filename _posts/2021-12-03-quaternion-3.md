@@ -122,7 +122,7 @@ But on 16 October 1843, as he was walking past a canal in Dublin, Hamilton had t
 Three independent axes and a fourth to describe the size of the scaling.
 Overcome with euphoria, Hamilton carved the fundamental equation $ijk=-1$ into the Broom bridge (also called Brougham Bridge). The engraving faded but a plaque has been put in its place.
 
-[Voight2021]: https://link.springer.com/book/10.1007/978-3-030-56694-4
+For a version of this in Hamilton's own words, see this letter to he wrote to John T. Graves the following day: [www.maths.tcd.ie/pub/HistMath/People/Hamilton/QLetter/QLetter.pdf](https://www.maths.tcd.ie/pub/HistMath/People/Hamilton/QLetter/QLetter.pdf). 
 
 Here is a definition of these quaternions:
 
@@ -167,7 +167,7 @@ I like to use the following mnemonic to remember the rules:
 <figcaption></figcaption>
 </figure>
 
-Going anti-clockwise with the arrows results in postive products, such as $ jk = i$, but going clockwise against the arrows results in negative products, like $kj = -i$.
+Going anti-clockwise with the arrows results in positive products, such as $ jk = i$, but going clockwise against the arrows results in negative products, like $kj = -i$.
 
 Unlike complex numbers, $i^2=j^2=k^2=-1$ has no direct interpretation because these numbers lie in the fourth dimension.[^irony]
 
@@ -206,8 +206,10 @@ $$
 			   &  y_1j (s_2 + x_2i+y_2j + z_2k) + z_1k (s_2 + x_2i+y_2j + z_2k)  \\
 			  =&  s_1s_2 + s_1x_2i+s_1y_2j + s_1z_2k + x_1s_2i - x_1x_2 + x_1y_2 k - x_1z_2j + \\
 			   &  y_1s_2j - y_1x_2k - y_1y_2 + y_1z_2 i + z_1s_2k + z_1x_2j - z_1y_2i - z_1z_2 \\ 
-			  =&  (s_1s_2 - x_1x_2 - y_1y_2 - z_1z_2 ) + (s_1x_2 + x_1s_2 + y_1x_z - z_1y_2 )i + \\
-			   &  (s_1y_2 - x_1z_2 + y_1s_2 + z_1x_2 )j + (s_1z_2 + x_1y_2 - y_1x_2 + z_1s_2 )k
+			  =&  (s_1s_2 - x_1x_2 - y_1y_2 - z_1z_2 ) + \\
+			   &  (s_1x_2 + x_1s_2 + y_1x_z - z_1y_2 )i + \\
+			   &  (s_1y_2 - x_1z_2 + y_1s_2 + z_1x_2 )j + \\
+			   & (s_1z_2 + x_1y_2 - y_1x_2 + z_1s_2 )k
 \end{align}
 $$
 
@@ -218,6 +220,21 @@ This was done in the [code][Quaternion.js] for the quaternion in [part 1][part1]
 
 [part1]:  {{ "mathematics/2021/11/05/quaternion-1-intro#2-an-axis-and-an-angle" | relative_url }}
 [Quaternion.js]: {{ "assets/posts/quaternions/Quaternion.js" | relative_url }}
+
+Quaternion multiplication does indeed preserve length:
+
+$$ \| q_1 \|^2 \| q_2 \|^2 = \| q_1 q_2 \| ^2 $$
+
+Where the magnitude of a quaternion is: 
+
+$$ \| q \|^2 = s^2 + x^2 + y^2 + z^2 $$
+
+When Hamilton verified this property, he knew his theory of quaternions was correct.
+It turns out though that he had only rediscovered [Euler's four-square identity][4squareIdentity],
+which Euler had proved almost 100 years prior. 
+
+[4squareIdentity]: https://en.wikipedia.org/wiki/Euler%27s_four-square_identity
+
 
 ### Inner product
 
@@ -248,7 +265,7 @@ $$ q^{*} = (s + xi + yj + zk)^{*} = s - xi - yj - zk $$
 
 The conjugate can be used to calculate the magnitude of a quaternion:
 
-$$ \| q \| ^2 = q q^{*} = s^2 + x^2 + y^2 + z^2 $$
+$$  q q^{*} = \| q \| ^2 = s^2 + x^2 + y^2 + z^2 $$
 
 ### Inverse and division
 
@@ -280,8 +297,6 @@ However we can get a feel of it through values:
 |$ 0.1 + 0.1i + 0.1j + 0.1k $ | $0.5 + 0.5i + 0.5j + 0.5k  $  | $0.9 + 0.9i + 0.9j +0.9k$|
 |$ 0.1 + 0.2i + 0.3j + 0.4k$| $0.4 + 0.5i + 0.6j+\sqrt{0.23}k$| $0.5 + 0.6i + 0.7j +0.8k$|
 
-
-
 For a unit quaternion, the inverse is $q^{-1} = q^{*}$.
 
 Using a normal vector $\hat{n}=n_xi + n_yj + n_zk$ with magnitude $ \| \hat{n} \| = 1$, the following unit quaternion can always be constructed:
@@ -296,11 +311,15 @@ $$ e^{\hat{n}\theta} = \cos(\theta) + \hat{n} \sin(\theta) $$
 
 With an inverse logarithm-like function:
 
-$$ log(\cos(\theta) + \hat{n} \sin(\theta)) = log(e^{\hat{n}\theta}) = \hat{n}\theta $$
+$$ \log(q) = \log(\cos(\theta) + \hat{n} \sin(\theta)) = \log(e^{\hat{n}\theta}) = \hat{n}\theta $$
+
+The general exponentiation formula is defined based on these:
+
+$$ q^t = e^{t \log q} $$
 
 We can then find a similar formula to de Moivre's formula:
 
-$$ q^t = (e^{\hat{n}\theta})^t = e^{\hat{n}\theta t} = \cos(\theta t) + \hat{n} \sin(\theta t) \; , \; \| q \| = 1 $$
+$$ q^t = (e^{t (\hat{n}\theta)}) = (e^{\hat{n}(t\theta)}) = \cos(\theta t) + \hat{n} \sin(\theta t) \; , \; \| q \| = 1 $$
 
 Please see this [Wikipedia][wiki_exp] article for formulas with non-unit quaternions.
 Please see [Quaternions, Interpolation and Animation by  Dam, Koch and Lillholm][Dam1998]
@@ -445,11 +464,15 @@ There is enough detail here to write a fully functioning quaternion implementati
 Most of these functions can be found in the [code][Quaternion.js] for the graph in [part 1][part1].
 The next and last section focuses on using interpolations for animations with quaternions.
 
-For the curious minded, the algebraic group that includes the real numbers, complex numbers and quaternions includes one another number system: the octonions. 
+For the curious minded, the algebraic group that includes the real numbers, complex numbers and quaternions has many more relatives.[^correction]
+They are made with the [Cayley-Dickson construction][CayleyDickson].
+The next algebra in the group are the octonions.
 These have eight basis units, made of one real part and seven imaginary parts. 
 They are non-cummutative ($ab \neq ba $) and non-associative ($(ab)c \neq a(bc)$). 
-It has been proven that no other consistent algebras of this type can be constructed.
-For more detail, a good starting point is the Wikipedia page: [Octonions](https://en.wikipedia.org/wiki/Octonion).
+For more detail, a good starting point is the Wikipedia page: [Octonions](https://en.wikipedia.org/wiki/Octonion). 
+It is an open question whether any of these higher order algebras like octonions have a physical connection with reality.
+
+[CayleyDickson]: https://en.wikipedia.org/wiki/Cayley%E2%80%93Dickson_construction
 
 ---
 
@@ -458,3 +481,7 @@ For more detail, a good starting point is the Wikipedia page: [Octonions](https:
 [^3squares]: A solution can be constructed if we allow non-integers, for example $4^2 + 6^2 + \sqrt{8}^2 = 60$. However then the solution is not closed under addition and multiplication (because we have use a square root), which hinders efforts to make a consistent algebra.
 
 [^irony]: An irony of quaternions is that the real part is in the 4th dimension and is therefore more "imaginary" than the three imaginary parts $i$, $j$ and $k$.
+
+[^correction]: Correction: an earlier version of this post claimed that this family only consists of four algebras: the reals, the complex numbers, the quaternions and the octonions. However this discussion on [HackerNews][HackerNews] pointed out that was wrong, as the Cayley–Dickson construction can be applied arbitrarily many times. 
+
+[HackerNews]: https://news.ycombinator.com/item?id=29510237

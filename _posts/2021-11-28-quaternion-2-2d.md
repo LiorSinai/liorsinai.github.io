@@ -236,7 +236,7 @@ Euler's number is a calculus constant, so it is natural that a proof can be prov
         $$s = \cos(t) + i\sin(t)$$
         The object will move in a circle.
         The velocity is $$\frac{ds}{dt} = -\sin(t) + i\cos(t) = i(\cos(t) + i\sin(t))=is $$
-        It is a well known fact that the velocity of an object moving in a circle is at 90&deg; to the cirlce with an acceleration directed inwards to the centre.
+        It is a well known fact that the velocity of an object moving in a circle is at 90&deg; to the circle with an acceleration directed inwards to the centre.
         Now consider a path $$s=e^{it}$$
         The velocity is:
         $$\frac{ds}{dt} = ie^{it} = is$$
@@ -247,7 +247,7 @@ Euler's number is a calculus constant, so it is natural that a proof can be prov
 
 This formula allows us to prove identities using the properties of exponentials.
 
-As a basic example, multiplying two complex numbers has the same affect as adding their rotation angles and multiplying their magnitudes:
+As a basic example, multiplying two complex numbers has the same effect as adding their rotation angles and multiplying their magnitudes:
 
 $$ 
 \begin{align}
@@ -271,7 +271,7 @@ $$
 
 Finally, the inverse of this exponential function can be defined as:
 
-$$ log(re^{i\theta}) = log(r) + i\theta log(e) = log(r) + i\theta $$
+$$ \log(re^{i\theta}) = \log(r) + i\theta \log(e) = \log(r) + i\theta $$
 
 
 ## Conclusion

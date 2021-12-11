@@ -9,6 +9,10 @@ tags: mathematics quaternions unity rotation 3d
 
 _Introduction to quaternions and rotations in 3D._ 
 
+_Upadate 11 December 2021: This post was featured on HackerNews and briefly hold the top spot. Please see this [link][HackerNews] for the full discussion. Minor modifications have been done based on the comments._
+
+[HackerNews]: https://news.ycombinator.com/item?id=29510237
+
 
 <script src="https://cdn.plot.ly/plotly-gl3d-2.5.1.min.js"> </script>
 <link rel="stylesheet" href="/assets/posts/quaternions/style.css">

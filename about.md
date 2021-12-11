@@ -11,10 +11,11 @@ Hi. Welcome to my blog. I'm an engineer from South Africa and I'm curious about 
 My hobbies include reading, long distance running, and complex origami (all the origami on this site is folded by me).
 I also occasionally work on my own engineering projects. My favourite place to be is in the middle of the bushveld.
 
-I currently work as a software engineer. Previously I completed a masters in systems and control engineering at the [University of Twente](https://www.utwente.nl/en)
+I work as a software engineer. Previously I completed a masters in systems and control engineering at the [University of Twente](https://www.utwente.nl/en)
 in the Netherlands. I also hold a bachelors in mechanical engineering from the [University of the Witwatersrand](https://www.wits.ac.za/) in South Africa.
-In between my bachelors and masters, I worked for the national telecommunications company of South Africa, Telkom.
+In between my bachelors and masters I worked in telecommunications.
 
+The subject matter of my posts is coding and mathematics, and occasionally  physics.
 For a current list of posts, see [here]({{ "/posts" | relative_url }}). 
 Here is a list of possible future posts:
 + **Electromagnetic waves and the internet**: working in telecommunications taught me much about the infrastructure behind the internet. I'd like to explain that here. 
