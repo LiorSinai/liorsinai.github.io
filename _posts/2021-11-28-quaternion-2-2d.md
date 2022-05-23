@@ -139,7 +139,7 @@ Which has a root at:
 
 $$ x= \sqrt[3]{2 + \sqrt{-121}} + \sqrt[3]{2 - \sqrt{-121}} = 4$$
 
-Cubic euqations were solved with a geometric meaning in mind, and in terms of geometry, the "square root of -1" has no meaning, because no square can have negative lengths. 
+Cubic equations were solved with a geometric meaning in mind, and in terms of geometry, the "square root of -1" has no meaning, because no square can have negative lengths. 
 But in terms of spatial geometry, negative values have the valid interpretation as the "opposite direction"
 and the imaginary number $i$ has the interpretation as a value orthogonal to the original direction.
 They are no more imaginary than north is to east or left is to forward.
