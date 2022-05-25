@@ -25,21 +25,17 @@ layout: default
   {% if page.background-caption %} <p class="caption"> {{ page.background-caption }} </p> {% endif %}
   </header>
 
-
   <div class="container">
     <div class="row">
       <div class="col-lg-9 col-md-10 mx-auto">
-
         {{ content }}
-
         <!-- Home Post List -->
         <!-- One page edge case
-		{% for post in site.posts limit : 5 %}  
-		article tag here
-		{% endfor %} -->
-
-		{% for post in paginator.posts %}
-		<article class="post-preview">
+        {% for post in site.posts limit : 5 %}  
+        article tag here
+        {% endfor %} -->
+        {% for post in paginator.posts %}
+        <article class="post-preview">
           <a href="{{ post.url | prepend: site.baseurl | replace: '//', '/' }}">
             <h2 class="post-title">{{ post.title }}</h2>
             {% if post.subtitle %}
@@ -47,38 +43,31 @@ layout: default
             {% else %}
             <p class="post-subtitle">{{ post.excerpt | strip_html | truncatewords: 40}}</p>
             {% endif %}
-		</a>
+          </a>
           <p class="post-meta">
-            {{ post.date | date: '%d %B, %Y' }}  &middot; {{ post.content| number_of_words }} words <!-- {% include read_time.html content=post.content %}  -->       
+            {{ post.date | date: '%d %B, %Y' }}  &middot; {{ post.content | strip_html | number_of_words }} words 
           </p>
         </article> 
-		{% endfor %}
-		
-		
-
+        {% endfor %}
         <!-- Pager
         <div class="clearfix">
           <a class="btn btn-primary float-right" href="{{"/posts" | relative_url }}">View All Posts &rarr;</a>
         </div>  -->
-		<!-- Pager -->
-		{% if paginator.total_pages > 1 %}
-
-		<div class="clearfix">
-
-		  {% if paginator.previous_page %}
-		  <a class="btn btn-primary float-left" href="{{ paginator.previous_page_path | prepend: site.baseurl | replace: '//', '/' }}">&larr;
-			Newer<span class="d-none d-md-inline"> Posts</span></a>
-		  {% endif %}
-
-		  {% if paginator.next_page %}
-		  <a class="btn btn-primary float-right" href="{{ paginator.next_page_path | prepend: site.baseurl | replace: '//', '/' }}">Older<span class="d-none d-md-inline"> Posts</span> &rarr;</a>
-		  {% endif %}
-
-		</div>
-
-		{% endif %}
-
-
+        <!-- Pager -->
+        {% if paginator.total_pages > 1 %}
+        <div class="clearfix">
+          {% if paginator.previous_page %}
+          <a class="btn btn-primary float-left" href="{{ paginator.previous_page_path | prepend: site.baseurl | replace: '//', '/' }}">&larr;
+          Newer<span class="d-none d-md-inline"> Posts</span>
+          </a>
+          {% endif %}
+          {% if paginator.next_page %}
+          <a class="btn btn-primary float-right" href="{{ paginator.next_page_path | prepend: site.baseurl | replace: '//', '/' }}">
+            Older<span class="d-none d-md-inline"> Posts</span> &rarr;
+          </a>
+          {% endif %}
+        </div>
+        {% endif %}
       </div>
     </div>
   </div>
