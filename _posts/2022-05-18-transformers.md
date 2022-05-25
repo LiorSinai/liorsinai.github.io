@@ -10,7 +10,9 @@ tags: mathematics transformers 'machine learning' 'deep learning'
 ---
 
 _Building a transformer in Julia. This a very long post on the full process behind making a transformer work in Julia._ 
-    
+
+<link rel="stylesheet" href="/assets/posts/transformers/style.css">
+
 ### Table of Contents
 <nav>
     <ol>
@@ -36,6 +38,10 @@ _Building a transformer in Julia. This a very long post on the full process behi
             </ul>
         </li>
         <li><a href="#use-case-amazon-reviews">Use case: Amazon reviews</a></li>
+            <ul>
+                <li><a href="#pipeline">Pipeline</a></li>
+                <li><a href="#evaluation">Evaluation</a></li>
+            </ul>
         <li><a href="#conclusion">Conclusion </a></li>
     </ol>
 </nav>
@@ -288,8 +294,14 @@ $$
     A = \text{softmax}\left(\frac{1}{\sqrt{d_h}}K^T Q\right)V
 $$
 
-For both the encoder and decoder $K$ and $Q$ are calculated as the outputs of dense layers with the embedding matrix $X$.
-Substituting it into $K^TQ$ and ignoring the bias we get:
+Where $\text{softmax}$ is the function:
+
+$$
+    \text{softmax}(z_i) = \frac{e^{z_i}}{\sum^N_r e^{z_r}}
+$$
+
+This is essentially a dot product of every column vector of the embedding matrix with some scaling.
+To see this more clearly, substitute the equations for $K$ and $Q$ into $K^TQ$ and ignore the bias:
 
 $$
     K^T Q = (W_KX)(W_QX)^T = W_K XX^T W_Q^T
@@ -297,12 +309,12 @@ $$
 
 [CosineSimilarity]: https://www.machinelearningplus.com/nlp/cosine-similarity/
 
-I hope this is recognisable as a dot product/inner product. 
+I hope the $XX^T$ is recognisable as a dot product/inner product. 
 The Google authors call it a different name, attention, and it is apparently all you need. 
 It is very closely related to an older machine learning technique called [cosine similarity][CosineSimilarity].
 
 Every word is multiplied with the embeddings of every other word, resulting in a small $N \times N$ matrix.
-The hope is the output looks something like:
+The hope is that the output looks something like:
 <figure class="post-figure">
 <img 
     src="/assets/posts/transformers/attention.png"
@@ -311,6 +323,7 @@ The hope is the output looks something like:
 <figcaption></figcaption>
 </figure>
 Reading down the columns we have an approximate weighting of how much every word thinks every other word is important.
+Or in the paper's terms, how much each word is paying attention to every other word.
 Here "camera" thinks "great" is the most important word in the sentence.
 Because of the weights this matrix is not symmetrical.
 So "great" actually places less importance on "camera" than "camera" places on it.
@@ -627,25 +640,6 @@ $$
 
 Plotted here on the left is a heatmap of the resultant matrix 
 and on the right are the sine waves used for the odd numbered rows:
-<style>
-    .slider {
-    position: relative;
-    width: 70%;
-    margin-left: auto;
-    }
-    .sliderValue{
-    position:relative;
-    display:inline;
-    margin: 0.5em;
-    }
-    .sliderText{
-    position:relative;
-    display:inline;
-    }
-    .graph{
-        width:100%
-    }
-</style>
 <div style="display:flex;max-width:95%">
     <img style="width:55%"
         src="/assets/posts/transformers/position_encodings.png"
@@ -679,7 +673,7 @@ Each column has a unique pattern so the encoding does accomplishes its task.
 To understand why, lets focus on the first row with $i=0$. 
 This sine wave has a wavelength of $2\pi \approx 6.28$ and we sample it every $1$ timestep so it repeats every 6 blocks.
 This leads to the 6 alternating colours in the top row: 3 light, then 3 dark, then repeat. 
-So this sine wave can only distinguish between sequences of lenght 6 or next.
+So this sine wave can only distinguish between sequences of length 6 or next.
 Now let's move on to $i=1$. This sine wave has a period of $2\pi(10^4)^{1/32} \approx 11.17$ so it repeats approximately every 11 blocks in the 3rd row. 
 We can now distinguish between sequences of up to length 11 and we can use the first row for greater precision.
 As we add sine waves, we can distinguish between sequences of longer wave lengths.
@@ -776,8 +770,7 @@ function mul2d(A<:AbstractMatrix, B<:AbstractMatrix)
 end
 {% endhighlight %}
  
-Of course many programming languages already have this function built in. 
-They have highly optimised this simple function. 
+Of course many programming languages already have this function built in and have highly optimised it. 
 We can do a quick time test:
 {%highlight julia %}
     A = randn(100, 100);
@@ -1014,6 +1007,7 @@ These terms are kind of archaic.
 They refer to a database model where the user makes a query (text in a search box), this is mapped to keys (video titles) 
 and a value is returned (video). 
 Or for a more direct programming metaphor: a hashmap where the query is hashed to a key to retrieve a value.
+
 But the names aren't so important. 
 Here we will be using the input matrix as the query, key and value. 
 They are each calculated using the dense matrices we stored in the struct:
@@ -1058,7 +1052,7 @@ Then we calculate the scaled dot attention for each head, combine results, and p
 end
 {% endhighlight %}
 
-Using the `batched_mul` function from the previous section it is now straightforward to calculate attention:[^permutedims]
+Using the `batched_mul` function from the previous section it is straightforward to calculate attention:[^permutedims]
 {% highlight julia %}
 function scaled_dot_attention(query::A1, key::A2, value::A3) where {
     T, A1 <: AbstractArray{T, 4}, A2 <: AbstractArray{T, 4}, A3 <: AbstractArray{T, 4}}
@@ -1372,12 +1366,245 @@ model = TransformersLite.TransformerClassifier(
 {% endhighlight %}
 
 Finally, we have a working transformer!
+
 ## Use case: Amazon Reviews 
+### Pipeline
+
+Here is a pipeline for training a model, from tokenizing the input to saving the output data.
+This pipeline implements a rudimentary development workflow with:
+- an output directory named after the date-time in "yyyymmdd-HHMM" format.
+- training history saved in JSON format.
+- hyperparameters that are used to control flow and are saved in JSON format.
+
+This includes a file I wrote called [training.jl](https://github.com/LiorSinai/TransformersLite.jl/blob/32dbf5910223d18ab30f5c22b5e8a6afce840bdd/examples/training.jl#L1). 
+It defines the following functions: `split_validation`, `accuracy`, `batch_matrix`, `batched_metric`, and `train!`.
+Please download or copy these functions to follow along.
+The `train!` function is based off `Flux.train!` except it returns a history and uses the batch functions.
+These reduce the maximum memory requirement at any one time. 
+In practice I found this made the process faster even though the total memory consumed throughout is about the same.
+
+The embedding dimension `dim_embedding` should be at least 8 for the Amazon Review task.
+You might want to change `nhead` to 1 if you do use this value.
+With a vocabulary of 6,000 words this results in a model with around 54,000 parameters.
+It takes about 10 minutes to train on an Intel i7 CPU with 1.80 GHz processing power and 8GB of RAM.
+Otherwise the default is an embedding dimension of 32 and 4 heads, which results in about 250,000 parameters.
+This takes about 30 minutes to train.
+Results between the smaller and bigger models were almost identical, except the bigger model converged slightly faster.
+
+Initialization:
+{% highlight julia %}
+using DataFrames
+using Arrow
+using Printf
+using BSON, JSON
+using Flux
+using Unicode
+using Dates
+
+using TokenizersLite
+using TransformersLite
+
+include("training.jl")
+
+path = "path\\to\\amazon_reviews_multi\\en\\1.0.0\\"
+filename = "amazon_reviews_multi-train.arrow"
+
+checksum = readdir(path)[1]
+filepath = joinpath(path, checksum, filename)
+
+df = DataFrame(Arrow.Table(filepath))
+display(df)
+
+hyperparameters = Dict(
+    "seed" => 2718,
+    "tokenizer" => "none",
+    "nlabels" => 5,
+    "model" => "TransformerClassifier",
+    "pdrop" => 0.1,
+    "dim_embedding" => 32
+)
+nlabels = hyperparameters["nlabels"]
+{% endhighlight %}
+
+Tokenizers:
+{% highlight julia %}
+if hyperparameters["tokenizer"] == "bpe"
+    directory = "vocab\\bpe"
+    path_rules = joinpath(directory, "amazon_reviews_train_en_rules.txt")
+    path_vocab = joinpath(directory, "amazon_reviews_train_en_vocab.txt")
+    tokenizer = load_bpe(path_rules, startsym="⋅")
+elseif hyperparameters["tokenizer"] == "affixes"
+    directory = "vocab\\affixes"
+    path_vocab = joinpath(directory, "amazon_reviews_train_en_vocab.txt")
+    tokenizer = load_affix_tokenizer(path_vocab)
+elseif hyperparameters["tokenizer"] == "none"
+    path_vocab = joinpath("vocab", "amazon_reviews_train_en.txt")
+    tokenizer = identity
+end
+vocab = load_vocab(path_vocab)
+indexer = IndexTokenizer(vocab, "[UNK]")
+display(tokenizer)
+display(indexer)
+{% endhighlight %}
+
+Tokens pipeline:
+{% highlight julia %}
+function clean(s::AbstractString)
+    s = lowercase(s)
+    s = Unicode.normalize(s, :NFD)
+    s = replace(s, r"['`’\u200d\p{M}]" => "") # contractions, zero width joiner and marks from normalization
+    s = replace(s, r"\n" => " ")
+end
+
+function preprocess(document, tokenizer; pattern = r"[A-Za-z][A-Za-z]+\b", max_length::Union{Nothing, Int}=nothing)
+    document = clean(document)
+    words = map(m->string(m.match), eachmatch(pattern, document))
+    tokens = tokenizer(words)
+    if !isnothing(max_length)
+        if length(tokens) > max_length
+            tokens = tokens[1:max_length]
+        end
+    end
+    tokens
+end
+
+documents = df[!, :review_body]
+labels = df[!, :stars]
+max_length = 50
+@time tokens = map(d->preprocess(d, tokenizer, max_length=max_length), documents) 
+@time indices = indexer(tokens) 
+
+y_train = copy(labels)
+if nlabels == 1
+    y_train[labels .≤ 2] .= 0
+    y_train[labels .≥ 4] .= 1
+    idxs = labels .!= 3
+    y_train = reshape(y_train, 1, :)
+else
+    idxs = Base.OneTo(length(labels))
+    y_train = Flux.onehotbatch(y_train, 1:nlabels)
+end
+
+X_train, y_train = indices[:, idxs], y_train[:, idxs];
+train_data, val_data = split_validation(X_train, y_train; rng=MersenneTwister(hyperparameters["seed"]))
+
+println("train samples:      ", size(train_data[1]), " ", size(train_data[2]))
+println("validation samples: ", size(val_data[1]), " ", size(val_data[2]))
+{% endhighlight %}
+
+Model:
+{% highlight julia %}
+dim_embedding = hyperparameters["dim_embedding"]
+pdrop = hyperparameters["pdrop"]
+model = TransformersLite.TransformerClassifier(
+    Embed(dim_embedding, length(indexer)), 
+    PositionEncoding(dim_embedding), 
+    Dropout(pdrop),
+    TransformerEncoderBlock[TransformerEncoderBlock(4, dim_embedding, dim_embedding * 4; pdrop=pdrop)],
+    Dense(dim_embedding, 1), 
+    FlattenLayer(),
+    Dense(max_length, nlabels)
+    )
+display(model)
+hyperparameters["trainable parameters"] = sum(length, Flux.params(model));
+{% endhighlight %}
+
+Training:
+{% highlight julia %}
+if nlabels == 1
+    loss(x, y) = Flux.logitbinarycrossentropy(model(x), y)
+else
+    loss(x, y) = Flux.logitcrossentropy(model(x), y)
+end
+loss(x::Tuple) = loss(x[1], x[2])
+
+opt = ADAM()
+
+val_acc = batched_metric(accuracy, val_data[1], val_data[2]; g=model)
+val_loss = batched_metric(loss, val_data[1], val_data[2])
+
+@printf "val_acc=%.4f ; " val_acc * 100
+@printf "val_loss=%.4f \n" val_loss
+
+start_time = time_ns()
+history = train!(loss, Flux.params(model), train_data, opt, val_data; n_epochs=10, batch_size=128)
+end_time = time_ns() - start_time
+println("done training")
+@printf "time taken: %.2fs\n" end_time/1e9
+{% endhighlight %}
+
+Save:
+{% highlight julia %}
+directory = "outputs\\" * Dates.format(now(), "yyyymmdd_HHMM")
+mkdir(directory)
+
+output_path = joinpath(directory, "model.bson")
+history_path = joinpath(directory, "history.json")
+hyperparameter_path = joinpath(directory, "hyperparameters.json")
+
+BSON.@save output_path model
+
+open(history_path,"w") do f
+  JSON.print(f, history)
+end
+
+open(hyperparameter_path, "w") do f
+    JSON.print(f, hyperparameters)
+end
+{% endhighlight %}
+
+### Evaluation
+
+For a full evaluation, please see my notebooks at [github.com/LiorSinai/TransformersLite.jl/tree/main/examples](https://github.com/LiorSinai/TransformersLite.jl/tree/main/examples).
+
+The accuracy achieved was 87.4% for the binary task and 49.9% for the 5 star classification task.
+This is up from a baseline of 50% for the binary task and 20% for the 5 star classification task.
+
+The confusion matrix shows that the binary model does indeed mostly predict the correct class:
+<figure class="post-figure">
+<img class="img-80"
+    src="/assets/posts/transformers/confusion_matrix_regression.png"
+	alt="confusion matrix"
+	>
+<figcaption></figcaption>
+</figure>
+
+A useful cross-section of the confusion matrix is the probabilities per each ground truth class:
+<figure class="post-figure">
+<img class="img-80"
+    src="/assets/posts/transformers/probabilities_ground_truth.png"
+	alt="bar chart probabilities vs ground truth"
+	>
+<figcaption></figcaption>
+</figure>
+These distributions are mostly skewed in the correct way, with 1 star ratings being mostly negative and 5 star ratings mostly positive. The model was not trained on 3 star reviews so here the distribution is almost uniform (random) with a slight negative skew. However this may also be a reflection of the underlying data with humans not being consistent with their ratings for 3 stars. 
+
+Changing focus to the 5 star case:
+<figure class="post-figure">
+<img class="img-80"
+    src="/assets/posts/transformers/confusion_matrix_classification5.png"
+	alt="confusion matrix"
+	>
+<figcaption></figcaption>
+</figure>
+Looking at the confusion matrix we can see that the model struggles with the middle ratings of 2-4 but was mostly accurate with the extreme ratings of 1 and 5. Again this is hypothesized to be partially because of the underlying data.
+
+<figure class="post-figure">
+<img class="img-80"
+    src="/assets/posts/transformers/predictions_classification5.png"
+	alt="bar chart predication vs ground truth"
+	>
+<figcaption></figcaption>
+</figure>
+Seeing in another view as a bar chart, for each star the most likely prediction is the star itself.
+However the distributions do have a spread and leave significant overlap for confusion.
+
+Although these results are not 100% perfect, it is a big achievement to have a model that can automatically attach sentiment to text.
 
 ## Conclusion
 
-Thank you for following me through this very long post.
-I hope you now understand transformers.
+Thank you for following through this very long post.
+I hope this has giving insight into transformers and how they work.
 
 ---
 

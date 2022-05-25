@@ -1,0 +1,17 @@
+.slider {
+    position: relative;
+    width: 70%;
+    margin-left: auto;
+    }
+    .sliderValue{
+    position:relative;
+    display:inline;
+    margin: 0.5em;
+    }
+    .sliderText{
+    position:relative;
+    display:inline;
+    }
+    .graph{
+        width:100%
+    }
