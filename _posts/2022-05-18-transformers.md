@@ -1147,34 +1147,6 @@ For every column $n$ of every batch $b$. This has two parameters in $a_{b}$ and 
 They are not so important and you can turn them off with `LayerNorm(d, affine=false)`.
 $\epsilon$ is a small constant value for numerical stability.
 
-<p>
-  <a class="btn" data-toggle="collapse" href="#EulerInterp" role="button" aria-expanded="false" aria-controls="collapseExample">
-    Backpropagation for layer norm &#8681;
-  </a>
-</p>
-<div class="collapse" id="EulerInterp">
-  <div class="card card-body ">
-    This has already been implemented for us. 
-    Out of interest, here is a derivation (non-affine):
-    $$
-    \begin{align}
-        \frac{\partial z}{\partial x_i} &= \frac{1}{\sigma + \epsilon}\frac{\partial }{\partial x_i}(x_r -\mu) + (x_r -\mu)\frac{\partial }{\partial x_i}(\sigma + \epsilon)^{-1} \\
-                &= \frac{1}{\sigma + \epsilon}(\delta_{ir} - \frac{\partial \mu}{\partial x_i}) - 
-                (x_i -\mu)(\sigma + \epsilon)^{-2}\frac{\partial \sigma}{\partial x_i} \\
-        \frac{\partial \mu}{\partial x_i} &= \frac{\partial}{\partial x_i} \frac{1}{d}\sum_k^d x_k \\
-                            &= 0 + ... + 0 + \frac{1}{d} + 0 + ... + 0 \\
-                            &= \frac{1}{d} \\
-        \frac{\partial \sigma}{\partial x_i} &= \frac{\partial}{\partial x_i} \sqrt{\frac{1}{d}\sum^d_k (x_k - \mu)^2} \\
-                            &= \frac{1}{d\sigma}\left((x_i - \mu)(1 - \frac{\partial \mu}{\partial x_i}) +
-                            \sum^d_{k\neq i}(x_k - \mu)(0 - \frac{\partial \mu}{\partial x_i}) \right) \\
-                            &= \frac{x_i -\mu}{d\sigma} + \frac{1}{d\sigma}\frac{\partial \mu}{\partial x_i}\left(\sum^d_k x_k -  \mu \sum^d_k 1 \right) \\
-                            &= \frac{x_i -\mu}{d\sigma} + \frac{1}{d^2\sigma}(\mu d -  \mu d) \\
-                            &= \frac{x_i -\mu}{d\sigma} \\
-    \end{align}
-    $$
-  </div>
-</div>
-
 Because the inputs and outputs are similar we only need four parameters to define the whole block:
 {% highlight julia %}
 TransformerEncoderBlock(nhead::Int, dm::Int, dhid::Int; pdrop::Float64=0.1) = TransformerEncoderBlock(
