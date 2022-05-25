@@ -1,0 +1,32 @@
+// Styling for table of contents
+.side-nav {
+    margin-top: 2rem;
+    padding-left: 0;
+    border-left: 1px solid #efefef;
+  }
+  
+  .side-nav a {
+    text-decoration: none;
+    color: #ccc;
+    transition: all 50ms ease-in-out; /* This small transition makes setting of the active state smooth */
+  }
+
+.side-nav a:hover,
+.side-nav a:focus {
+  color: $primary;
+}
+
+.side-nav ol {
+    list-style: none;
+}
+
+.side-nav li.active > a {
+  color: $primary;
+  }
+
+#stickyTable {
+  position: -webkit-sticky; /* Safari */  
+	position: sticky;
+	top: 4rem;
+	align-self: start;
+}

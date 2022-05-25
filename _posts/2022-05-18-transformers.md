@@ -4,31 +4,41 @@ title:  "Building a transformer in Julia"
 date:   2022-05-18
 author: Lior Sinai
 background: '/assets/posts/transformers/transformer.png'
+sidenav: 2022-05-18-transformers-toc.html
 categories: coding
 tags: mathematics transformers 'machine learning' 'deep learning'
 ---
 
 _Building a transformer in Julia. This a very long post on the full process behind making a transformer work in Julia._ 
-
-
+    
 ### Table of Contents
-- [Introduction](#introduction)
-- [Design](#design)
-	- [Design considerations](#design-considerations)
-	- [Inputs and outputs](#inputs-and-outputs)
-	- [Architecture](#architecture)
-    - [Attention](#attention)
-- [Julia implementation](#julia-implementation)
-	- [Project setup](#project-setup)
-	- [Tokenizers](#tokenizers)
-	- [Word embeddings](#word-embeddings)
-	- [Position encodings](#position-encodings)
-	- [Multiplication with higher order arrays](#multiplication-with-higher-order-arrays)
-	- [Multi-head attention](#multi-head-attention)
-	- [Encoder blocks](#encoder-blocks)
-	- [Classifier](#classifier)
-- [Use case: Amazon reviews](#use-case-amazon-reviews)
-- [Conclusion](#conclusion)
+<nav>
+    <ol>
+        <li><a href="#introduction">Introduction</a></li>
+        <li><a href="#design">Design</a>
+            <ul>
+                <li><a href="#design-considerations">Design considerations</a></li>
+                <li><a href="#inputs-and-outputs">Inputs and outputs</a></li>
+                <li><a href="#architecture">Architecture</a></li>
+                <li><a href="#attention">Attention</a></li>
+            </ul>
+        </li>
+        <li><a href="#julia-implementation">Julia implementation</a>
+            <ul>
+                <li><a href="#project-setup">Project setup</a></li>
+                <li><a href="#tokenizers">Tokenizers</a></li>
+                <li><a href="#word-embeddings">Word embeddings</a></li>
+                <li><a href="#position-encodings">Position encodings</a></li>
+                <li><a href="#multiplication-with-higher-order-arrays">Multiplication with higher order arrays</a></li>
+                <li><a href="#multi-head-attention">Multi-head attention</a></li>
+                <li><a href="#encoder-blocks">Encoder blocks</a></li>
+                <li><a href="#classifier">Classifier</a></li>
+            </ul>
+        </li>
+        <li><a href="#use-case-amazon-reviews">Use case: Amazon reviews</a></li>
+        <li><a href="#conclusion">Conclusion </a></li>
+    </ol>
+</nav>
 
 ## Introduction
 
@@ -621,7 +631,7 @@ and on the right are the sine waves used for the odd numbered rows:
     .slider {
     position: relative;
     width: 70%;
-    margin-left: auto
+    margin-left: auto;
     }
     .sliderValue{
     position:relative;
