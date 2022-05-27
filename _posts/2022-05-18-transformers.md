@@ -302,13 +302,7 @@ A = randn(3, 4, 2, 2)
 B = randn(4, 3, 2, 2);
 A * B # MethodError: no method matching *(::Array{Float64, 4}, ::Array{Float64, 4})
 {% endhighlight %}
-Multiplication simply isn't defined for them. So we'll have to write our own function to handle the multiplication here and also for the backpropagation. We'll do this as a simple extension to 2D matrix multiplication.
-
-There is a set of multidimensional algebraic objects called [tensors][wiki_tensor] where multiplication is defined for higher orders. 
-Confusingly, Google named their machine learning framework TensorFlow and calls higher order arrays tensors.
-So one should differentiate between machine learning tensors and geometric tensors.
-They are not the same.
-To give a simple explanation: one can think of geometric tensors as higher order arrays with severe constraints on their entries and operations because they represent geometric objects. These constraints make it harder - not easier - to code higher order arrays as geometric tensors.
+Multiplication simply isn't defined for them. So we'll have to write our own function to handle the multiplication here and also for the backpropagation. We'll do this as a simple extension to 2D matrix multiplication.[^tensors]
 
 ### Attention
 
@@ -945,9 +939,6 @@ Doing a time test
 The `batched_mul` version is about 3&times; faster.
 
 We don't need to write a `rrule` for it because rules already exists for `reshape` and `batched_mul`.
-
-[wiki_tensor]: https://en.wikipedia.org/wiki/Tensor
-
 
 ### Multi-head attention
 
@@ -1691,3 +1682,20 @@ I hope this has giving insight into transformers and how they work.
     $$ \frac{j+k}{n_{max}}=\frac{1}{n_{max}}j+\frac{k}{n_{max}}$$
 
 [^permutedims]: One may think that it is better to use `PermutedDimsArray` because it provides a view instead of allocating a new array like `permutedims`. In practice the `reshape` in `batched_mul` creates a `ReshapedArray{PermutedDimsArray{Array}}` which the compiler struggles to optimise for, greatly slowing the batched multiplication. So it is better to take a smaller performance hit here with allocating a new array. The `reshape` then simply returns `Array`.
+
+[^tensors]: There is a set of multidimensional algebraic objects called [tensors](https://en.wikipedia.org/wiki/Tensor) where multiplication is defined for higher orders. 
+    Confusingly, Google named their machine learning framework TensorFlow and calls higher order arrays tensors.
+    So one should differentiate between machine learning tensors and geometric tensors.
+    They are not the same.
+    To give a simple explanation: one can think of geometric tensors as higher order arrays with severe constraints on their entries and operations because they represent geometric objects. These constraints make it harder - not easier - to code higher order arrays as geometric tensors.
+
+    For those who have studied tensors in physics: the multiplication output required is:
+    
+    $$ C_{ijk} = \sum_r A_{irk} B_{rjk}$$
+    
+    If we arbitrarily assign some co-ordinates as co-variant and some as contra-variant, we can write this in tensor notation:
+
+    $$ C^{i}_{jk_{1}k_{2}} = A^i_{rk_{1}}B^r_{jk_{2}}$$
+
+    But there is no valid tensor operation to reduce this 4D tensor to 3D without violating the tensor property.
+
