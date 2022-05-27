@@ -81,7 +81,7 @@ But this is tiny in comparison to OpenAI's [GPT-3][GPT3] with 175 billion parame
 It is licensed over an [API][GPT3_api] and is responsible for generating text that has made its way around the internet and popular science articles. 
 These large models are even shaping hardware.
 The CEO of chip manufacturer Nvidia, Jensen Huang, focused a segment of his [2022 keynote][NvideaGTC] speech on transformers and their impact on his industry.
-Nvidia have also released their own large transformer model with [530 billon parameters][NvidiaMegatron] and have conducted tests with a [1 trillion parameter model][NvideaLM].
+Nvidia have also released their own large transformer model with [530 billon parameters][NvidiaMegatron] and have conducted tests with a [1 trillion parameter model][NvidiaLM].
 
 Despite being originally developed for NLP, they have come for computer vision too. 
 This [2020 paper][Image16words] showed that they can compete with top convolutional neural networks (CNNs). 
