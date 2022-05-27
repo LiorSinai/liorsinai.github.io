@@ -1099,7 +1099,8 @@ function scaled_dot_attention(query::A1, key::A2, value::A3) where {
     batched_mul(value, score) #size(attention) == (dh, N, nhead, B)
 end
 {% endhighlight %}
-The softmax function (and its rrule) are provided by NNlib.
+The softmax function (and its rrule) are provided by NNlib. For backpropagation information please see this 
+[link](https://eli.thegreenplace.net/2016/the-softmax-function-and-its-derivative/).
 
 The one last thing we need to do is make it work for a single embedding instead of a batch.
 For code reuse the best solution is to make a single embedding a batch of one:
@@ -1181,6 +1182,8 @@ $$
 For every column $n$ of every batch $b$. This has two parameters in $a_{nb}$ and $b_{nb}$. 
 They are not so important and you can turn them off with `LayerNorm(d, affine=false)`.
 $\epsilon$ is a small constant value for numerical stability.
+For backpropagation information please see 
+[my post]({{ "/mathematics/2022/05/18/layernorm.html" | relative_url }}).
 
 Because the inputs and outputs are similar we only need four parameters to define the whole block:
 {% highlight julia %}
