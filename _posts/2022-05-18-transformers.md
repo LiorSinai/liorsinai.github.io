@@ -39,6 +39,7 @@ _Building a transformer in Julia. This a very long post on the full process behi
         </li>
         <li><a href="#use-case-amazon-reviews">Use case: Amazon reviews</a></li>
             <ul>
+                <li><a href="#data-exploration">Data exploration</a></li>
                 <li><a href="#pipeline">Pipeline</a></li>
                 <li><a href="#evaluation">Evaluation</a></li>
             </ul>
@@ -57,8 +58,8 @@ _Building a transformer in Julia. This a very long post on the full process behi
 [GPT3_api]: https://openai.com/api/
 [Gato]: https://www.deepmind.com/publications/a-generalist-agent
 [Image16words]: https://arxiv.org/abs/2010.11929
-[NvideaMegatron]: https://arxiv.org/abs/1909.08053
-[NvideaLM]: https://github.com/NVIDIA/Megatron-LM
+[NvidiaMegatron]: https://arxiv.org/abs/1909.08053
+[NvidiaLM]: https://github.com/NVIDIA/Megatron-LM
 
 In December 2017 Google AI released their transformer architecture in the paper [Attention is all you need][Attention]. 
 (It is a highly recommended read.)
@@ -79,8 +80,8 @@ Transformers lend themselves to large models. The original transformer model was
 But this is tiny in comparison to OpenAI's [GPT-3][GPT3] with 175 billion parameters.
 It is licensed over an [API][GPT3_api] and is responsible for generating text that has made its way around the internet and popular science articles. 
 These large models are even shaping hardware.
-The CEO of chip manufacturer NVIDEA, Jensen Huang, focused a segment of his [2022 keynote][NvideaGTC] speech on transformers and their impact on his industry.
-NVIDEA have also released their own large transformer model with [530 billon parameters][NvideaMegatron] and have conducted tests with a [1 trillion parameter model][NvideaLM].
+The CEO of chip manufacturer Nvidia, Jensen Huang, focused a segment of his [2022 keynote][NvideaGTC] speech on transformers and their impact on his industry.
+Nvidia have also released their own large transformer model with [530 billon parameters][NvidiaMegatron] and have conducted tests with a [1 trillion parameter model][NvideaLM].
 
 Despite being originally developed for NLP, they have come for computer vision too. 
 This [2020 paper][Image16words] showed that they can compete with top convolutional neural networks (CNNs). 
@@ -276,7 +277,31 @@ There are 4 non-linear steps (softmax, 2&times;layer norm, RELU) and the other 8
 
 You'll notice that the inputs are either 3D or 4D arrays. 
 These are not standard in linear algebra so a [section](#multiplication-with-higher-order-arrays) below is dedicated to getting comfortable with them.
-In particular, in any programming language multiplying two higher order arrays will not work e.g. `A*B`.
+In particular, in any programming language multiplying two higher order arrays will not work.
+For example:
+{% highlight julia %}
+A = randn(3, 4, 2, 2)
+3×4×2×2 Array{Float64, 4}:
+[:, :, 1, 1] =
+ 0.539347   0.772838  0.793975  0.436097
+ 0.0890865  0.374346  0.462195  0.691458
+ 0.364314   0.701065  0.712357  0.801697
+[:, :, 2, 1] =
+ 0.587629  0.128034  0.908577  0.221286
+ 0.526123  0.788315  0.692201  0.99606
+ 0.510707  0.338502  0.832025  0.33279
+[:, :, 1, 2] =
+ 0.163337  0.991491   0.309396  0.155
+ 0.785946  0.0787799  0.160141  0.212985
+ 0.323122  0.806226   0.228209  0.205507
+[:, :, 2, 2] =
+ 0.0339063  0.402629  0.239698   0.471303
+ 0.787614   0.8888    0.0176223  0.957667
+ 0.352839   0.153378  0.829512   0.256615
+ -1.79658    1.45127   -1.11244
+B = randn(4, 3, 2, 2);
+A * B # MethodError: no method matching *(::Array{Float64, 4}, ::Array{Float64, 4})
+{% endhighlight %}
 Multiplication simply isn't defined for them. So we'll have to write our own function to handle the multiplication here and also for the backpropagation. We'll do this as a simple extension to 2D matrix multiplication.
 
 There is a set of multidimensional algebraic objects called [tensors][wiki_tensor] where multiplication is defined for higher orders. 
@@ -300,7 +325,7 @@ $$
     \text{softmax}(z_i) = \frac{e^{z_i}}{\sum^N_r e^{z_r}}
 $$
 
-This is essentially a dot product of every column vector of the embedding matrix with some scaling.
+Attention is essentially a dot product of every column vector of the embedding matrix with some scaling.
 To see this more clearly, substitute the equations for $K$ and $Q$ into $K^TQ$ and ignore the bias:
 
 $$
@@ -609,6 +634,15 @@ There is a cost to using a predefined function: it is very inefficient.
 If we do a small experiment and call scatter we will see it results in a large matrix of mostly zeros:
 {%highlight julia %}
 NNlib.scatter(+, rand(8, 4), [1, 5, 11, 1]; dstsize=(8, 15))
+8×15 Matrix{Float64}:
+ 1.62703   0.0  0.0  0.0  0.495725  0.0  0.0  0.0  0.0  0.0  0.237452     0.0  0.0  0.0  0.0
+ 0.979735  0.0  0.0  0.0  0.984499  0.0  0.0  0.0  0.0  0.0  0.145738     0.0  0.0  0.0  0.0
+ 0.892948  0.0  0.0  0.0  0.76959   0.0  0.0  0.0  0.0  0.0  0.714658     0.0  0.0  0.0  0.0
+ 1.45113   0.0  0.0  0.0  0.883492  0.0  0.0  0.0  0.0  0.0  0.52775      0.0  0.0  0.0  0.0
+ 0.702824  0.0  0.0  0.0  0.965256  0.0  0.0  0.0  0.0  0.0  0.0966964    0.0  0.0  0.0  0.0
+ 1.16978   0.0  0.0  0.0  0.568429  0.0  0.0  0.0  0.0  0.0  0.000161501  0.0  0.0  0.0  0.0
+ 1.80566   0.0  0.0  0.0  0.271676  0.0  0.0  0.0  0.0  0.0  0.430018     0.0  0.0  0.0  0.0
+ 1.16445   0.0  0.0  0.0  0.911601  0.0  0.0  0.0  0.0  0.0  0.786343     0.0  0.0  0.0  0.0
 {% endhighlight %}
 This could be improved with a custom scatter function using the `SparseArrays` package.
 
@@ -884,7 +918,7 @@ end
   </div>
 </div>
 
-Unfortunately making an optimised version of this is beyond me. 
+Making an optimised version of this is beyond the scope of this post. 
 But what we can do is extend `batched_mul` by reshaping 4D $m\times n \times p \times q$ arrays into 3D $m\times n \times pq$ arrays:
 {%highlight julia %}
 import NNlib.batched_mul
@@ -1035,8 +1069,9 @@ It turns the 3D $d_m \times N \times B$ input into a 2D $d_m \times NB$ matrix, 
 This solution is valid because the weights for the dense layer are 2D.
 
 We now need to split $Q$, $K$ and $V$ from $d_m \times N \times B$ to $d_h \times N \times H \times B$ matrices.
-This is done in two steps: $d_hH \times N \times B \rightarrow d_h \times H \times N \times B \rightarrow d_h \times N \times H \times B$
-(break $d_m$ into $d_h$ and $H$ and then swap the 2nd and 3rd dimensions):
+This is done in two steps:
+1. $d_h \times H \times N \times B$ (break $d_m$ into $d_h$ and $H$)
+2. $d_h \times N \times H \times B$ (swap the 2nd and 3rd dimensions)
 {% highlight julia %}
     Q = permutedims(reshape(Q, dh, mha.nhead, qs[2], qs[3]), [1, 3, 2, 4])
     K = permutedims(reshape(K, dh, mha.nhead, ks[2], ks[3]), [1, 3, 2, 4])
@@ -1140,10 +1175,10 @@ Interestingly layer norm was only popularised after batch normalization in this 
 The actual function used for layer norm is:
 
 $$
-    a_{b}\frac{X_{b}-\mu_{b}}{\sigma_{b}+\epsilon} + b_{b}
+    a_{nb}\frac{X_{nb}-\mu_{nb}}{\sigma_{nb}+\epsilon} + b_{nb}
 $$
 
-For every column $n$ of every batch $b$. This has two parameters in $a_{b}$ and $b_{b}$. 
+For every column $n$ of every batch $b$. This has two parameters in $a_{nb}$ and $b_{nb}$. 
 They are not so important and you can turn them off with `LayerNorm(d, affine=false)`.
 $\epsilon$ is a small constant value for numerical stability.
 
@@ -1223,7 +1258,7 @@ At last, our model is almost ready for use.
 There is just one last question, how to use the output embedding matrix?
 We could take a mean across each word embedding and then pass that to a dense layer.
 Or we can take a dense layer across each word, reduce it down to one dimension, and pass that to a dense layer.
-Or we could flatten the whole array into a $dm N \times 1$ column. 
+Or we could flatten the whole array into a $d_m N \times 1$ column. 
 
 My preference is to do an aggregation on each word first and then on the sentence.
 Here is a simple flatten layer which we will need to put in between:
@@ -1340,6 +1375,64 @@ model = TransformersLite.TransformerClassifier(
 Finally, we have a working transformer!
 
 ## Use case: Amazon Reviews 
+
+Presented here is a subset of the results from scripts and notebooks at [github.com/LiorSinai/TransformersLite.jl/tree/main/examples](https://github.com/LiorSinai/TransformersLite.jl/tree/main/examples).
+
+### Data exploration
+
+The [Amazon Reviews][AmazonReviews] English dataset consists of 200,000 test samples and 5,000 training samples.
+The reviews are equally divided into 5 stars where 1 is a low score and 5 is best.
+There are eight features:
+1. review_id
+2. product_id
+3. reviewer_id
+4. stars
+5. review_body
+6. review_title
+7. language
+8. product_category
+
+The models were only trained on "stars" and "review_body". 
+
+A small sample of reviews (original spelling and punctuation):
+<table>
+  <tr>
+    <th>Star</th>
+    <th>Review</th>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>I like everything abut them they are perfect!</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>This is not a bad chair for the price. I had some problems with the wheels but they were promptly addressed by very helpful customer service. So overall I can give the 4 stars to this product.</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>As expected and average product</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>Overall quality is good on this product although they are smaller in size than anticipated.</td>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>Dissapointing, bad quality dont buy</td>
+  </tr>
+</table>
+
+The reviews can go up to 4,000 characters, but most are much shorter than that:
+<figure class="post-figure">
+<img class="img-80"
+    src="/assets/posts/transformers/content_lengths.png"
+	alt="content lengths"
+	>
+<figcaption></figcaption>
+</figure>
+Of these reviews, 80% have less than 260 characters and/or less than 50 words.
+This justifies setting a maximum token count of 50.
+
 ### Pipeline
 
 Here is a pipeline for training a model, from tokenizing the input to saving the output data.
@@ -1526,8 +1619,6 @@ end
 {% endhighlight %}
 
 ### Evaluation
-
-For a full evaluation, please see my notebooks at [github.com/LiorSinai/TransformersLite.jl/tree/main/examples](https://github.com/LiorSinai/TransformersLite.jl/tree/main/examples).
 
 The accuracy achieved was 87.4% for the binary task and 49.9% for the 5 star classification task.
 This is up from a baseline of 50% for the binary task and 20% for the 5 star classification task.
