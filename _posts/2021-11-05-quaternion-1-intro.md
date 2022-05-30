@@ -9,7 +9,7 @@ tags: mathematics quaternions unity rotation 3d
 
 _Introduction to quaternions and rotations in 3D._ 
 
-_Upadate 11 December 2021: This post was featured on HackerNews and briefly hold the top spot. Please see this [link][HackerNews] for the full discussion. Minor modifications have been done based on the comments._
+_Update 11 December 2021: This post was featured on HackerNews and briefly hold the top spot. Please see this [link][HackerNews] for the full discussion. Minor modifications have been done based on the comments._
 
 [HackerNews]: https://news.ycombinator.com/item?id=29510237
 
@@ -177,7 +177,7 @@ $$ v_r = R_{\phi}R_{\theta}R_{\psi}v$$
 
 <div class="card">
   <div class="card-body">
-    <h5 class="card-title">Matrix defintions</h5>
+    <h5 class="card-title">Matrix definitions</h5>
     <p class="card-text">
 		\[
 		R_{\psi} =

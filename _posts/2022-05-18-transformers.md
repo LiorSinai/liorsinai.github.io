@@ -625,7 +625,7 @@ This is what `scatter` does. Note that we use the red column twice, so we have t
 The `rrule` applies `+` as the reducing function; that is, the two errors are added together and then to the word embedding.
 
 There is a cost to using a predefined function: it is very inefficient.
-If we do a small experiment and call scatter we will see it results in a large matrix of mostly zeros:
+If we do a small experiment and call scatter we will see it results in a large matrix of mostly zeros:[^sparse]
 {%highlight julia %}
 NNlib.scatter(+, rand(8, 4), [1, 5, 11, 1]; dstsize=(8, 15))
 8×15 Matrix{Float64}:
@@ -638,7 +638,6 @@ NNlib.scatter(+, rand(8, 4), [1, 5, 11, 1]; dstsize=(8, 15))
  1.80566   0.0  0.0  0.0  0.271676  0.0  0.0  0.0  0.0  0.0  0.430018     0.0  0.0  0.0  0.0
  1.16445   0.0  0.0  0.0  0.911601  0.0  0.0  0.0  0.0  0.0  0.786343     0.0  0.0  0.0  0.0
 {% endhighlight %}
-This could be improved with a custom scatter function using the `SparseArrays` package.
 
 ### Position encodings
 
@@ -698,14 +697,14 @@ and on the right are the sine waves used for the odd numbered rows:
 </script>
 
 Each column has a unique pattern so the encoding does accomplishes its task.
-To understand why, lets focus on the first row with $i=0$. 
+To understand how, lets focus on the first row with $i=0$. 
 This sine wave has a wavelength of $2\pi \approx 6.28$ and we sample it every $1$ timestep so it repeats every 6 blocks.
 This leads to the 6 alternating colours in the top row: 3 light, then 3 dark, then repeat. 
-So this sine wave can only distinguish between sequences of length 6 or next.
-Now let's move on to $i=1$. This sine wave has a period of $2\pi(10^4)^{1/32} \approx 11.17$ so it repeats approximately every 11 blocks in the 3rd row. 
+So this sine wave can only distinguish between sequences of length 6 or less.
+Now let's move on to $i=1$. This sine wave has a period of $2\pi(10^4)^{2/32} \approx 11.17$ so it repeats approximately every 11 blocks in the 3rd row. 
 We can now distinguish between sequences of up to length 11 and we can use the first row for greater precision.
 As we add sine waves, we can distinguish between sequences of longer wave lengths.
-In general the wavelengths are $2\pi(10^4)^{i/d}$.
+In general the wavelengths are $2\pi(10^4)^{2i/d}$.
 
 [position_encoding]: https://kazemnejad.com/blog/transformer_architecture_positional_encoding/
 
@@ -807,7 +806,7 @@ We can do a quick time test:
     @time A * B;       # 0.000265s
 {% endhighlight %}
 The naive implementation is 9&times; slower.
-One of the reasons is our indexing is very naive.
+One of the reasons is the indexing is very inefficient.
 The code will start at the top and count down to the cell needed for each multiplication
 when we could take advantage of the fact that the next cell is next door:
 
@@ -850,6 +849,9 @@ The NNlib function is about 1.5&times; faster.
 
 For transformers we work with 4D arrays but they are sets of sets of independent matrices (repetition intended).
 So multiplication is a set of five loops or two outer loops and matrix multiplication:
+
+$$ C_{ijkl} = \sum_r A_{irkl} B_{rjkl} $$
+
 {%highlight julia %}
 function mul4d(A::AbstractArray{T, 4}, B::AbstractArray{T, 4}) where T
     C = Array{Float64, 4}(undef, size(A, 1), size(B, 2), size(A, 3), size(A, 4))
@@ -1032,11 +1034,11 @@ These terms are kind of archaic.
 They refer to a database model where the user makes a query (text in a search box), this is mapped to keys (video titles) 
 and a value is returned (video). 
 Or for a more direct programming metaphor: a hashmap where the query is hashed to a key to retrieve a value.
+The matrix multiplications here represent a softer version of this where we are returning a weighting of the values.
+The same matrix is used as the query, key and value, which can be interpreted as a self-reflective lookup, analogous to asking a query what it thinks is most important about itself.
 
 But the names aren't so important. 
-Here we will be using the input matrix as the query, key and value. 
-They are each calculated using the dense matrices we stored in the struct:
-
+The query, key and value are each calculated using the dense matrices we stored in the struct based on the input matrices:
 {% highlight julia %}
 function (mha::MultiheadAttention)(query::A1, key::A2, value::A3) where {
     T, A1 <: AbstractArray{T, 3}, A2 <: AbstractArray{T, 3}, A3 <: AbstractArray{T, 3}}
@@ -1093,20 +1095,6 @@ end
 The softmax function (and its rrule) are provided by NNlib. For backpropagation information please see this 
 [link](https://eli.thegreenplace.net/2016/the-softmax-function-and-its-derivative/).
 
-The one last thing we need to do is make it work for a single embedding instead of a batch.
-For code reuse the best solution is to make a single embedding a batch of one:
-{% highlight julia %}
-function (mha::MultiheadAttention)(query::A1, key::A2, value::A3) where {
-    T, A1 <: AbstractMatrix{T}, A2 <: AbstractMatrix{T}, A3 <: AbstractMatrix{T}}
-    # single sample version. Input is dm × N
-    query = reshape(query, size(query, 1), size(query, 2), 1)
-    key   = reshape(key, size(key, 1), size(key, 2), 1)
-    value = reshape(value, size(value, 1), size(value, 2), 1)
-    A = mha(query, key, value)
-    reshape(A, size(A, 1), size(A, 2))
-end
-{% endhighlight %}
-
 <p>
   <a class="btn" data-toggle="collapse" href="#EulerInterp" role="button" aria-expanded="false" aria-controls="collapseExample">
     Notes on backpropagation in the attention layer &#8681;
@@ -1128,6 +1116,20 @@ end
     We don't need to define the rrule because Flux will combine the rules for <code>permutedims</code> and <code>batched_mul</code> to get the same result.
   </div>
 </div>
+
+The one last thing we need to do is make it work for a single embedding instead of a batch.
+For code reuse the best solution is to make a single embedding a batch of one:
+{% highlight julia %}
+function (mha::MultiheadAttention)(query::A1, key::A2, value::A3) where {
+    T, A1 <: AbstractMatrix{T}, A2 <: AbstractMatrix{T}, A3 <: AbstractMatrix{T}}
+    # single sample version. Input is dm × N
+    query = reshape(query, size(query, 1), size(query, 2), 1)
+    key   = reshape(key, size(key, 1), size(key, 2), 1)
+    value = reshape(value, size(value, 1), size(value, 2), 1)
+    A = mha(query, key, value)
+    reshape(A, size(A, 1), size(A, 2))
+end
+{% endhighlight %}
 
 ### Encoder blocks
 
@@ -1435,7 +1437,7 @@ This pipeline implements a rudimentary development workflow with:
 - training history saved in JSON format.
 - hyperparameters that are used to control flow and are saved in JSON format.
 
-This includes a file I wrote called [training.jl](https://github.com/LiorSinai/TransformersLite.jl/blob/32dbf5910223d18ab30f5c22b5e8a6afce840bdd/examples/training.jl#L1). 
+This includes a file I wrote called [training.jl](https://github.com/LiorSinai/TransformersLite.jl/blob/main/examples/training.jl). 
 It defines the following functions: `split_validation`, `accuracy`, `batch_matrix`, `batched_metric`, and `train!`.
 Please download or copy these functions to follow along.
 The `train!` function is based off `Flux.train!` except it returns a history and uses the batch functions.
@@ -1447,7 +1449,7 @@ You might want to change `nhead` to 1 if you do use this value.
 With a vocabulary of 6,000 words this results in a model with around 54,000 parameters.
 It takes about 10 minutes to train on an Intel i7 CPU with 1.80 GHz processing power and 8GB of RAM.
 Otherwise the default is an embedding dimension of 32 and 4 heads, which results in about 250,000 parameters.
-This takes about 30 minutes to train.
+This takes about 1 hour to train.
 Results between the smaller and bigger models were almost identical, except the bigger model converged slightly faster.
 
 Initialization:
@@ -1699,3 +1701,4 @@ I hope this has giving insight into transformers and how they work.
 
     But there is no valid tensor operation to reduce this 4D tensor to 3D without violating the tensor property.
 
+[^sparse]: Using `SparseArrays` in custom scatter function doesn't seem to improve efficiency.

@@ -268,8 +268,8 @@ using Statistics
 
 abstract type AbstractClassifier end
 
-function predict(classfier::AbstractClassifier, X::DataFrame)
-    throw("predict not implemented for classifier of type $(typeof(classfier))")
+function predict(classifier::AbstractClassifier, X::DataFrame)
+    throw("predict not implemented for classifier of type $(typeof(classifier))")
 end
 
 function fit!(classifier::AbstractClassifier, X::DataFrame, Y::DataFrame)
@@ -280,8 +280,8 @@ end
 Some functions can be defined to act on all subtypes of `AbstractClassifier`. These are independent of the specifics of the classifier.
 For example, here is a score function:
 {% highlight julia %}
-function score(classfier::AbstractClassifier, X::DataFrame, Y::DataFrame)
-    y_pred = predict(classfier, X)
+function score(classifier::AbstractClassifier, X::DataFrame, Y::DataFrame)
+    y_pred = predict(classifier, X)
     return count(y_pred .== Y[:, 1]) / size(Y, 1)
 end
 {% endhighlight %}
@@ -351,7 +351,7 @@ end
 {% endhighlight %}
 
 The type T can be determined from the training dataset. 
-But most of the time it will be `Float64`, so we can make an outer constructer to make this type the default:
+But most of the time it will be `Float64`, so we can make an outer constructor to make this type the default:
 {% highlight julia %}
 RandomForestClassifier(;n_trees=100, max_depth=nothing, max_features=nothing, min_samples_leaf=1, random_state=Random.GLOBAL_RNG,
         bootstrap=true, oob_score=false
@@ -790,7 +790,7 @@ end
 {% endhighlight %} 	
 
 There is another simpler method to calculate feature importance: shuffle (permutate) a feature column, and record how well the model performs.
-Shuffling a column makes the values for each sample random, but at the same time keeps the overal distribution for the feature constant.
+Shuffling a column makes the values for each sample random, but at the same time keeps the overall distribution for the feature constant.
 Scikit-learn has a great [article][scikit_perm_fi] on the advantages of this over impurity based feature importance.
 (A `perm_feature_importance()` function is in the Classifier.jl file.)
 

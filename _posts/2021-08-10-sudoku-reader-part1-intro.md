@@ -101,7 +101,7 @@ Personally I think machine learning can be tricky to implement and expensive to 
 
 The algorithm is not robust and is prone to false positives. That is, because of the weak assumptions made, anything vaguely representing a grid - a painting or a cupboard - will be identified as the Sudoku grid. The machine learning algorithm is also not robust to noise so it will then "see" numbers in this random object. It is up to the user to avoid these problems by only feeding in clear, well lit images of Sudoku grids.
 
-For an indepth explanation of each step, please see the folowing posts:
+For an in-depth explanation of each step, please see the following posts:
 - Preprocessing, grid extraction and quadrilateral fitting: [part 2][grid_extraction].
 - Image warping and digit extraction:  [part 3][digit_extraction].
 - Digit classification using machine learning: [part 4][machine_learning].
@@ -114,7 +114,7 @@ For an indepth explanation of each step, please see the folowing posts:
 # Comparison with Python
 
 Having done it first in Python gave me perspective. Firstly, I think Python is a better choice for this task. 
-That is a negative way to start off a series that is supposed to promote Julia. But Julia does have an infamous "first time to plot" problem, and this task is mostly about plotting and processing single images. Julia imposes an upfront cost of an initial slow compile time for enhanced performace afterwards. It can take 2 and a half minutes to run the code base from start to finish the first time. After that it takes a few seconds but that's already too late. Meanwhile in Python it takes a few seconds to run through the whole pipeline every time.
+That is a negative way to start off a series that is supposed to promote Julia. But Julia does have an infamous "first time to plot" problem, and this task is mostly about plotting and processing single images. Julia imposes an upfront cost of an initial slow compile time for enhanced performance afterwards. It can take 2 and a half minutes to run the code base from start to finish the first time. After that it takes a few seconds but that's already too late. Meanwhile in Python it takes a few seconds to run through the whole pipeline every time.
 That said, I still think this application is worthwhile as a learning exercise.
 
 The machine learning is where Julia really shined. Julia is built for scientific programming and number crunching.

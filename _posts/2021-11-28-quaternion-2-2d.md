@@ -232,7 +232,7 @@ Euler's number is a calculus constant, so it is natural that a proof can be prov
   <div class="card-body">
     <h5 class="card-title">Proof of Euler's formula</h5>
     <p class="card-text">
-		Consider a particle travelling along the path parameterised with time $t$ as
+		Consider a particle traveling along the path parameterised with time $t$ as
         $$s = \cos(t) + i\sin(t)$$
         The object will move in a circle.
         The velocity is $$\frac{ds}{dt} = -\sin(t) + i\cos(t) = i(\cos(t) + i\sin(t))=is $$

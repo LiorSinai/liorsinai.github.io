@@ -30,7 +30,7 @@ Part 1 describes the high levels details of the program I made and what it can d
 
 # Introduction<a id="Introduction"></a>
 
-Several years ago during my masters my friend and I made a Bitcoin simulater for our final project in a software course.
+Several years ago during my masters my friend and I made a Bitcoin simulator for our final project in a software course.
 It was a watered down version of the real Bitcoin, but it worked well enough.
 After I started this blog I'd thought about doing a blog post on it, but I had become very disillusioned with blockchain.
 As this [article][thecorrespondent] so wonderfully put it, blockchain is the amazing solution for almost nothing.
@@ -52,7 +52,7 @@ It requires almost no programming experience to use, other than basic knowledge 
 My blockchain program currently implements these features (I've crossed out features that are part of most cryptos but are not in my blockchain.):
 1. An immutable blockchain: any change to any file registered inside a block will make that block and all subsequent blocks after it invalid.
 2. <s>Decentralized network management.</s> 
-	1. <s>Consenesus mechanism. </s>
+	1. <s>Consensus mechanism. </s>
 	2. <s>Propagation mechanism. </s>
 	2. <s>Central waiting list (mempool). </s>
 3. Proof of work.
@@ -338,7 +338,7 @@ Join me in [part 2][part2].
 	And this is essentially how cryptos works except they uses "blocks" instead of "cheques" and the original amount is "found" by a "miner".
 	Note that unlike a normal, sane bank the blockchain doesn't store account balances. 
  
-[^PoW]: If you know a better strategy, please let me know. Nevermind improving my program, we could make lots of money with Bitcoin.
+[^PoW]: If you know a better strategy, please let me know. Never mind improving my program, we could make lots of money with Bitcoin.
 
 [^miners]: Real miners use specialised [computers][bitcoin-miners] which do  $10^{14}\approx 2^{46.5}$ hashes/sec. A proof of work on one of those will take 24 years at the current Bitcoin difficulty.
 

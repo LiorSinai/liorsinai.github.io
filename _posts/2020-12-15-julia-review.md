@@ -104,7 +104,7 @@ Python, however, is a different story.
 Python is easy to learn and lovely to tinker with, but as soon as your project expands that joy dissipates.
 It's noticeably slower than other languages. It has no type checking and very generous scoping rules.
 This makes you think less when writing your own code, which is great, but it makes you think _more_ when reviewing someone else's.
-Did they intend this variable to be an array? A string? A custom type? Have I accidently reused an identifier?
+Did they intend this variable to be an array? A string? A custom type? Have I accidentally reused an identifier?
 Popular packages go out of their way to _not_ use Python for core processing, including Numpy, Scikit-learn and TensorFlow (they use, C, C++ and Cython).
 Julia promises to fix these many issues, and it's a relief.
 
@@ -341,7 +341,7 @@ function f()
 end
 {% endhighlight %}
 This function will pull in the global variable <code>y</code> even though no <code>global</code> keyword was used for <code>y</code>. Hence running <code>f()</code> will return 60.
-I had a few errors where I accidently used the name of a global variable and hence my values were wrong.
+I had a few errors where I accidentally used the name of a global variable and hence my values were wrong.
 I would prefer this to require a call to load the variable <code>y</code> in the function, e.g. <code>global y</code>.
 </ul>
 - Constructors for big structs look horrible. Have a look at my random forest [constructor][git_rfc_construct]. 

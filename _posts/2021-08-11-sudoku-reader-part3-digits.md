@@ -28,7 +28,7 @@ All code is available online at my repository: [github.com/LiorSinai/SudokuReade
 ## Straightening the image.
 
 From [part 2][grid_extraction] we have a quadrilateral which represents our grid. 
-We could mask our image to exlcude pixels outside the quadrilateral and crop it to the rectangle borders.
+We could mask our image to exclude pixels outside the quadrilateral and crop it to the rectangle borders.
 For example:
 <figure class="post-figure">
 <img class="img-95"
@@ -125,7 +125,7 @@ Here is the result of the warping:
   <div class="card card-body ">
   
 
-OpenCV comes with a fuction called <code>getPerspectiveTransform</code>. I had to write the Julia version of this myself.
+OpenCV comes with a function called <code>getPerspectiveTransform</code>. I had to write the Julia version of this myself.
 To explain it properly, I would need to explain pinhole cameras, projection matrices, rotation matrices and more. Here is a source which does that: <a style="text-decoration:underline" href="https://towardsdatascience.com/estimating-a-homography-matrix-522c70ec4b2c">estimating a homography matrix.</a> 
 For now, all I am going to say is that the calculations reduce to multiplication of every pixel with a special matrix called a homography matrix:
 
@@ -338,7 +338,7 @@ end
 {% endhighlight %}
 
 The ratio for the digits lies between 15%-50% so I've set the threshold at a conservative 10%.
-The assumption is that the machine learning model will be able to distinguish between random artefacts and true digits; we're just removing the most obviously empty cells.
+The assumption is that the machine learning model will be able to distinguish between random artifacts and true digits; we're just removing the most obviously empty cells.
 
 Lastly, here is code to make a circle with discrete pixels:
 {%highlight julia %}
@@ -469,6 +469,6 @@ This is explained next in [part 4][machine_learning].
 
 ---
 
-[^binarization]: We need to binarize again to remove distortions from warping. Originally I used the AdaptiveThreshold method which applies different threholds thorought the image. This is needed for a large complex image. Here we have much smaller images so a more straightforward algorithm called [Otsu's method][Otsu] can be used. This automatically calculates and applies a single threhold for the whole image. This threhold minimises the intra-class variance - it attempts to set a threshold such that all the pixels within each class (background and foreground) have the most similar values possible.
+[^binarization]: We need to binarize again to remove distortions from warping. Originally I used the AdaptiveThreshold method which applies different thresholds through out the image. This is needed for a large complex image. Here we have much smaller images so a more straightforward algorithm called [Otsu's method][Otsu] can be used. This automatically calculates and applies a single threshold for the whole image. This threshold minimises the intra-class variance - it attempts to set a threshold such that all the pixels within each class (background and foreground) have the most similar values possible.
 
 [Otsu]: https://en.wikipedia.org/wiki/Otsu%27s_method

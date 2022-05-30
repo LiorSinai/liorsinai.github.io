@@ -202,7 +202,7 @@ But I'll stop here 🙂.
 ## Reflection
 
 This application used several algorithms, some rather complex, to do a task that humans consider trivial. 
-This is not to downplay the effort. The task is a complex one, and we only consider it trivial because our brains have exquistively adapted to it.
+This is not to downplay the effort. The task is a complex one, and we only consider it trivial because our brains have exquisitely adapted to it.
 
 We've used several algorithms along the way. It is worth taking stock of all of them and all the parameters that are needed. Some of these parameters are fixed, whether set explicitly or implied. For example, the blurring is done the same in the horizontal and vertical directions and so one parameter is fixed. 
 Others are free and may require hand tuning.

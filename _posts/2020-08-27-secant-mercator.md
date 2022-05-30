@@ -9,9 +9,9 @@ categories: mathematics
 tags:	cartography mathematics 
 ---
 
-_The integral of the secant is well known to any beginners calculus student. Yet this integral was once a major outstanding maths problem. It was first introduced by Geradus Mercator, who needed it to make his famous map, in 1569. He couldn't find it, and used an approximation instead. The exact solution was found accidently 86 years later without calculus in 1645. It then took another two decades until a formal proof was given in 1668, 99 years after Mercator first proposed the problem._ 
+_The integral of the secant is well known to any beginners calculus student. Yet this integral was once a major outstanding maths problem. It was first introduced by Geradus Mercator, who needed it to make his famous map, in 1569. He couldn't find it, and used an approximation instead. The exact solution was found accidentally 86 years later without calculus in 1645. It then took another two decades until a formal proof was given in 1668, 99 years after Mercator first proposed the problem._ 
 
-_Update 13 March 2021: added a note on how Napier calculated logarithm trignometry tables. This was prompted by a correction raised in a discussion of this post on [HackerNews][hackernews]._
+_Update 13 March 2021: added a note on how Napier calculated logarithm trigonometry tables. This was prompted by a correction raised in a discussion of this post on [HackerNews][hackernews]._
 
 _Update 10 October 2021: the great circle and rhumb line images are now made with a script that uses [Cartopy][Cartopy]. Previously they were made with a Matlab application. You can see the new script at my [Github repository][repo] and enter your co-ordinates to generate your own lines._
 
@@ -143,7 +143,7 @@ While the equations are simple, the construction process can be hard to visualis
 	alt="Equirectangular map construction"
 	>
 	<figcaption>A segment of the sphere is peeled off and flattened.
-The right most image shows a top view of the flattening. The arcs are pulled flat in the longitudial direction, so that they become straight lines.
+The right most image shows a top view of the flattening. The arcs are pulled flat in the longitudinal direction, so that they become straight lines.
 They do not change length in this process, but that requires stretching out the sides along the $x$-axis. 
 Thus a single point where all the arcs meet, is stretched into a line.   </figcaption>
 </figure>
@@ -208,9 +208,9 @@ For example, here is the rhumb line through modern day New York and Cape Town:
 
 At each point along the rhumb line, the angle $\theta$ with the meridian is 48.56&deg;, which corresponds to a bearing of 311&deg;26'18'' from Cape Town to New York. 
 I've also shown the great circle, which is a circle whose centre lies on the centre of the sphere. 
-Travelling along the great circle is always shorter. In this case, the distance is 12550 km instead of 12600 km along the rhumb line.
+Traveling along the great circle is always shorter. In this case, the distance is 12550 km instead of 12600 km along the rhumb line.
 With modern technology, it is easy for ships and aeroplanes to stick to the great circles. But back in Mercator's day, this was rather difficult. 
-So sailors preferred to stick to rhumb lines. They would rather get to their destination by travelling a little longer, then get lost and travel a lot more.
+So sailors preferred to stick to rhumb lines. They would rather get to their destination by traveling a little longer, then get lost and travel a lot more.
 
 Mercator's idea was to stretch out a cylindrical projection map in the North-South direction to preserve shapes and angles.
 Looking at the Lambert projection,[^4] it can be seen that a different stretch factor is required for each latitude. At the equator, no stretch is required.
@@ -267,7 +267,7 @@ Calculating the bearing can be done simply with a ruler and a projector.
 No thinking or maths required! (And no fancy instruments on globes either.) In modern day terms we would say, it was a big hit with sailors.
 
 For online maps, the local projection is very important. If you are looking for directions in a city, what matters most to you is that the roads look correct.
-This is why the Mercator map is used - to preserve angles between grids in roads. Other map projections don't meet this simple requirment.
+This is why the Mercator map is used - to preserve angles between grids in roads. Other map projections don't meet this simple requirement.
 A minor problem is that the scale changes at each latitude, but online maps can easily calculate this at each point. 
 Try this with [Google Maps][maps_google]. For the same zoom factor, the scale bar is not the same length at each latitude. 
 Also, along the equator, the scale bar has a minimum of 5m. Up near the poles, which is way more stretched out, the scale bar goes down to 1m.
@@ -275,7 +275,7 @@ But you don't notice this when zooming in on a specific point in the map.
 
 For the record, if you are going to look at long distances on Google Maps, it's best to turn the "Globe view" option on.
 
-## Tables for trigs, Mercator and logs
+## Tables for trig, Mercator and logs
 
 This is where things take an unexpected turn. 
 But in order to understand how, I want to explain another part of history: mathematical  tables. 
@@ -418,7 +418,7 @@ It was designed with an "artistic approach". Unlike the other projections, inste
 [^4]: I am not sure if Mercator knew of this projection. It was only formally described by Johann Heinrich Lambert in 1772. However, I think it is the easiest way to visualise the Mercator projection construction, so I have used it here anyway. There are other constructions for it but I do not think they are helpful. The Mercator just is a very unnatural projection.
 [^6]: There are several popular Coronavirus map trackers that use the Mercator projection. How sad. 
 [^correction]: My original article said that logarithmic trigonometric tables appeared _after_ normal logarithmic tables. However because of Napier's unusual derivation of the approximation formula, this is not true. This was pointed out to me on comments on this post on HackerNews. You can see these [here][hackernews].
-[^Napier]: Here is a brief overview of Napier's method: He compared a particle travelling along an infinite line with another particle travelling along a finite line of length $R$. The first particle travels at a uniform speed $\frac{dx_1}{dt}=1$, while the second particle travels at a speed proportional to the distance it has left along the finite line, $\frac{dx_2}{dt}=R-x_2$. The distance the second particle travels is related to the first particle with this differential equation: $\frac{dx_2}{dx_1}=R-x_2$. Its solution is:
+[^Napier]: Here is a brief overview of Napier's method: He compared a particle traveling along an infinite line with another particle traveling along a finite line of length $R$. The first particle travels at a uniform speed $\frac{dx_1}{dt}=1$, while the second particle travels at a speed proportional to the distance it has left along the finite line, $\frac{dx_2}{dt}=R-x_2$. The distance the second particle travels is related to the first particle with this differential equation: $\frac{dx_2}{dx_1}=R-x_2$. Its solution is:
 
 	$$  \begin{align} x_1 &= log_{\frac{1}{e}} \left(\frac{R-x_2}{R}\right)  \\ 
 						  &\approx log_{\left(1-\frac{1}{R}\right)^R}\left(sin(\theta) \right) 

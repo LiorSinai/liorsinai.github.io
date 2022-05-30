@@ -281,7 +281,7 @@ def place_and_erase(self, r: int, c: int, x: int, constraint_prop=True):
 	inds_row = [(r, j) for j in range(self.n)]
 	inds_col = [(i, c) for i in range(self.n)]
 	inds_box = self.get_box_inds(r, c)
-	erased = [(r, c)]  # set of indices for constraint propogration
+	erased = [(r, c)]  # set of indices for constraint propagation
 	erased += self.erase([x], inds_row + inds_col + inds_box, [])
 	# constraint propagation, through every index that was changed
 	while erased and constraint_prop:

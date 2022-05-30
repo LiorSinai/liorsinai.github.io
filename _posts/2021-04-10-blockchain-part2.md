@@ -101,7 +101,7 @@ public class Blockchain
 The only fully public attributes are  Name and BlockchainDirectory.  They are not included in any hashes or data checks. 
 The rest are set privately.
 `MakeBlock()` is a helper function to ensure that blocks increment their indices properly and carry over previous hashes.
-Otherwise blocks can be created indepedently of the blockchain with their own constructors.
+Otherwise blocks can be created independently of the blockchain with their own constructors.
 
 `CommitBlock()` does multiple checks before committing a block:
 - Indices must be sequential.
@@ -243,7 +243,7 @@ public class Token
 
 The token is linked to a file, but I've chosen not to store the file data in it.
 It only stores the file name. The file data is loaded each time it is needed.
-This requires knowning the directory where the file resides
+This requires knowing the directory where the file resides
 but I've chosen not to store it.
 It therefore needs to be passed to the `Print()` and `Verify()` functions.
 

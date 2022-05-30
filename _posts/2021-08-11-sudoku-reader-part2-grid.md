@@ -36,7 +36,7 @@ I found more complicated techniques - e.g. line detections with Hough Transforma
 Machine learning could also be used for this problem.
 For example, [MathWorks][MathWorks] trained a model to segment an area around the grid.
 It only trains on 100 images so I do not know how well it generalises.
-A more general model usually requires a much larger dataset. That could be time consuimg to make.
+A more general model usually requires a much larger dataset. That could be time consuming to make.
 
 After the largest contour has been found, a quadrilateral is fit to the contour, and that is returned as the grid.
 
