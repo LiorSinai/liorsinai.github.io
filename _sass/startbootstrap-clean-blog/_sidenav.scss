@@ -1,10 +1,12 @@
 // Styling for table of contents
 .side-nav {
-    margin-top: 2rem;
+    --offset: 2rem;
+    margin-top: var(--offset);
     padding-left: 0;
     border-left: 1px solid #efefef;
     overflow-y: auto;
-    height: 34em;
+    overflow-x: clip;
+    max-height: calc(100vh - var(--offset) * 2);
     font-size: 18px;
   }
   

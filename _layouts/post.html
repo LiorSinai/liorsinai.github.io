@@ -41,8 +41,8 @@ layout: default
         </div>
       </div>
       {% if page.sidenav %}
-      <!-- sticky table of contents for > medium screens (>720px) -->
-      <div class="col-lg-3 col-md-2 d-none d-md-block"> 
+      <!-- side nav for large screens (>992px) -->
+      <div class="col-lg-3 d-none d-lg-block"> 
         {% include {{ page.sidenav }} %}
        </div>
       {% endif %}
