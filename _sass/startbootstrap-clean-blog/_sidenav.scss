@@ -8,6 +8,15 @@
     overflow-x: clip;
     max-height: calc(100vh - var(--offset) * 2);
     font-size: 18px;
+
+    .nav-link.active {
+      color: $primary
+    }
+
+    .nav-link{ 
+      padding-top: 0;
+      padding-bottom: 0;
+    }
   }
   
   .side-nav a {
@@ -20,14 +29,6 @@
 .side-nav a:focus {
   color: $primary;
 }
-
-.side-nav ol {
-    list-style: none;
-}
-
-.side-nav li.active > a {
-  color: $primary;
-  }
 
 #stickyTable {
   position: -webkit-sticky; /* Safari */  
