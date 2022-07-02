@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Building a transformer in Julia"
+title:  "How to code a transformer in Julia"
 date:   2022-05-18
 author: Lior Sinai
 background: '/assets/posts/transformers/transformer.png'
@@ -9,7 +9,7 @@ categories: coding
 tags: mathematics transformers 'machine learning' 'deep learning'
 ---
 
-_Building a transformer in Julia. This a very long post on the full process behind making a transformer work in Julia._ 
+_Coding a transformer in Julia. This a very long post on the full process behind making a transformer work in Julia. This solution uses the Flux machine learning framework. It also describes the mathematics behind transformers._ 
 
 <link rel="stylesheet" href="/assets/posts/transformers/style.css">
 
@@ -1662,8 +1662,8 @@ Although these results are not 100% perfect, it is a big achievement to have a m
 
 ## Conclusion
 
-Thank you for following through this very long post.
-I hope this has giving insight into transformers and how they work.
+Thank you for following this tutorial.
+I hope you now have a working transformer and have much better insight into how they work.
 
 ---
 
