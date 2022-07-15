@@ -421,11 +421,10 @@ This is based loosely on the registered [Transformers.jl][Transformersjl] packag
 ### Tokenizers
 [HuggingFaceBPE]: https://huggingface.co/course/chapter6/5?fw=pt
 
-The input is a sentence when we need to break up into tokens. 
+The input is a sentence that we need to break up into tokens. 
 This preprocessing step is a huge topic itself.
-To avoid spending too much time here, I am going to provide functions for cleaning the text.
-They put all text in lowercase, normalize unicode to ASCII e.g. "é" to "e" and "don't" to "dont" and split sentences into words.
-The regex for the latter is <code style="white-space:nowrap">[A-Za-z][A-Za-z]+\b</code> which finds all words with more than two ASCII letters without numbers.
+To avoid spending too much time here, I am going to provide functions for this.
+Firstly for cleaning the text: put all text in lowercase and normalize unicode to ASCII e.g. "é" to "e" and "don't" to "dont".
 
 {%highlight julia %}
 using Unicode
@@ -435,7 +434,12 @@ function clean(s::AbstractString)
     s = replace(s, r"['`’\u200d\p{M}]" => "") # contractions, zero width joiner and marks from normalization
     s = replace(s, r"\n" => " ")
 end
+{% endhighlight %}
 
+Then for splitting sentences into words, subword tokenization and truncating long results.
+The word finding is done with the following regex: <code style="white-space:nowrap">[A-Za-z][A-Za-z]+\b</code>. This finds all words with more than two ASCII letters without numbers.
+
+{%highlight julia %}
 function preprocess(document, tokenizer; pattern = r"[A-Za-z][A-Za-z]+\b", max_length::Union{Nothing, Int}=nothing)
     document = clean(document)
     words = map(m->string(m.match), eachmatch(pattern, document))
@@ -449,8 +453,7 @@ function preprocess(document, tokenizer; pattern = r"[A-Za-z][A-Za-z]+\b", max_l
 end
 {% endhighlight %}
 
-The `preprocess` function requires a tokenizer for subword tokenization.
-I have made simple tokenizers at [github.com/LiorSinai/TokenizersLite.jl](https://github.com/LiorSinai/TokenizersLite).
+I have made simple tokenizers for subword tokenization at [github.com/LiorSinai/TokenizersLite.jl](https://github.com/LiorSinai/TokenizersLite).
 You can also use the registered BytePairEncoding.jl package.
 Or if you do not want subword tokenization use `tokenizer=identity`.
 This is sufficient for the Amazon Reviews problem that we will investigate later.
@@ -491,9 +494,9 @@ encode(tokenizer::IndexTokenizer{T}, x::T) where T = something(
 {% endhighlight %}
 
 This assumes we are giving a single token of type `T`. 
-We also want to do multiple dispatch on sentences, which are `Vector{T}` and on batches of sentences, or `Vector{Vector{T}}`.
-When with working with batches we'll need all sentence to be the same length.
-We truncate long sentences (already done in `preprocess`) and we can introduce a padding token for sentence longer than some maximum length.
+We also want to do multiple dispatch on sentences which are `Vector{T}` and on batches of sentences where are `Vector{Vector{T}}`.
+When working with batches we'll need all sentence to be the same length.
+We truncate long sentences (already done in `preprocess`) and we can introduce a padding token for sentences shorter than the maximum length.
 Here the unknown token is used for padding:
 {%highlight julia %}
 function encode(tokenizer::IndexTokenizer{T}, seq::AbstractVector{T}) where T
@@ -1438,7 +1441,7 @@ This pipeline implements a rudimentary development workflow with:
 - hyperparameters that are used to control flow and are saved in JSON format.
 
 This includes a file I wrote called [training.jl](https://github.com/LiorSinai/TransformersLite.jl/blob/main/examples/training.jl). 
-It defines the following functions: `split_validation`, `accuracy`, `batch_matrix`, `batched_metric`, and `train!`.
+It defines the following functions: `split_validation`, `get_batch`, `batched_metric`, and `train!`.
 Please download or copy these functions to follow along.
 The `train!` function is based off `Flux.train!` except it returns a history and uses the batch functions.
 These reduce the maximum memory requirement at any one time. 
@@ -1574,8 +1577,10 @@ Training:
 {% highlight julia %}
 if nlabels == 1
     loss(x, y) = Flux.logitbinarycrossentropy(model(x), y)
+    accuracy(ŷ, y) = mean((Flux.sigmoid.(ŷ) .> 0.5) .== y)
 else
     loss(x, y) = Flux.logitcrossentropy(model(x), y)
+    accuracy(ŷ, y) = mean(Flux.onecold(ŷ) .== Flux.onecold(y))
 end
 loss(x::Tuple) = loss(x[1], x[2])
 
