@@ -996,7 +996,7 @@ function MultiheadAttention(nhead::Int, dm::Int, dout::Int)
 end
 {% endhighlight %}
 
-Define utility functions for printing:
+Define printing functions:
 {% highlight julia %}
 function Base.show(io::IO, mha::MultiheadAttention)
     dh = div(size(mha.denseQ.weight)[1], mha.nhead)
@@ -1014,19 +1014,17 @@ function Base.show(io::IO, m::MIME"text/plain", mha::MultiheadAttention)
 end
 
 function _show_multiheadattention(io::IO, mha::MultiheadAttention; indent=0)
-    inner_indent = indent + 5
-    print(io, " "^indent, mha)
-    print(io,"(")
-    print(io, "\n")
+    inner_indent = indent + 2
+    print(io, " "^indent, mha, "(\n") 
     Flux._layer_show(io, mha.denseQ, inner_indent, "denseQ")
     Flux._layer_show(io, mha.denseK, inner_indent, "denseK")
     Flux._layer_show(io, mha.denseV, inner_indent, "denseV")
     Flux._layer_show(io, mha.denseO, inner_indent, "denseO")
     print(io, " "^indent, ")")
-    if indent==0
+    if indent == 0
         Flux._big_finale(io, mha)
     else 
-        println(io, "")
+        println(io, ",")
     end
 end
 {% endhighlight %}
@@ -1041,7 +1039,7 @@ The matrix multiplications here represent a softer version of this where we are 
 The same matrix is used as the query, key and value, which can be interpreted as a self-reflective lookup, analogous to asking a query what it thinks is most important about itself.
 
 But the names aren't so important. 
-The query, key and value are each calculated using the dense matrices we stored in the struct based on the input matrices:
+The query, key and value are each calculated using the dense matrices we stored in the struct based on the input matrices:[^dense_multi]
 {% highlight julia %}
 function (mha::MultiheadAttention)(query::A1, key::A2, value::A3) where {
     T, A1 <: AbstractArray{T, 3}, A2 <: AbstractArray{T, 3}, A3 <: AbstractArray{T, 3}}
@@ -1055,14 +1053,6 @@ function (mha::MultiheadAttention)(query::A1, key::A2, value::A3) where {
     K = mha.denseK(key)
     V = mha.denseV(value)
 {% endhighlight %}
-
-In the above [section](#multiplication-with-higher-order-arrays) I went into great detail about handling multiplication for higher order arrays. How does `Dense` handle the 3D input?
-{% highlight julia %}
-(a::Dense)(x::AbstractArray) = 
-  reshape(a(reshape(x, size(x,1), :)), :, size(x)[2:end]...)
-{% endhighlight %}
-It turns the 3D $d_m \times N \times B$ input into a 2D $d_m \times NB$ matrix, does the multiplication, then transforms it back again.
-This solution is valid because the weights for the dense layer are 2D.
 
 We now need to split $Q$, $K$ and $V$ from $d_m \times N \times B$ to $d_h \times N \times H \times B$ matrices.
 This is done in two steps:
@@ -1209,23 +1199,18 @@ function Base.show(io::IO, m::MIME"text/plain", te::TransformerEncoderBlock)
     _show_transformer_encoder(io, te)
 end
 
-function _show_transformer_encoder(io::IO, t::TransformerEncoderBlock; indent=0)
-    inner_indent = indent + 5
-    print(io, " "^indent, "TransformerEncoderBlock")
-    print(io, "(")
-    print(io, "\n")
-    _show_multiheadattention(io, t.multihead_attention, indent=inner_indent)
-    Flux._layer_show(io, t.dropout, inner_indent)
-    Flux._layer_show(io, t.layer_norm_attention, inner_indent)
-    Flux._layer_show(io, t.dense1, inner_indent)
-    Flux._layer_show(io, t.dense2, inner_indent)
-    Flux._layer_show(io, t.dropout, inner_indent)
-    Flux._layer_show(io, t.layer_norm_attention, inner_indent)
+function _show_transformer_encoder(io::IO, t::TransformerEncoderBlock, indent=0)
+    inner_indent = indent + 2
+    print(io, " "^indent, "TransformerEncoderBlock(\n")
+    _show_multiheadattention(io, t.multihead_attention, inner_indent)
+    for layer in [t.dropout, t.layer_norm_attention, t.dense1, t.dense2, t.dropout, t.layer_norm_feedforward]
+        Flux._layer_show(io, layer, inner_indent)
+    end
     print(io, " "^indent, ")")
-    if indent==0
+    if indent == 0
         Flux._big_finale(io, t)
     else
-        println(io, "")
+        println(io, ",")
     end
 end
 {% endhighlight %}
@@ -1323,22 +1308,20 @@ function Base.show(io::IO, m::MIME"text/plain", t::TransformerClassifier)
 end
 
 function _show_transformer_classifier(io::IO, t::TransformerClassifier; indent=0)
-    inner_indent = 5
-    print(io, " "^indent, "TransformerClassifier")
-    print(io, "(")
-    print(io, "\n")
-    Flux._layer_show(io, t.embed, inner_indent)
-    Flux._layer_show(io, t.position_encoding, inner_indent)
-    Flux._layer_show(io, t.dropout, inner_indent)
-    for e in t.encoder_layers
-        _show_transformer_encoder(io, e, indent=inner_indent)
+    inner_indent = indent + 2
+    print(io, " "^indent, "TransformerClassifier(\n")
+    for layer in [t.embed, t.position_encoding, t.dropout, t.encoder_layers..., t.agg_layer, t.flatten_layer, t.classifier]
+        if typeof(layer) <: TransformerEncoderBlock
+            _show_transformer_encoder(io, layer, inner_indent)
+        else
+            Flux._layer_show(io, layer, inner_indent)
+        end
     end
-    Flux._layer_show(io, t.agg_layer, inner_indent)
-    Flux._layer_show(io, t.flatten_layer, inner_indent)
-    Flux._layer_show(io, t.classifier, inner_indent)
     print(io, " "^indent, ")")
-    if indent==0
+    if indent == 0
         Flux._big_finale(io, t)
+    else
+        println(io, ",")
     end
 end
 
@@ -1436,16 +1419,9 @@ This justifies setting a maximum token count of 50.
 
 Here is a pipeline for training a model, from tokenizing the input to saving the output data.
 This pipeline implements a rudimentary development workflow with:
-- an output directory named after the date-time in "yyyymmdd-HHMM" format.
-- training history saved in JSON format.
-- hyperparameters that are used to control flow and are saved in JSON format.
-
-This includes a file I wrote called [training.jl](https://github.com/LiorSinai/TransformersLite.jl/blob/main/examples/training.jl). 
-It defines the following functions: `split_validation`, `get_batch`, `batched_metric`, and `train!`.
-Please download or copy these functions to follow along.
-The `train!` function is based off `Flux.train!` except it returns a history and uses the batch functions.
-These reduce the maximum memory requirement at any one time. 
-In practice I found this made the process faster even though the total memory consumed throughout is about the same.
+- An output directory named after the date-time in "yyyymmdd-HHMM" format.
+- Training history saved in JSON format.
+- Hyperparameters that are used to control flow and are saved in JSON format.
 
 The embedding dimension `dim_embedding` should be at least 8 for the Amazon Review task.
 You might want to change `nhead` to 1 if you do use this value.
@@ -1468,8 +1444,6 @@ using Dates
 using TokenizersLite
 using TransformersLite
 
-include("training.jl")
-
 path = "path\\to\\amazon_reviews_multi\\en\\1.0.0\\"
 filename = "amazon_reviews_multi-train.arrow"
 
@@ -1483,7 +1457,6 @@ hyperparameters = Dict(
     "seed" => 2718,
     "tokenizer" => "none",
     "nlabels" => 5,
-    "model" => "TransformerClassifier",
     "pdrop" => 0.1,
     "dim_embedding" => 32
 )
@@ -1537,6 +1510,16 @@ labels = df[!, :stars]
 max_length = 50
 @time tokens = map(d->preprocess(d, tokenizer, max_length=max_length), documents) 
 @time indices = indexer(tokens) 
+{% endhighlight %}
+
+Train/validation data split.
+{% highlight julia %}
+function split_validation(X::AbstractMatrix, Y::AbstractMatrix, frac=0.1; rng=Random.GLOBAL_RNG)
+    nsamples = size(X, 2)
+    idxs = shuffle(rng, 1:nsamples)
+    ntrain = nsamples - floor(Int, frac * nsamples)
+    (X[:, idxs[1:ntrain]], Y[:, idxs[1:ntrain]]), (X[:, idxs[ntrain+1:end]], Y[:, idxs[ntrain+1:end]])
+end
 
 y_train = copy(labels)
 if nlabels == 1
@@ -1570,7 +1553,69 @@ model = TransformersLite.TransformerClassifier(
     Dense(max_length, nlabels)
     )
 display(model)
+hyperparameters["model"] = "$(typeof(model).name.wrapper)"
 hyperparameters["trainable parameters"] = sum(length, Flux.params(model));
+{% endhighlight %}
+
+
+Training helper functions. 
+The `train!` function is based off `Flux.train!` except it returns a history and uses the package `ProgressBars`.
+It is meant to be used with `Flux.DataLoader` for working with batched data.
+{% highlight julia %}
+using Random
+using ProgressBars
+
+function train!(loss, ps, data, opt, val_data; n_epochs=100)
+    history = Dict(
+        "train_acc"=>Float64[], 
+        "train_loss"=>Float64[], 
+        "val_acc"=>Float64[], 
+        "val_loss"=>Float64[]
+        )
+    for epoch in 1:n_epochs
+        ps = Flux.Params(ps)
+        iter = ProgressBar(data)
+        set_description(iter, "epoch $epoch/$n_epochs")
+        for Xy in iter
+            gs = gradient(ps) do
+                loss(Xy)
+            end
+            Flux.update!(opt, ps, gs)
+        end
+        update_history!(history, model, loss, data, val_data)
+    end
+    println("")
+    history
+end
+
+function update_history!(history::Dict, model, loss, train_data, val_data)
+    train_acc = batched_metric(accuracy, train_data; g=model)
+    train_loss = batched_metric(loss, train_data)
+    val_acc = batched_metric(accuracy, val_data; g=model)
+    val_loss = batched_metric(loss, val_data)
+    
+    push!(history["train_acc"], train_acc)
+    push!(history["train_loss"], train_loss)
+    push!(history["val_acc"], val_acc)
+    push!(history["val_loss"], val_loss)
+
+    @printf "train_acc=%.4f%%; " train_acc * 100
+    @printf "train_loss=%.4f; " train_loss
+    @printf "val_acc=%.4f%%; " val_acc * 100
+    @printf "val_loss=%.4f ;" val_loss
+end
+
+function batched_metric(f, data; g=identity)
+    result = 0.0
+    num_observations = 0
+    for (x, y) in data
+        metric = f(g(x), y) 
+        batch_size = Flux.numobs(x) 
+        result += metric * batch_size
+        num_observations += batch_size
+    end
+    result / num_observations
+end
 {% endhighlight %}
 
 Training:
@@ -1586,14 +1631,18 @@ loss(x::Tuple) = loss(x[1], x[2])
 
 opt = ADAM()
 
-val_acc = batched_metric(accuracy, val_data[1], val_data[2]; g=model)
-val_loss = batched_metric(loss, val_data[1], val_data[2])
+batch_size = 32
+train_data_loader = Flux.DataLoader(train_data; batchsize=batch_size, shuffle=true)
+val_data_loader = Flux.DataLoader(val_data; batchsize=batch_size, shuffle=false)
+
+val_acc = batched_metric(accuracy, val_data_loader; g=model)
+val_loss = batched_metric(loss, val_data_loader)
 
 @printf "val_acc=%.4f ; " val_acc * 100
 @printf "val_loss=%.4f \n" val_loss
 
 start_time = time_ns()
-history = train!(loss, Flux.params(model), train_data, opt, val_data; n_epochs=10, batch_size=128)
+history = train!(loss, Flux.params(model), train_data_loader, opt, val_data_loader; n_epochs=10)
 end_time = time_ns() - start_time
 println("done training")
 @printf "time taken: %.2fs\n" end_time/1e9
@@ -1707,3 +1756,11 @@ I hope you now have a working transformer and have much better insight into how 
     But there is no valid tensor operation to reduce this 4D tensor to 3D without violating the tensor property.
 
 [^sparse]: Using `SparseArrays` in custom scatter function doesn't seem to improve efficiency.
+
+[^dense_multi]: I went into great detail about [Multiplication with higher order arrays](#multiplication-with-higher-order-arrays). `Dense` is originally designed for 2D inputs. So how does it handle the 3D input? From the `Flux.jl` source code:
+    ```
+    (a::Dense)(x::AbstractArray) = 
+    reshape(a(reshape(x, size(x,1), :)), :, size(x)[2:end]...)
+    ```
+    It turns the 3D $d_m \times N \times B$ input into a 2D $d_m \times NB$ matrix, does the multiplication, then transforms it back again.
+    This solution is valid because the weights for the dense layer are 2D.
