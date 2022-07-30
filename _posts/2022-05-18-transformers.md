@@ -1244,7 +1244,7 @@ We could take a mean across each word embedding and then pass that to a dense la
 Or we can take a dense layer across each word, reduce it down to one dimension, and pass that to a dense layer.
 Or we could flatten the whole array into a $d_m N \times 1$ column. 
 
-My preference is to do an aggregation on each word first and then on the sentence.
+My preference is to do an aggregation on each word first and then on the full text.
 Here is a simple flatten layer which we will need to put in between:
 {% highlight julia %}
 struct FlattenLayer end
@@ -1267,92 +1267,60 @@ end
 We can now make our model with Flux chain:
 
 {% highlight julia %}
-dim_embedding = 32
-pdrop = 0.1
+position_encoding = PositionEncoding(32)
 add_position_encoding(x) = x .+ position_encoding(x)
 model = Chain(
-    Embed(dim_embedding, length(indexer)), 
+    Embed(32, 7455), 
     add_position_encoding, # can also make anonymous
-    Dropout(pdrop),
-    TransformerEncoderBlock(4, dim_embedding, dim_embedding * 4; pdrop=pdrop),
-    Dense(dim_embedding, 1),
-    TransformersLite.FlattenLayer(),
-    Dense(max_length, nlabels)
-     )
-{% endhighlight %}
-
-Or here is the whole model wrapped in a struct with nicer printing and names:
-{% highlight julia %}
-struct TransformerClassifier{
-    E<:Embed, 
-    PE<:PositionEncoding, 
-    DO<:Dropout, 
-    TEB<:Vector{TransformerEncoderBlock}, 
-    A, 
-    f<:FlattenLayer, 
-    D<:Dense
-    }
-    embed::E
-    position_encoding::PE
-    dropout::DO
-    encoder_layers::TEB
-    agg_layer::A
-    flatten_layer::f
-    classifier::D
-end
-
-Flux.@functor TransformerClassifier
-
-function Base.show(io::IO, m::MIME"text/plain", t::TransformerClassifier)
-    _show_transformer_classifier(io, t)
-end
-
-function _show_transformer_classifier(io::IO, t::TransformerClassifier; indent=0)
-    inner_indent = indent + 2
-    print(io, " "^indent, "TransformerClassifier(\n")
-    for layer in [t.embed, t.position_encoding, t.dropout, t.encoder_layers..., t.agg_layer, t.flatten_layer, t.classifier]
-        if typeof(layer) <: TransformerEncoderBlock
-            _show_transformer_encoder(io, layer, inner_indent)
-        else
-            Flux._layer_show(io, layer, inner_indent)
-        end
-    end
-    print(io, " "^indent, ")")
-    if indent == 0
-        Flux._big_finale(io, t)
-    else
-        println(io, ",")
-    end
-end
-
-function (t::TransformerClassifier)(x::A) where {T, N, A<:AbstractArray{T, N}}
-    x = t.embed(x)
-    x = x .+ t.position_encoding(x)
-    x = t.dropout(x)
-    for e in t.encoder_layers
-        x = e(x)
-    end
-    x = t.agg_layer(x)
-    x = t.flatten_layer(x)
-    x = t.classifier(x)
-    x
-end
-{% endhighlight %}
-
-An example of a small model:
-{% highlight julia %}
-model = TransformersLite.TransformerClassifier(
-    Embed(dim_embedding, length(indexer)), 
-    PositionEncoding(dim_embedding), 
-    Dropout(pdrop),
-    TransformerEncoderBlock[
-        TransformerEncoderBlock(4, dim_embedding, dim_embedding * 4; pdrop=pdrop)
-    ],
-    Dense(dim_embedding, 1), 
+    Dropout(0.1),
+    TransformerEncoderBlock(4, 32, 32 * 4; pdrop=0.1),
+    Dense(32, 1),
     FlattenLayer(),
-    Dense(max_length, nlabels)
+    Dense(50, 5)
     )
 {% endhighlight %}
+
+Alternatively see [classifier.jl](https://github.com/LiorSinai/TransformersLite.jl/blob/main/src/classifier.jl) in the repository for a version of the same model wrapped in a struct with nicer printing and names. Making a model with this:
+{% highlight julia %}
+model = TransformersLite.TransformerClassifier(
+    Embed(32, 7455), 
+    PositionEncoding(32), 
+    Dropout(0.1),
+    TransformerEncoderBlock[
+        TransformerEncoderBlock(4, 32, 32 * 4; pdrop=0.1)
+    ],
+    Dense(32, 1), 
+    FlattenLayer(),
+    Dense(50, 5)
+    )
+{% endhighlight %}
+
+Output:
+{% highlight julia %}
+TransformerClassifier(
+  Embed((32, 7455)),                    # 238_560 parameters
+  PositionEncoding(32),
+  Dropout(0.1),
+  TransformerEncoderBlock(
+    MultiheadAttention(num_heads=4, head_size=8, 32=>32)(
+      denseQ = Dense(32 => 32),         # 1_056 parameters
+      denseK = Dense(32 => 32),         # 1_056 parameters
+      denseV = Dense(32 => 32),         # 1_056 parameters
+      denseO = Dense(32 => 32),         # 1_056 parameters
+    ),
+    Dropout(0.1),
+    LayerNorm(32),                      # 64 parameters
+    Dense(32 => 128, relu),             # 4_224 parameters
+    Dense(128 => 32),                   # 4_128 parameters
+    Dropout(0.1),
+    LayerNorm(32),                      # 64 parameters
+  ),
+  Dense(32 => 1),                       # 33 parameters
+  FlattenLayer(),
+  Dense(50 => 5),                       # 255 parameters
+)                  # Total: 21 arrays, 251_552 parameters, 1.083 MiB.
+{% endhighlight %}
+
 
 Finally, we have a working transformer!
 
@@ -1547,7 +1515,9 @@ model = TransformersLite.TransformerClassifier(
     Embed(dim_embedding, length(indexer)), 
     PositionEncoding(dim_embedding), 
     Dropout(pdrop),
-    TransformerEncoderBlock[TransformerEncoderBlock(4, dim_embedding, dim_embedding * 4; pdrop=pdrop)],
+    TransformerEncoderBlock[
+        TransformerEncoderBlock(4, dim_embedding, dim_embedding * 4; pdrop=pdrop)
+    ],
     Dense(dim_embedding, 1), 
     FlattenLayer(),
     Dense(max_length, nlabels)
