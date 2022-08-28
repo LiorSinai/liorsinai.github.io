@@ -359,27 +359,28 @@ We'll be making use of the Flux framework along with the NNlib and ChainRulesCor
 An example output will be:
 {%highlight julia %}
 TransformerClassifier(
-     Embed(32, 7455),                   # 238_560 parameters
-     PositionEncoding(32),
-     Dropout(0.1),
-     TransformerEncoderBlock(
-          MultiheadAttention(num_heads=4, head_size=8, 32=>32)(
-               denseQ = Dense(32 => 32),  # 1_056 parameters
-               denseK = Dense(32 => 32),  # 1_056 parameters
-               denseV = Dense(32 => 32),  # 1_056 parameters
-               denseO = Dense(32 => 32),  # 1_056 parameters
-          )
-          Dropout(0.1),
-          LayerNorm(32),                # 64 parameters
-          Dense(32 => 128, relu),       # 4_224 parameters
-          Dense(128 => 32),             # 4_128 parameters
-          Dropout(0.1),
-          LayerNorm(32),                # 64 parameters
-     )
-     Dense(32 => 1),                    # 33 parameters
-     FlattenLayer(),
-     Dense(50 => 5),                    # 255 parameters
-)                  # Total: 21 arrays, 251_552 parameters, 1.083 MiB
+  Embed((32, 7455)),                    # 238_560 parameters
+  PositionEncoding(32),
+  Dropout(0.1),
+  TransformerEncoderBlock(
+    MultiheadAttention(num_heads=4, head_size=8, 32=>32)(
+      denseQ = Dense(32 => 32),         # 1_056 parameters
+      denseK = Dense(32 => 32),         # 1_056 parameters
+      denseV = Dense(32 => 32),         # 1_056 parameters
+      denseO = Dense(32 => 32),         # 1_056 parameters
+    ),
+    Dropout(0.1),
+    LayerNorm(32),                      # 64 parameters
+    Dense(32 => 128, relu),             # 4_224 parameters
+    Dense(128 => 32),                   # 4_128 parameters
+    Dropout(0.1),
+    LayerNorm(32),                      # 64 parameters
+  ),
+  Dense(32 => 1),                       # 33 parameters
+  FlattenLayer(),
+  Dense(50 => 5),                       # 255 parameters
+)        # Total: 21 trainable arrays, 251_552 parameters,
+          # plus 1 non-trainable, 32_000 parameters, summarysize 1.083 MiB
 {% endhighlight %}
 
 The `Dropout`, `LayerNorm` and `Dense` layers are already part of the Flux package.
@@ -731,6 +732,9 @@ struct PositionEncoding{W <: AbstractArray}
     encoding::W
 end
 
+Flux.@functor PositionEncoding # make this layer discoverable by Flux
+Flux.trainable(m::PositionEncoding) = () # but specify no weights are trainable
+
 function PositionEncoding(dim_embedding::Int, max_length::Int=1000)
     W = make_position_encoding(dim_embedding, max_length)
     PositionEncoding(W)
@@ -1013,7 +1017,7 @@ function Base.show(io::IO, m::MIME"text/plain", mha::MultiheadAttention)
     _show_multiheadattention(io, mha)
 end
 
-function _show_multiheadattention(io::IO, mha::MultiheadAttention; indent=0)
+function _show_multiheadattention(io::IO, mha::MultiheadAttention, indent=0)
     inner_indent = indent + 2
     print(io, " "^indent, mha, "(\n") 
     Flux._layer_show(io, mha.denseQ, inner_indent, "denseQ")
@@ -1196,7 +1200,13 @@ function Base.show(io::IO, te::TransformerEncoderBlock)
 end
 
 function Base.show(io::IO, m::MIME"text/plain", te::TransformerEncoderBlock)
-    _show_transformer_encoder(io, te)
+    if get(io, :typeinfo, nothing) === nothing  # e.g. top level in REPL
+        _show_transformer_encoder(io, te)
+    elseif !get(io, :compact, false)  # e.g. printed inside a Vector, but not a Matrix
+      Flux._layer_show(io, te)
+    else
+      show(io, te)
+    end
 end
 
 function _show_transformer_encoder(io::IO, t::TransformerEncoderBlock, indent=0)
@@ -1318,7 +1328,8 @@ TransformerClassifier(
   Dense(32 => 1),                       # 33 parameters
   FlattenLayer(),
   Dense(50 => 5),                       # 255 parameters
-)                  # Total: 21 arrays, 251_552 parameters, 1.083 MiB.
+)        # Total: 21 trainable arrays, 251_552 parameters,
+          # plus 1 non-trainable, 32_000 parameters, summarysize 1.083 MiB
 {% endhighlight %}
 
 
