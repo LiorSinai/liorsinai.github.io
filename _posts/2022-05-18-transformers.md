@@ -9,7 +9,7 @@ categories: coding
 tags: mathematics transformers 'machine learning' 'deep learning'
 ---
 
-_Transformers for natural language processing from first principles. This a long post which details a full implementation of transformers and the mathematics behind them. The use case is prediciting Amazon review stars based on the review text. The language of choice is Julia utilising the Flux machine learning framework._ 
+_Transformers for natural language processing from first principles. This a long post which details a full implementation of transformers and the mathematics behind them. The use case is predicting Amazon review stars based on the review text. The language of choice is Julia utilising the Flux machine learning framework._ 
 
 <link rel="stylesheet" href="/assets/posts/transformers/style.css">
 
