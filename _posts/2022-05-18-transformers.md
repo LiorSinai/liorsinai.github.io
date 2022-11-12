@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "How to code a transformer in Julia"
+title:  "Transformers from first principles in Julia"
 date:   2022-05-18
 author: Lior Sinai
 background: '/assets/posts/transformers/transformer.png'
@@ -9,7 +9,7 @@ categories: coding
 tags: mathematics transformers 'machine learning' 'deep learning'
 ---
 
-_Coding a transformer in Julia. This a very long post on the full process behind making a transformer work in Julia. This solution uses the Flux machine learning framework. It also describes the mathematics behind transformers._ 
+_Transformers for natural language processing from first principles. This a long post which details a full implementation of transformers and the mathematics behind them. The use case is prediciting Amazon review stars based on the review text. The language of choice is Julia utilising the Flux machine learning framework._ 
 
 <link rel="stylesheet" href="/assets/posts/transformers/style.css">
 
@@ -306,8 +306,8 @@ Multiplication simply isn't defined for them. So we'll have to write our own fun
 
 ### Attention
 
-The most important steps in the above table are the attention steps.
-Combing them all into one and working with only 2D matrices, we get the definition for the scaled dot product attention:
+The most important steps in the above table are the steps 3 to 5.
+Combing them into one and working with only 2D matrices, we get the definition for the scaled dot product attention:
 
 $$
     A = \text{softmax}\left(\frac{1}{\sqrt{d_h}}K^T Q\right)V
@@ -423,43 +423,16 @@ This is based loosely on the registered [Transformers.jl][Transformersjl] packag
 [HuggingFaceBPE]: https://huggingface.co/course/chapter6/5?fw=pt
 
 The input is a sentence that we need to break up into tokens. 
-This preprocessing step is a huge topic itself.
-To avoid spending too much time here, I am going to provide functions for this.
-Firstly for cleaning the text: put all text in lowercase and normalize unicode to ASCII e.g. "é" to "e" and "don't" to "dont".
+This preprocessing step is a huge topic itself and I am not going to go into detail here.
 
-{%highlight julia %}
-using Unicode
-function clean(s::AbstractString)
-    s = lowercase(s)
-    s = Unicode.normalize(s, :NFD)
-    s = replace(s, r"['`’\u200d\p{M}]" => "") # contractions, zero width joiner and marks from normalization
-    s = replace(s, r"\n" => " ")
-end
-{% endhighlight %}
-
-Then for splitting sentences into words, subword tokenization and truncating long results.
-The word finding is done with the following regex: <code style="white-space:nowrap">[A-Za-z][A-Za-z]+\b</code>. This finds all words with more than two ASCII letters without numbers.
-
-{%highlight julia %}
-function preprocess(document, tokenizer; pattern = r"[A-Za-z][A-Za-z]+\b", max_length::Union{Nothing, Int}=nothing)
-    document = clean(document)
-    words = map(m->string(m.match), eachmatch(pattern, document))
-    tokens = tokenizer(words)
-    if !isnothing(max_length)
-        if length(tokens) > max_length
-            tokens = tokens[1:max_length]
-        end
-    end
-    tokens
-end
-{% endhighlight %}
-
-I have made simple tokenizers for subword tokenization at [github.com/LiorSinai/TokenizersLite.jl](https://github.com/LiorSinai/TokenizersLite).
+The first step is to clean the text. The [pipeline](#pipeline) later has basic functions for doing this and splitting sentences into words. 
+The next step is subword tokenization. 
+I have made simple tokenizers for this at [github.com/LiorSinai/TokenizersLite.jl](https://github.com/LiorSinai/TokenizersLite).
 You can also use the registered BytePairEncoding.jl package.
-Or if you do not want subword tokenization use `tokenizer=identity`.
-This is sufficient for the Amazon Reviews problem that we will investigate later.
+Or if you do not want subword tokenization use `tokenizer=identity` and the tokens will be the words themselves.
+That is sufficient for the Amazon Reviews problem that we will investigate later.
 
-Once we have tokens we do need to map them to word embeddings.
+Once we have tokens we need to map them to word embeddings.
 For this we'll make a simple `IndexTokenizer`:
 {%highlight julia %}
 struct IndexTokenizer{T}
@@ -903,7 +876,8 @@ end
     \frac{\partial L}{\partial A}_{ijkl} = \sum_r \frac{\partial L}{\partial Z}_{irkl} B_{jrkl} \\
     \frac{\partial L}{\partial B}_{ijkl} = \sum_r A_{rikl}  \frac{\partial L}{\partial Z}_{rjkl} 
     $$
-    Thankfully there already exists a way to get a view of transposes along the first two dimensions in higher order arrays: <code>PermutedDimsArray</code>. So the <code>rrule</code> is relatively short:
+    Where we transpose along the first two dimensions of each array and apply the previous equations.
+    Thankfully there is an inbuilt function to do the transposition in higher order arrays: <code>PermutedDimsArray</code>. So the <code>rrule</code> is relatively short:
     <pre><code class="language-julia">
     import ChainRulesCore.rrule
     using ChainRulesCore: @thunk, NoTangent
@@ -1043,6 +1017,7 @@ The matrix multiplications here represent a softer version of this where we are 
 The same matrix is used as the query, key and value, which can be interpreted as a self-reflective lookup, analogous to asking a query what it thinks is most important about itself.
 
 But the names aren't so important. 
+
 The query, key and value are each calculated using the dense matrices we stored in the struct based on the input matrices:[^dense_multi]
 {% highlight julia %}
 function (mha::MultiheadAttention)(query::A1, key::A2, value::A3) where {
@@ -1060,7 +1035,7 @@ function (mha::MultiheadAttention)(query::A1, key::A2, value::A3) where {
 
 We now need to split $Q$, $K$ and $V$ from $d_m \times N \times B$ to $d_h \times N \times H \times B$ matrices.
 This is done in two steps:
-1. $d_h \times H \times N \times B$ (break $d_m$ into $d_h$ and $H$)
+1. $(d_h \times H)\times N \times B$ (break $d_m$ into $d_h$ and $H$)
 2. $d_h \times N \times H \times B$ (swap the 2nd and 3rd dimensions)
 {% highlight julia %}
     Q = permutedims(reshape(Q, dh, mha.nhead, qs[2], qs[3]), [1, 3, 2, 4])
@@ -1107,7 +1082,7 @@ The softmax function (and its rrule) are provided by NNlib. For backpropagation 
     Here we have a case of $Z=A^TB$.  
     This requires finding transposes of these results:
     $$
-    \frac{\partial L}{\partial A} = \left(\frac{\partial L}{\partial A^T}\right)^T = B \frac{\partial L}{\partial Z}^T \\
+    \frac{\partial L}{\partial A} = \left(\frac{\partial L}{\partial A^T}\right)^T = \left(\frac{\partial L}{\partial Z} B^T \right)^T = B \frac{\partial L}{\partial Z}^T \\
     \frac{\partial L}{\partial B} = (A^T)^T \frac{\partial L}{\partial Z} = A\frac{\partial L}{\partial Z}
     $$
     We don't need to define the rrule because Flux will combine the rules for <code>permutedims</code> and <code>batched_mul</code> to get the same result.
@@ -1177,14 +1152,15 @@ For backpropagation information please see
 
 Because the inputs and outputs are similar we only need four parameters to define the whole block:
 {% highlight julia %}
-TransformerEncoderBlock(nhead::Int, dm::Int, dhid::Int; pdrop::Float64=0.1) = TransformerEncoderBlock(
-    MultiheadAttention(nhead, dm, dm),
-    LayerNorm(dm),
-    Dense(dm, dhid, relu),
-    Dense(dhid, dm),
-    LayerNorm(dm),
-    Dropout(pdrop)
-)
+TransformerEncoderBlock(nhead::Int, dm::Int, dhid::Int; pdrop::Float64=0.1) = 
+    TransformerEncoderBlock(
+        MultiheadAttention(nhead, dm, dm),
+        LayerNorm(dm),
+        Dense(dm, dhid, relu),
+        Dense(dhid, dm),
+        LayerNorm(dm),
+        Dropout(pdrop)
+    )
 {% endhighlight %}
 
 Printing functions:
@@ -1464,6 +1440,8 @@ display(indexer)
 {% endhighlight %}
 
 Tokens pipeline:
+- Put all text in lowercase and normalize unicode to ASCII e.g. "é" to "e" and "don't" to "dont".
+- Split passages into words. (More complex sentence splitting is in the [examples](https://github.com/LiorSinai/TransformersLite.jl/blob/main/examples/demo_sentences.jl).)
 {% highlight julia %}
 function clean(s::AbstractString)
     s = lowercase(s)
