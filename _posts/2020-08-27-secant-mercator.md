@@ -9,7 +9,7 @@ categories: mathematics
 tags:	cartography mathematics 
 ---
 
-_The integral of the secant is well known to any beginners calculus student. Yet this integral was once a major outstanding maths problem. It was first introduced by Geradus Mercator, who needed it to make his famous map, in 1569. He couldn't find it, and used an approximation instead. The exact solution was found accidentally 86 years later without calculus in 1645. It then took another two decades until a formal proof was given in 1668, 99 years after Mercator first proposed the problem._ 
+_The integral of sec(x) is well known to any beginners calculus student. Yet this integral was once a major outstanding maths problem. It was first introduced by Geradus Mercator, who needed it to make his famous map, in 1569. He couldn't find it, and used an approximation instead. The exact solution was found accidentally 86 years later without calculus in 1645. It then took another two decades until a formal proof was given in 1668, 99 years after Mercator first proposed the problem._ 
 
 _Update 13 March 2021: added a note on how Napier calculated logarithm trigonometry tables. This was prompted by a correction raised in a discussion of this post on [HackerNews][hackernews]._
 
@@ -41,16 +41,16 @@ Integration is the mathematics of inverting this - given a gradient function, wh
 My lecturer was introducing the integration of trigonometric functions.
 He started off with:
 
-$$ \int sin(x) dx = -cos(x) + c \:\text{  and } \int cos(x) dx = sin(x) + c$$ 
+$$ \int \sin(x) dx = -\cos(x) + c \:\text{  and } \int \cos(x) dx = \sin(x) + c$$ 
 
-This relationship made sense, because sine and cosine derivatives were opposites. Just had to be careful of minus signs. Next he derived the integral for the tangent:
+This relationship made sense because sine and cosine derivatives were opposites. Just had to be careful of minus signs. Next he derived the integral for the tangent:
 
-$$ \int tan(x) dx = \int \frac{sin(x)}{cos(x)}dx = -ln|cos(x)| + c $$
+$$ \int \tan(x) dx = \int \frac{\sin(x)}{\cos(x)}dx = -\ln|\cos(x)| + c $$
 
-Ok, that was tricky. It was not immediately obvious that the inverse of the chain rule could be used here, because the function $cos(x)$ was present with its derivative $sin(x)$.
+Ok, that was tricky. It was not immediately obvious that the inverse of the chain rule could be used here, because the function $\cos(x)$ was present with its derivative $\sin(x)$.
 But given enough thought, it made sense. Then he said, this is the integral of the secant, and learn it off by heart:
 
-$$ \int sec(x) dx = ln|sec(x) + tan(x)| + c $$
+$$ \int \sec(x) dx = \ln|\sec(x) + \tan(x)| + c $$
 
 OK, where did that come from? My lecturer offered no explanation. It was easy to verify that it worked by finding the derivative.[^derivative]
 (Paper [2][secant_Rickey] has a more complex proof using only integration.)
@@ -61,7 +61,7 @@ But how had he come up with that?
     src="/assets/posts/secant-mercator/integral_secant_graph.png"
 	alt="Secant integral graph"
 	>
-	<figcaption>The curve $ln|sec(x) + tan(x)|$ has tangents with a gradient of $sec(x)$. Discovering this fact took 100 years.</figcaption>
+	<figcaption>The curve $\ln|\sec(x) + \tan(x)|$ has tangents with a gradient of $\sec(x)$. Discovering this fact took 100 years.</figcaption>
 </figure>
 
 
@@ -90,11 +90,11 @@ That is why a teacher was crunching numbers when he serendipitously realised wha
 The secant is a standard trigonometric function. It is defined as the ratio of the hypotenuse $c$ to the adjacent side $a$ for an angle $\varphi$ in a right angled triangle.
 In mathematical notation, the definition is:
 
-$$ sec(\varphi) = \frac{c}{a} $$
+$$ \sec(\varphi) = \frac{c}{a} $$
 
 It is the reciprocal of the more widely used cosine function:
 
-$$ sec(\varphi) = \frac{1}{cos(\varphi)} $$
+$$ \sec(\varphi) = \frac{1}{\cos(\varphi)} $$
 
 Here are the graphs of the secant and cosine for the angles from $-2\pi$ (-360&deg;) to $2\pi$ (360&deg;):
 
@@ -145,7 +145,7 @@ While the equations are simple, the construction process can be hard to visualis
 	<figcaption>A segment of the sphere is peeled off and flattened.
 The right most image shows a top view of the flattening. The arcs are pulled flat in the longitudinal direction, so that they become straight lines.
 They do not change length in this process, but that requires stretching out the sides along the $x$-axis. 
-Thus a single point where all the arcs meet, is stretched into a line.   </figcaption>
+Thus a single point where all the arcs meet is stretched into a line.   </figcaption>
 </figure>
 
 The equirectangular map has a total area of $(2\pi R)(\pi R)=2\pi^2 R^2$ while the surface area of the sphere is $4\pi R^2$. 
@@ -175,7 +175,7 @@ And here is a cross section of the sphere along side the final map:
 
 The equations are:
 
-$$ \begin{align} y &= Rsin(\varphi)\\ x &= R\lambda \end{align}$$
+$$ \begin{align} y &= R\sin(\varphi)\\ x &= R\lambda \end{align}$$
 
 For objects near the equator, this results in very little distortion, such as for Africa. But objects near the poles are compressed because of the sphere's curvature. 
 This can be seen clearly with Greenland.
@@ -227,29 +227,29 @@ This stretch factor can be calculated as follows:
 
 First Mercator divided the globe into graticules of equal spacing $\delta\varphi$ and $\delta\lambda$. 
 Along the meridians, the arc length of each graticule is $R\delta\varphi$.
-Along the parallels, the radius of the circle is $Rcos(\varphi)$, so that the arc length is $(Rcos(\varphi))\delta\lambda$.
+Along the parallels, the radius of the circle is $R\cos(\varphi)$, so that the arc length is $(R\cos(\varphi))\delta\lambda$.
 The tangent can be then approximated as:
 
-$$ tan(\alpha) \approx \frac{Rcos(\varphi)\delta\lambda}{R\delta\varphi}$$
+$$ \tan(\alpha) \approx \frac{R\cos(\varphi)\delta\lambda}{R\delta\varphi}$$
 
 This graticule is then flattened into the rectangle with the following two requirements:
 
-1. The angles are kept constant, by setting $\alpha =\beta$.
-2. The parallels are projected on to the $x$-axis, like in the Lambert projection. This means $\delta x = R\delta \lambda$.
+1. The angles are kept constant by setting $\alpha =\beta$.
+2. The parallels are projected on to the $x$-axis like in the Lambert projection. This means $\delta x = R\delta \lambda$.
 
 Therefore the transformation is:
 
-$$ \begin{align} tan(\alpha) &= tan(\beta) \\ 
-\frac{Rcos(\varphi)\delta\lambda}{R\delta\varphi} &= \frac{\delta x}{\delta y} \\
-\delta y &=  \frac{\delta x}{\delta \lambda} \frac{1}{cos(\varphi)} \delta \varphi = R sec(\varphi) \delta \varphi
+$$ \begin{align} \tan(\alpha) &= \tan(\beta) \\ 
+\frac{R\cos(\varphi)\delta\lambda}{R\delta\varphi} &= \frac{\delta x}{\delta y} \\
+\delta y &=  \frac{\delta x}{\delta \lambda} \frac{1}{\cos(\varphi)} \delta \varphi = R \sec(\varphi) \delta \varphi
  \end{align} $$
 
 From here, it is a small step to turn this into an integral. However, calculus was only properly invented a century later after Mercator published his map. 
-Instead what Mercator did, was realise that he could add up the stretch factors at each point. 
-The stretch at graticule _n_ is approximately the stretch of the graticule below it plus $R sec(\varphi) \delta \varphi$. This can then be turned into a sum:
+Instead what Mercator did was realise that he could add up the stretch factors at each point. 
+The stretch at graticule _n_ is approximately the stretch of the graticule below it plus $R \sec(\varphi) \delta \varphi$. This can then be turned into a sum:
 
-$$ \begin{align} y_n &\approx R sec(n \cdot \delta \varphi) \delta \varphi + y_{n-1} \\
-                     &=\sum^{n}_{k=0} R sec(k \cdot \delta \varphi) \delta \varphi \end{align}$$
+$$ \begin{align} y_n &\approx R \sec(n \cdot \delta \varphi) \delta \varphi + y_{n-1} \\
+                     &=\sum^{n}_{k=0} R \sec(k \cdot \delta \varphi) \delta \varphi \end{align}$$
 
 Using a constant value for $\delta \varphi $, Mercator was able to calculate the spacings for his map. Then he drew a world map over it.
 This is a modern rendering of the final result:
@@ -296,7 +296,7 @@ This made it easier for others to make their own Mercator maps.
 
 In 1614, John Napier introduced logarithms. This is the inverse of the exponential operation. In modern terms, the logarithm $y$ of $x$ to base $b$ is written as:
 
-$$ y = log_b x  \quad ; \quad b^y = x $$
+$$ y = \log_b x  \quad ; \quad b^y = x $$
 
 Napier's main motivation was to find an easier way to do multiplication and division. 
 For example, from the laws of exponents:
@@ -307,7 +307,7 @@ Therefore a division can be done as follows:
 
 $$ 3764 \div 873 = 2^{11.878} \div 2^{9.770} = 2^{2.108} = 4.311 $$ 
 
-Where $log_{2}(3764) = 11.878 $ and $log_{2}(873) = 9.770 $
+Where $\log_{2}(3764) = 11.878 $ and $\log_{2}(873) = 9.770 $
 
 The logarithms again had to be painstakingly calculated through approximation calculations. 
 Napier did this using a kinetic framework. While this idea may be unusual today, it has to do with how Napier originally visualised logarithms.[^Napier]
@@ -334,10 +334,10 @@ Next, mathematicians extended these tables to other trigonometric function:
 </figure>
 
 In 1645, according to legend, a teacher named Henry Bond noticed something strange. 
-The numbers in Wright's Mercator table were similar to the numbers in a $log_e(tan(\varphi))$ table.
+The numbers in Wright's Mercator table were similar to the numbers in a $\log_e(\tan(\varphi))$ table.
 They just were offset by a factor of 2 and 45&deg; in the tables. So he essentially conjectured that:
 
-$$ \int_0^{\varphi_1} sec(\varphi) d\varphi = ln \left| \tan \left( \frac{\varphi_1}{2} + 45^\circ \right) \right | $$
+$$ \int_0^{\varphi_1} \sec(\varphi) d\varphi = \ln \left| \tan \left( \frac{\varphi_1}{2} + 45^\circ \right) \right | $$
 
 Mathematicians caught on to the claim but could not prove it. Calculus was still in its infancy. 
 In 1668, 99 years after Mercator first made his map and 23 years after Bond gave the solution, it was finally proven by James Gregory.
@@ -346,11 +346,11 @@ In 1670 Isaac Barrow offered a more succinct proof through integration with part
 
 Lastly, through trigonometric identities, it can be proven that the following three formulas are all equivalent:
 
-$$ \int sec(\varphi) d\varphi = 
+$$ \int \sec(\varphi) d\varphi = 
 \begin{cases} 
-ln |sec(\varphi) + tan(\varphi) | + c \\
-ln \left| \tan \left( \frac{\varphi}{2} + 45^\circ \right) \right | + c\\ 
-\frac{1}{2}ln \left| \frac{1+sin(\varphi)}{1-sin(\varphi)}  \right| + c
+\ln |\sec(\varphi) + \tan(\varphi) | + c \\
+\ln \left| \tan \left( \frac{\varphi}{2} + 45^\circ \right) \right | + c\\ 
+\frac{1}{2}\ln \left| \frac{1+\sin(\varphi)}{1-\sin(\varphi)}  \right| + c
 \end{cases} $$
 
 ## Conclusion
@@ -399,19 +399,19 @@ It was designed with an "artistic approach". Unlike the other projections, inste
 
 	$$  
 	\begin{align} 
-	&\frac{d}{dx}ln|sec(x) + tan(x)| \\
-	&= \frac{d}{dx}ln|z| \quad\quad,\; z=sec(x)+tan(x) \\
-	&= \frac{d}{dz}ln|z| \frac{dz}{dx} \\
-	&= \left(\frac{1}{z}\right)(sec(x)tan(x) + sec^2(x)) \\
-	&= sec(x)\frac{tan(x) + sec(x)}{sec(x) + tan(x)} \\
-	&= sec(x)
+	&\frac{d}{dx}\ln|\sec(x) + \tan(x)| \\
+	&= \frac{d}{dx}\ln|z| \quad\quad,\; z=\sec(x)+\tan(x) \\
+	&= \frac{1}{z} \frac{dz}{dx} \\
+	&= \frac{1}{\sec(x) + \tan(x)}(\sec(x)\tan(x) + \sec^2(x)) \\
+	&= \sec(x)\frac{\tan(x) + \sec(x)}{\sec(x) + \tan(x)} \\
+	&= \sec(x)
 	\end{align}
 	$$
 
 	This uses the chain rule and the assumes the following have been proved:
-	- $\frac{d}{dz}ln(z) = \frac{1}{z}$
-	- $\frac{d}{dx} tan(x) = sec ^2(x)$
-	- $\frac{d}{dx} sec(x) = sec(x)tan(x)$
+	- $\frac{d}{dz}\ln(z) = \frac{1}{z}$
+	- $\frac{d}{dx} \tan(x) = \sec ^2(x)$
+	- $\frac{d}{dx} \sec(x) = \sec(x)\tan(x)$
 
 [^2]: The rate of change of the area with respect to the x-axis is the line (very thin rectangle) $y$. That is, $\frac{dA}{dx}=y \implies A=\int y dx$.
 [^3]: The earth is approximated as a sphere for most mapping applications. Where more accuracy is required, there are extensions which can account for its deviations from a sphere.
@@ -420,8 +420,8 @@ It was designed with an "artistic approach". Unlike the other projections, inste
 [^correction]: My original article said that logarithmic trigonometric tables appeared _after_ normal logarithmic tables. However because of Napier's unusual derivation of the approximation formula, this is not true. This was pointed out to me on comments on this post on HackerNews. You can see these [here][hackernews].
 [^Napier]: Here is a brief overview of Napier's method: He compared a particle traveling along an infinite line with another particle traveling along a finite line of length $R$. The first particle travels at a uniform speed $\frac{dx_1}{dt}=1$, while the second particle travels at a speed proportional to the distance it has left along the finite line, $\frac{dx_2}{dt}=R-x_2$. The distance the second particle travels is related to the first particle with this differential equation: $\frac{dx_2}{dx_1}=R-x_2$. Its solution is:
 
-	$$  \begin{align} x_1 &= log_{\frac{1}{e}} \left(\frac{R-x_2}{R}\right)  \\ 
-						  &\approx log_{\left(1-\frac{1}{R}\right)^R}\left(sin(\theta) \right) 
+	$$  \begin{align} x_1 &= \log_{\frac{1}{e}} \left(\frac{R-x_2}{R}\right)  \\ 
+						  &\approx \log_{\left(1-\frac{1}{R}\right)^R}\left(\sin(\theta) \right) 
 		\end{align}$$ 
 
 	More information can be found at [https://plus.maths.org/content/dynamic-logarithms](https://plus.maths.org/content/dynamic-logarithms).
