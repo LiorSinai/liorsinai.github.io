@@ -145,7 +145,7 @@ For example, here at column 8 both these two paths are white after two black run
 <a name="converged_state">
 <img class="img-95"
     src="/assets/posts/nonograms/converged_state.png"
-	alt="nfa"
+	alt="converged states"
     name="converged_state"
 	>
 </a>
