@@ -339,7 +339,7 @@ It then starts with step 1 again.
 If at any time a block has no candidates, it means a mistake was made, and the code backtracks.
 
 {% highlight python %}
-def solveSudoku(grid, num_boxes=SIZE, all_solutions=False):
+def solve_sudoku(grid, num_boxes=SIZE, all_solutions=False):
     def solve(puzzle, depth=0):
         nonlocal calls, depth_max
         calls += 1
