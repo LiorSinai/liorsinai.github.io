@@ -463,6 +463,55 @@ Match NonDeterministicFiniteAutomation::find_match_(vector<int> &target)
 }
 {% endhighlight %}
 
+Example:
+
+{% highlight c++ %}
+vector<int> string_to_vec(string line_str)
+{
+    unordered_map<char, int> symbols2int;
+    symbols2int['-'] = BLANK;
+    symbols2int['#'] = BOX;
+    symbols2int[' '] = EITHER;
+    vector<int> line = {};
+    for (char c : line_str)
+    {
+        line.push_back(symbols2int[c]);
+    }
+    return line;
+}
+
+unique_ptr<NonDeterministicFiniteAutomation> nfa = 
+    make_unique<NonDeterministicFiniteAutomation>();
+vector<int> line;
+vector<int> result;
+Match m;
+string s0 = "---#--         -      # ";
+string s1 = "---#--#-----------#####-";
+string s2 = "---#-------------#-#####";
+
+line = string_to_vec(s0);
+result =  string_to_vec(s1);
+// left match
+vector<int> pattern = {1, 1, 5};
+nfa->compile(pattern);
+m = nfa->find_match(line);
+cout << (m.match == result) << "\n";
+
+// right match
+reverse(pattern.begin(), pattern.end());
+nfa->compile(pattern);
+reverse(line.begin(), line.end());
+m = nfa->find_match(line);
+reverse(m.match.begin(), m.match.end());
+result = string_to_vec(s2);
+cout << (m.match == result) << "\n";
+{% endhighlight %}
+
+The output should be:
+```
+1 //true
+1 //true
+```
 
 ## Conclusion
 
