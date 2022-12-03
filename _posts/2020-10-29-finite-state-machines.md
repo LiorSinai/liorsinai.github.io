@@ -9,7 +9,7 @@ tags:	'regex, finite state machines'
 
 _I recently solved a particular kind of puzzle, nonograms, using finite state machines for regex matching. This is a very efficient way to do regex matching and in fact formed the basis of the first regex matchers. But finite state machines have since been replaced with more versatile but slower backtracking algorithms._ 
 
-
+_Update 3 December 2022: edits to the text and updated the code._
 
 ## Introduction
 
@@ -70,7 +70,7 @@ For example, for the above nonogram:
 	alt="nonogram elephant solving"
 	>
 </figure>
-Row 6 is the row of interest. Rows 5 and 7 show the left-most and right-most solutions respectively (and not solutions for row 5 or 7). 
+Row 6 with the run (6,3,2) is the row of interest. Rows 5 and 7 show the left-most and right-most solutions respectively (and not solutions for row 5 or 7). 
 The shaded cells in row 6 are the cells that always overlap in row 5 and row 7. These can be kept black, and all other cells should be left unknown.
 
 This process is then completed for every row. Next, it is done for each column, except this time the solution is constrained by the cells already shaded in each row.
@@ -122,10 +122,12 @@ This was especially crippling on puzzles which required guessing, which adds ano
 
 [bear_solution]: /assets/posts/nonograms/bear_finished.png
 
-I tried coding other matching algorithms, but they always seemed to turn into DFS.
-It is easy to write heuristics for simple cases, but the general case eluded me.
-So I looked around for more efficient matching algorithms, and came across this often cited [blog post][russ_post] by Russ Cox. 
-It describes Ken Thompson's $\mathcal{O}(n^2)$ [matching algorithm][Thompson_paper] for regex[^2] using nondeterministic finite state automata (NFA). 
+We shouldn't need to explore each binary choice though.
+There is plenty of overlap between solutions and it should be possible to exclude many of them.
+For example, if we can quickly establish that the first cell is always black we can exclude all possibilities where it is white.
+I tried to write heuristics for this but my algorithms always seemed to turn into DFS.
+So I looked around for more efficient matching algorithms and came across this [blog post][russ_post] by Russ Cox. 
+It describes Ken Thompson's $\mathcal{O}(n^2)$ [matching algorithm][Thompson_paper] for [regular expressions][wiki_regex] using nondeterministic finite state automata (NFA).
 
 [russ_post]: https://swtch.com/~rsc/regexp/regexp1.html
 
@@ -133,23 +135,45 @@ It describes Ken Thompson's $\mathcal{O}(n^2)$ [matching algorithm][Thompson_pap
 [Cpp_regex]: http://www.cplusplus.com/reference/regex/
 [regex101]: https://regex101.com/
 
-The nonogram problem here can easily be rephrased as a regex problem. This is done as follows:
-- Encode in binary: 
+The important insight was that this nonogram problem, like the regex problem, is mostly dependent on the active state.
+Multiple different paths can converge to the same state and once they do they are collapsed into one.
+This significantly reduces the amount of possibilities and the complexity of the algorithm.
+For example, here at column 8 both these two paths are white after two black runs and hence they are in the same state. After this point, these two will be indistinguishable from each each other. 
+(We can keep track of which path is the left-most match separately.)
+
+<figure class="post-figure">
+<a name="converged_state">
+<img class="img-95"
+    src="/assets/posts/nonograms/converged_state.png"
+	alt="nfa"
+    name="converged_state"
+	>
+</a>
+</figure>
+
+In order to the reuse Thompson's matching algorithm we first need to rephrase the nonogram problem as a regex problem. This is done as follows:
+- Take a run _(a, b, ..., z)_.
+- Use binary encoding for each of the three colours: 
 	- black cell: $01_2 = 1$
 	- white cell: $10_2 = 2$
 	- either:     $11_2 = 3$
-- Write each nonogram pattern _(a, b, ..., z)_ as the following regex: `([23]*)([13]){a}([23]+)([13]){b}([23]+)...([13]){z}([23]*)`.
+- The starting Nonogram number _a_ corresponds to zero or more whites follwed by _a_ blacks followed by one or more whites. In regex notation: `(2)*(1){a}(2)+`.
+- Account for cells that are unknown (either): `([23]*)([13]){a}([23]+)`.
+- Repeat for pairs of blacks and whites in the middle: `([13]){b}([23]+)...`
+- The last cell can be followed by an unknown number of whites: `([13]){z}([23]*)`
+
+The run _(a, b, ..., z)_ thus becomes the pattern: `([23]*)([13]){a}([23]+)([13]){b}([23]+)...([13]){z}([23]*)`.
 
 Regex matchers themselves are usually DFS algorithms. For the most part this is more practical than finite state automata. 
-DFS allows more complex regular expressions (Cox's article has a full list in his post). 
+DFS allows more complex regular expressions (Cox's [article](russ_post) has a full list). 
 However the exponential nature of backtracking can cause them to fail, sometimes in spectacular [fashion][cloudfare_outage].
 
 [cloudfare_outage]: https://blog.cloudflare.com/details-of-the-cloudflare-outage-on-july-2-2019/
 
 An alternative is to represent the character expression as a nondeterministic finite state automation. Let's break that name down:
-- automation: a sort of machine/program. I find the term archaic but it does come from a time before computers.
-- finite state: there is a countable number of states. This is opposed to infinite or continuous states, such as measurements with gradients in nature, or states which depend on such a large combination of elements that they are for practical purposes uncountable.
-- nondeterministic: given a state, it cannot always be determined what the previous state was. Actually, that is a minor problem here because we do want to know how many times we have passed through each state, not just the current state. But we can store this information outside of the NFA.
+- Automation: a sort of machine/program. I find the term archaic but it does come from a time before computers.
+- Finite state: there is a countable number of states. This is opposed to infinite or continuous states, such as measurements with gradients in nature, or states which depend on such a large combination of elements that they are for practical purposes uncountable.
+- Nondeterministic: given a state, it cannot always be determined what the previous state was. Actually, that is a minor problem here because we do want to know how many times we have passed through each state, not just the current state. But we can store this information outside of the NFA.
 
 The NFA is composed of states _S_ which transition in one of the following ways:
 <figure class="post-figure">
@@ -167,22 +191,25 @@ We can use these components to build up a full state automation for our regex pa
 	alt="nfa"
 	>
 </figure>
-We start at the start state _S_, and as we read characters, transition to the right. We only transition if the next character matches the next state.
+We start at the start state _S_ and as we read characters transition to the right. We only transition if the next character matches the next state.
 If the next character doesn't match any transition, then we halt the matching process.
 
 If we were to backtrack on a halt, then this algorithm would still be an $\mathcal{O}(2^n)$ process.
 It is made into an $O(n^2)$ algorithm by doing the following:
 	
-1. At each split with multiple valid transitions, simultaneously  do all.
-2. Only keep track of current active states (and not the history).
+1. At each split with multiple valid transitions, simultaneously do all.
+2. Only keep track of current active states. As discussed above, this collapses paths into a finite number of states.
 
-Only doing the first would result in breadth-first search (BFS), which still has $O(2^n)$ complexity.
-The second step however means that the number of active states per character is a function of the pattern length. That is $O(n)$.
-So since we process $n$ characters,the whole algorithm is $O(n^2)$.
+The number of active states is purely a function of the pattern length. That is $O(n)$.
+So since we process $n$ characters, the whole algorithm is $O(n^2)$.
 
-The minor difficulty is that we do want to keep track of part of the history - that is, the current matching vectors - as well as the current state.
-But we can keep one match per state without increasing the complexity, and since we only want the left-most match, we can just keep the left-most match per state.
-
+The minor difficulty is that we do want to keep track of at least one path - the left-most match.
+We can do this by keeping track of one path per state. 
+In the case that we get two or more paths converging to the same state - as in the [image](#converged_state) above - 
+we'll always take preference for a state that is repeating, because that is a more left-most match. 
+So for the example the first row with a repeating white is saved. 
+Otherwise, we'll take preference for the path of the first state that enters a new state.
+When we finish the NFA for the first time we return the path that is associated with it.
 
 [Thompson_paper]: https://dl.acm.org/doi/10.1145/363347.363387
 
@@ -191,7 +218,7 @@ But we can keep one match per state without increasing the complexity, and since
 
 This is my C++ code for the NFA matcher. For the full code, see my Github [repository][github_cpp].
 
-Firstly, three types of objects are defined in the header: Match, State and NonDeterministicFiniteAutomation:[^3]
+Firstly, three types of objects are defined in the header: Match, State and NonDeterministicFiniteAutomation:[^std]
 {% highlight c++ %}
 struct Match
 {
@@ -231,12 +258,13 @@ The first step is to compile the pattern to a finite state machine.
 This is tricky because of potential nested expressions and also because of skipping states (e.g. with ? or \*). 
 The Thompson construction first converts the pattern to postfix notation. 
 It then uses a stack to keep track of the start and end states. 
-For my implementation here, I've stored all the states in the vector _states_, and the stack holds the indices of each state in that vector.
+For my implementation here, I've stored all the states in the vector `states` and the stack holds the indices of each state in that vector.
 These indices are referred to as "state IDs" in the code.
 Then depending on the input symbol, a different action is taken.
 
 {% highlight c++ %}
-vector<char> NonDeterministicFiniteAutomation::convert_pattern(vector<int> pattern){
+vector<char> NonDeterministicFiniteAutomation::convert_pattern(vector<int> pattern)
+{
     vector<char> fragments;
     fragments.push_back(BLANK); //implicit conversion to char
     fragments.push_back('*');
@@ -256,10 +284,9 @@ vector<char> NonDeterministicFiniteAutomation::convert_pattern(vector<int> patte
     return fragments;
 }
 
-
 void NonDeterministicFiniteAutomation::compile(vector<int> pattern_)
 {   
-    /* convert a numerical sequence such as (a, b, ..) to the following regex:
+    /* convert a numerical sequence such as (a, b, ..) to regex.
     e.g. (1,5,3) -> ([23]*)([13]){1}([12]+)([13]){5}([12]+)([13]){3}([12]+)([23]*) */
 
     //reset 
@@ -317,7 +344,7 @@ void NonDeterministicFiniteAutomation::compile(vector<int> pattern_)
                 st.push(state);
                 st.push(next_); 
                 break;
-            default:
+            default: // a number
                 next_ = st.top();
                 this->states[next_].symbol = sym;
                 new_end.id = num_states++;
@@ -331,75 +358,108 @@ void NonDeterministicFiniteAutomation::compile(vector<int> pattern_)
 }   
 {% endhighlight %}
 
-After compiling, we can run our simulation.
-In practice, the active states are kept in a hash table, with the key being the state ID, and the entry being the matching vector so far.
-The unique key property of the hash table guarantees that our current states are all unique. 
-A duplicate state is either overwritten or not entered into the table.
-
-We cannot advance each state simultaneously, but this is very closely achieved by advancing each state one step at a time, one after the other.
-A second hash table is used to make sure that the new transitions are all independent.
-That is, an old state is not overwritten because it was a new state for another state that should have advanced simultaneously with it, but happened to advance one step earlier.
-
-
+Next some helper functions:
 {% highlight c++ %}
-bool is_finished(vector<int>& array, int idx){
-    for (int i = idx+1; i < array.size(); ++i){
-        if (array[i] == BOX){
+bool is_finished(vector<int> &array, int idx)
+{
+    for (int i = idx + 1; i < array.size(); ++i)
+    {
+        if (array[i] == BOX)
+        {
             return false;
         }
     }
     return true;
 }
 
-Match NonDeterministicFiniteAutomation::find_match(std::vector<int>& array){
-    if (!this->is_compiled){
+bool is_valid_transition(State &state, int bit)
+{
+    return (state.symbol == '\0' || state.symbol & bit);
+}
+
+bool is_repeated_state(State *state, State *next_state)
+{
+    return (next_state->id == state->id);
+}
+
+bool is_new_state(unordered_map<int, vector<int>> &matches, State *next_state)
+{
+    return matches.find(next_state->id) == matches.end();
+}
+
+void fill_end_with_blanks(vector<int> &vec, int length)
+{
+    vector<int> trailing_zeros(length - vec.size(), BLANK);
+    vec.insert(vec.end(), trailing_zeros.begin(), trailing_zeros.end());
+}
+{% endhighlight %}
+
+Then the simulation.
+
+We cannot advance each state simultaneously, but this is very closely achieved by advancing each state one step at a time, one after the other.
+We store the active states in a hash table with the key being the state ID and the entry being the matching vector so far. 
+The unique key property of the hash table guarantees that our current states are all unique. 
+A duplicate state is either overwritten or not entered into the table.
+
+A second hash table is used to make sure that the new transitions are all independent.
+That is, an old state is not overwritten because it was a new state for another state that should have advanced simultaneously with it, but happened to advance one step earlier.
+
+{% highlight c++ %}
+Match NonDeterministicFiniteAutomation::find_match_(vector<int> &target)
+{
+    if (!this->is_compiled)
+    {
         throw "The NFA was not compiled!";
     }
-    if (pattern.empty() && array.empty()){
+    if (pattern.empty() && target.empty())
+    {
         return Match{ {}, {}, true};
     }
-	
-    int idx = -1; // index in the array
-    unordered_map<int, vector<int>> matches; //key, value pair is state_id, match
-    unordered_map<int, vector<int>> new_matches; //key, value pair is state_id, match
+
+    int idx = -1;
+    unordered_map<int, vector<int>> matches;
+    unordered_map<int, vector<int>> new_matches;
 
     vector<int> empty_vec;
-    empty_vec.reserve(array.size());
-    matches.insert(pair<int, vector<int>>(0, empty_vec)); 
-    while (idx < (int)array.size() - 1 && !matches.empty()){
-        ++idx;    
+    empty_vec.reserve(target.size());
+    matches.insert(pair<int, vector<int>>(0, empty_vec));
+    while (idx < (int)target.size() - 1 && !matches.empty())
+    {
+        ++idx;
         unordered_map<int, vector<int>>::iterator it;
-        for (it = matches.begin(); it != matches.end(); ++it){
-            int state_id = it->first; 
-            vector<int>* match = &it->second;
-            State* state = &states[state_id];
-            for (int next_id: state->transitions){
-                // is this a valid transition?
-                if (this->states[next_id].symbol == '\0' || this->states[next_id].symbol & array[idx]){
-                    State* next_state = &states[next_id];
-                    if (next_state->is_end){ // is this the final state?
-                        if (is_finished(array, idx)){
-                            Match m{*match, this->pattern, true};
-                            vector<int>* match_final = &m.match;
-                            match_final->push_back(next_state->symbol);
-                            // add final set of blanks
-                            vector<int> trailing_zeros(array.size() - (idx+1), BLANK);
-                            match_final->insert( match_final->end(), trailing_zeros.begin(), trailing_zeros.end() );                       
-                            return m;
-                        } // else don't add back to the stack
+        for (it = matches.begin(); it != matches.end(); ++it)
+        {
+            int state_id = it->first;
+            vector<int> *match = &it->second;
+            State *state = &states[state_id];
+            for (int next_id : state->transitions)
+            {
+                if (is_valid_transition(this->states[next_id], target[idx]))
+                {
+                    State *next_state = &states[next_id];
+                    if (next_state->is_end)
+                    {
+                        if (is_finished(target, idx))
+                        {
+                            match->push_back(next_state->symbol);
+                            fill_end_with_blanks(*match, target.size());
+                            return Match{*match, this->pattern, true};
+                        }
                     }
-                    // keep only the earliest repeated states in the stack 
-                    else if ((next_state->id == state->id) || (new_matches.find(next_state->id) == new_matches.end())){
-                        new_matches[next_state->id] = *match; //overwrite newer entries for repeats
+                    else if (is_new_state(new_matches, next_state) 
+                        || is_repeated_state(state, next_state) // repeat states can overwrite new states
+                        )
+                    {
+                        new_matches[next_state->id] = *match; 
                         new_matches[next_state->id].push_back(next_state->symbol);
                     }
                 } // else skip this transition
-            } // move onto the next active state
-        }
+            } // move to the next transition
+        } // move to the next active state
         matches.swap(new_matches);
         new_matches.clear();
     }
-    return Match { {}, this->pattern, false}; // no match was found
+    return Match{ {}, this->pattern, false}; // no match was found
 }
 {% endhighlight %}
 
@@ -411,12 +471,11 @@ It is understandable why more versatile DFS replaced them as the default algorit
 The simplicity of NFAs is also their downfall - complex regex cannot be modelled with them.
 But certainly for cases like this which don't have complex matching criteria, it is the superior option.
 
-I'm still curious if there are faster ways to solve nonograms or to find a left-most match. Jan Wolter's code for one was certainly faster than mine, and I am not sure why.
-
+I'm still curious if there are faster ways to solve nonograms or to find a left-most match. 
+Jan Wolter's [code](Wolter_survey) for one was certainly faster than mine, and I am not sure why.
 
 ---
 
 [^0]: The right-most match can be found with the same algorithm by either iterating through the indices backwards, or passing a reversed version of the pattern and line to the left-most matcher.
 [^1]: For a pattern $(x_1, x_2, ..., x_p)$ in a line with $n$ cells, the number of free whites is: $n_{free} = n - (\sum_i^p x_i) - (p-1)$. In the worst case with all unknown except for a single black at the end, this will result in $2^{n_{free}}$ choices for the whites.
-[^2]: Regex is short for regular expression. It is a standardised sequence of characters that define a search pattern in a (text) string. Most modern program languages have an inbuilt regex implementation. For more detail, see the Wikipedia [article][wiki_regex] or an online regex tester like [regex101][regex101].
-[^3]: To make the code more readable, I've presented it as if I called `using namespace std`. But according to best practice, I did not do this in the actual code.
+[^std]: To make the code more readable, I've presented it as if I called `using namespace std`. But according to best practice, I did not do this in the actual code.
