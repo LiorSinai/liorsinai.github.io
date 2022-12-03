@@ -152,6 +152,7 @@ Here is an illustration:
 	>
 <figcaption>Modified from <a href="https://en.wikipedia.org/wiki/File:Plane_with_ENU_embedded_axes.svg">Wikipedia</a></figcaption>
 </figure>
+
 The three angles are:
 - $\psi$: yaw, about the $z$ axis.
 - $\theta$: pitch, about the $y'$ axis[^pitch]

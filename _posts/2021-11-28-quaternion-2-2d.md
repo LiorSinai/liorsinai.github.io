@@ -54,7 +54,7 @@ $$
 \begin{align}
 x_r &= r\cos(\beta + \theta) \\
     &= \color{green}{r\cos\beta \cos\theta} - \color{red}{r\sin\beta \sin\theta} \\
-    &=  (r\\cos\theta)\cos\beta - (r\sin\theta)\sin\beta \\
+    &= (r\cos\theta)\cos\beta - (r\sin\theta)\sin\beta \\
     &= (x)\cos\beta - (y)\sin\beta 
 \end{align}
 $$
