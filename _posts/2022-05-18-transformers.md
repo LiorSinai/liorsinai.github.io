@@ -4,7 +4,7 @@ title:  "Transformers from first principles in Julia"
 date:   2022-05-18
 author: Lior Sinai
 background: '/assets/posts/transformers/transformer.png'
-sidenav: 2022-05-18-transformers-toc.html
+sidenav: toc-transformers.html
 categories: coding
 tags: mathematics transformers 'machine learning' 'deep learning'
 ---
