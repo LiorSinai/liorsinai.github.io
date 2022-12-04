@@ -7,7 +7,7 @@ makeSideNav = () => {
     //var toc = document.createElement('nav');
     var toc = document.getElementById("stickyTable");
     if (toc == null) {
-        console.log("No element with id=#stickyTable found. Aborting side nav creation.");
+        console.log("No element with id=stickyTable found. Aborting side nav creation.");
         return;
     }
     var content = document.getElementById("post-content");
@@ -18,9 +18,9 @@ makeSideNav = () => {
         if (id == "table-of-contents") { continue; }
         var level = parseInt(headings[i].localName.replace("h", ""));
         var title = headings[i].innerHTML;
-        var link = document.createElement('a'); // Create a link
-        link.setAttribute("href", "#" + id) // Set the href to the heading ID
-        link.innerHTML = title; // Set the link text to the heading text
+        var link = document.createElement('a'); 
+        link.setAttribute("href", "#" + id);
+        link.innerHTML = title;
         link.classList.add('nav-link');
         if (level == 2) {
             toc.appendChild(link);

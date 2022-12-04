@@ -7,7 +7,7 @@ makeTableOfContents = () => {
     //var toc = document.createElement('nav');
     var toc = document.getElementById("toc");
     if (toc == null) {
-        console.log("No element with id=#toc found. Aborting table of contents creation.");
+        console.log("No element with id=toc found. Aborting table of contents creation.");
         return;
     }
     var list = document.createElement("ol")
@@ -20,9 +20,9 @@ makeTableOfContents = () => {
         if (id == "table-of-contents") { continue; }
         var level = parseInt(headings[i].localName.replace("h", ""));
         var title = headings[i].innerHTML;
-        var link = document.createElement('a'); // Create a link
-        link.setAttribute("href", "#" + id) // Set the href to the heading ID
-        link.innerHTML = title; // Set the link text to the heading text
+        var link = document.createElement('a');
+        link.setAttribute("href", "#" + id);
+        link.innerHTML = title;
         var item = document.createElement('li');
         item.appendChild(link);
         if (level == 2) {
