@@ -4,7 +4,7 @@ title:  "Transformers from first principles in Julia"
 date:   2022-05-18
 author: Lior Sinai
 background: '/assets/posts/transformers/transformer.png'
-sidenav: toc-transformers.html
+sidenav: true
 categories: coding
 tags: mathematics transformers 'machine learning' 'deep learning'
 ---
@@ -14,38 +14,9 @@ _Transformers for natural language processing from first principles. This a long
 <link rel="stylesheet" href="/assets/posts/transformers/style.css">
 
 ### Table of Contents
-<nav>
-    <ol>
-        <li><a href="#introduction">Introduction</a></li>
-        <li><a href="#design">Design</a>
-            <ul>
-                <li><a href="#design-considerations">Design considerations</a></li>
-                <li><a href="#inputs-and-outputs">Inputs and outputs</a></li>
-                <li><a href="#architecture">Architecture</a></li>
-                <li><a href="#attention">Attention</a></li>
-            </ul>
-        </li>
-        <li><a href="#julia-implementation">Julia implementation</a>
-            <ul>
-                <li><a href="#project-setup">Project setup</a></li>
-                <li><a href="#tokenizers">Tokenizers</a></li>
-                <li><a href="#word-embeddings">Word embeddings</a></li>
-                <li><a href="#position-encodings">Position encodings</a></li>
-                <li><a href="#multiplication-with-higher-order-arrays">Multiplication with higher order arrays</a></li>
-                <li><a href="#multi-head-attention">Multi-head attention</a></li>
-                <li><a href="#encoder-blocks">Encoder blocks</a></li>
-                <li><a href="#classifier">Classifier</a></li>
-            </ul>
-        </li>
-        <li><a href="#use-case-amazon-reviews">Use case: Amazon reviews</a></li>
-            <ul>
-                <li><a href="#data-exploration">Data exploration</a></li>
-                <li><a href="#pipeline">Pipeline</a></li>
-                <li><a href="#evaluation">Evaluation</a></li>
-            </ul>
-        <li><a href="#conclusion">Conclusion </a></li>
-    </ol>
-</nav>
+
+<nav id="toc"></nav>
+<script src="/assets/makeTableOfContents.js"></script>
 
 ## Introduction
 

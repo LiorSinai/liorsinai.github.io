@@ -22,6 +22,7 @@ layout: default
         </div>
       </div>
     </div>
+    {% if page.background-caption %} <p class="caption"> {{ page.background-caption }} </p> {% endif %}
   </header>
 
   <div class="container" id="post-content">
@@ -43,7 +44,8 @@ layout: default
       {% if page.sidenav %}
       <!-- side nav for large screens (>992px) -->
       <div class="col-lg-3 d-none d-lg-block"> 
-        {% include {{ page.sidenav }} %}
+        <nav id="stickyTable" class="side-nav flex-column"></nav>
+        <script src="/assets/makeSideNav.js"></script>
        </div>
       {% endif %}
     </div>
