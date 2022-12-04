@@ -14,7 +14,6 @@ makeSideNav = () => {
     var headings = content.querySelectorAll('h1,h2,h3');
 
     for (i = 0; i <= headings.length - 1; i++) {
-        console.log(i);
         var id = headings[i].innerHTML.toLowerCase().replace(/ /g, "-").replace(/[^a-z0-9-]/g, "");
         if (id == "table-of-contents") { continue; }
         var level = parseInt(headings[i].localName.replace("h", ""));
