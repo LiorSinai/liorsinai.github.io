@@ -346,7 +346,7 @@ This formula works because
 
 When we combine these effects, post-multiplying with a negative axes (because of the conjugate) rotates the vector anti-clockwise, but the 4th dimension part is still rotated clockwise and hence cancels out with the pre-multiplication.
 
-Here is a more formal proof. This is a nice proof because working through it gives further insight into problem:
+Here is a more formal proof. This is a nice proof because working through it gives further insight into the problem:
 
 <div class="card">
   <div class="card-body">
@@ -440,7 +440,8 @@ Here is a more formal proof. This is a nice proof because working through it giv
 		$$ 
 		\begin{align}
 			qvq^{*} =& (\cos\theta + k\sin\theta)(xi+yj+zk)(\cos\theta - k\sin\theta) \\
-					=& ((x\cos\theta - y \sin\theta)i + (x\sin\theta + y\cos\theta)j + z\cos\theta k -z\sin\theta)  (\cos\theta - k\sin\theta) \\
+					=& [(x\cos\theta - y \sin\theta)i + (x\sin\theta + y\cos\theta)j + (z\cos\theta k -z\sin\theta)]
+					\\ &(\cos\theta - k\sin\theta) \\
 					=& -z \cos\theta \sin\theta + z \cos\theta \sin\theta + (x(\cos^2\theta - \sin^2\theta ) -2y\sin\theta \cos\theta) i +\\
 					 & (2x\sin\theta \cos\theta + y(\cos^2\theta - \sin^2\theta ) )j + z(\cos^2\theta + \sin^2\theta) k \\
 					=& 0 + (x\cos2\theta - y\sin2\theta)i + (x\sin2\theta + y\cos2\theta)j + zk		 

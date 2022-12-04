@@ -277,7 +277,7 @@ $$ \log(re^{i\theta}) = \log(r) + i\theta \log(e) = \log(r) + i\theta $$
 ## Conclusion
 
 This post has now primed us for quaternions which were very much inspired by complex numbers.
-However there are important differences, most notably the non-commutativity resulting from the order dependent nature of rotations in 3D.
+There will be important differences, most notably the non-commutativity resulting from the order dependent nature of rotations in 3D. But otherwise they are very closely related.
 
 Please join me in the next [section][quaternions] where I describe quaternions in depth.
 

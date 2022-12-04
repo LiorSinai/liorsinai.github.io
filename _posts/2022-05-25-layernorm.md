@@ -52,7 +52,7 @@ We take the partial derivative of each component of $z$ with respect to every co
 That is:
 
 $$
-    \begin{bmatrix}
+   \frac{\partial z}{\partial x} =  \begin{bmatrix}
         \frac{\partial z_1}{\partial x_1} & \frac{\partial z_2}{\partial x_1} & \dots & \frac{\partial z_n}{\partial x_1} \\
         \frac{\partial z_1}{\partial x_2} & \frac{\partial z_2}{\partial x_2} & \dots & \frac{\partial z_n}{\partial x_2} \\
         \vdots & \vdots & \ddots & \vdots \\
@@ -92,8 +92,10 @@ $$
 \begin{align}
     \frac{\partial z_k}{\partial x_i} &= \frac{\partial }{\partial x_i}(x_k -\mu)(\sigma + \epsilon)^{-1} \\
         &= (\sigma + \epsilon)^{-1}\frac{\partial }{\partial x_i}(x_k -\mu) + (x_k -\mu)\frac{\partial }{\partial x_i}(\sigma + \epsilon)^{-1} \\
-        &= \frac{1}{\sigma + \epsilon}(\delta_{ik} - \frac{\partial \mu}{\partial x_i}) - 
-            (x_k -\mu)(\sigma + \epsilon)^{-2}(\frac{\partial \sigma}{\partial x_i} + 0)
+        &= \frac{1}{\sigma + \epsilon}\left(\delta_{ik} - \frac{\partial \mu}{\partial x_i}\right) - 
+            (x_k -\mu)(\sigma + \epsilon)^{-2}\left(\frac{\partial \sigma}{\partial x_i} + 0\right) \\
+        &= \frac{1}{\sigma + \epsilon}\left(\delta_{ik} - \frac{\partial \mu}{\partial x_i}\right) - 
+            \frac{x_k -\mu}{(\sigma + \epsilon)^{2}}\frac{\partial \sigma}{\partial x_i}
 \end{align}
 $$
 
@@ -109,28 +111,29 @@ $$
 
 Intuitively if a component increases by $\Delta x$ it increases the whole mean by $\frac{\Delta x}{n}$.
 
-The derivative of the standard deviation:
+It is also dependent on the derivative of the standard deviation:
 
 $$
 \begin{align}
     \frac{\partial \sigma}{\partial x_i} &= \frac{\partial}{\partial x_i} \left( \frac{1}{n}\sum^n_r (x_r - \mu)^2 \right)^{\frac{1}{2}} \\
         &= \frac{1}{2}\left( \frac{1}{n}\sum^n_r (x_r - \mu)^2 \right)^{-\frac{1}{2}} \frac{\partial}{\partial x_i} \left( \frac{1}{n}\sum^n_r (x_r - \mu)^2 \right) \\
-        &= \frac{1}{2\sigma}\left(\frac{1}{n}\sum^n_{r}2(x_r - \mu)(\delta_{ir} - \frac{\partial \mu}{\partial x_i}) \right) \\
+        &= \frac{1}{2\sigma}\left(\frac{1}{n}\sum^n_{r}2(x_r - \mu)
+        \left(\delta_{ir} - \frac{\partial \mu}{\partial x_i}\right) \right) \\
         &= \frac{1}{n\sigma}\left((x_i -\mu) - \sum^n_r (x_r -  \mu)\frac{\partial \mu}{\partial x_i} \right)\\
         &= \frac{x_i -\mu}{n\sigma}
 \end{align}
 $$
 
-Since:
+Because
 $$
 \sum^n_r (x_r -  \mu) = \sum^n_r x_r - \mu \sum^n_r 1 = (n\mu) - \mu(n) = 0
 $$
 
-In summary:
+In summary (including the trainable parameters $a$ and $b$):
 
 $$
 \begin{align}
-    \frac{\partial z_k}{\partial x_i} &= a\left(\frac{1}{\sigma + \epsilon}(\delta_{ik} - \frac{\partial \mu}{\partial x_i}) - 
+    \frac{\partial z_k}{\partial x_i} &= a\left(\frac{1}{\sigma + \epsilon}\left(\delta_{ik} - \frac{\partial \mu}{\partial x_i}\right) - 
             \frac{x_k -\mu}{(\sigma + \epsilon)^{2}}\frac{\partial \sigma}{\partial x_i} \right) \\
     \frac{\partial \mu}{\partial x_i} &= \frac{1}{n} \\    
     \frac{\partial \sigma}{\partial x_i} &=  \frac{x_i -\mu}{n\sigma} \\
@@ -169,7 +172,8 @@ x = X[:, k]
 
 dμ = ones(n, n) .* 1/n
 dσ = (x .- means[k]) ./ (n * stds[k])
-dx = (I(n) - dμ) ./ (stds[k] + model.ϵ) - dσ * transpose(x .- means[k]) ./ (stds[k] + model.ϵ).^2
+dx = (I(n) - dμ) ./ (stds[k] + model.ϵ) 
+    - dσ * transpose(x .- means[k]) ./ (stds[k] + model.ϵ).^2
 grads2 = dx * errors[:, k] 
 {% endhighlight %}
 
