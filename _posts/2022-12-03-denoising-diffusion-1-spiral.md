@@ -755,7 +755,7 @@ function model_predictions(diffusion::GaussianDiffusion, x::AbstractArray, times
 end
 {% endhighlight %}
 
-Then we can use substitute $\hat{x}_0$ in equation $\eqref{eq:posterior}$ for $\tilde{\mu}_t$ and $\tilde{\beta}_t$:
+Then we can now use $\hat{x}_0$ in equation $\eqref{eq:posterior}$ for $\tilde{\mu}_t$ and $\tilde{\beta}_t$:
 {%highlight julia %}
 function q_posterior_mean_variance(
     diffusion::GaussianDiffusion, x_start::AbstractArray, x_t::AbstractArray, timesteps::AbstractVector{Int}
