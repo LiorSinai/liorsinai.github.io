@@ -36,7 +36,8 @@ makeSideNav = () => {
                 link.classList.add('flex-column');
                 toc.appendChild(parent);
             }
-            link.classList.add('ml-3');
+            link.innerHTML = "-" + title;
+            link.classList.add('ml-1');
             parent.appendChild(link)
         }
     }

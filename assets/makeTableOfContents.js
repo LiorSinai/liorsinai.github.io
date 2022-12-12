@@ -36,9 +36,17 @@ makeTableOfContents = () => {
                 var parent = document.createElement('li');
                 list.appendChild(parent);
             }
-            subheading = document.createElement('ul');
-            subheading.appendChild(item);
-            parent.appendChild(subheading)
+            if (parent.children.length > 1)
+            {
+                var sublist = parent.children[1]
+            }
+            else
+            {
+                var sublist = document.createElement('ol');
+                sublist.setAttribute("type", "i");
+                parent.appendChild(sublist)
+            }
+            sublist.appendChild(item);
         }
     }
 }
