@@ -537,7 +537,7 @@ Given our start image estimate $\hat{x}_0$, we can calculate the reverse process
 $$
 \begin{align}
 p_\theta(x_{t-1} \vert x_{t}) &= q(x_{t−1}|x_t,\hat{x}_0) \\
-                   &= \tilde{\mu}_t(x_t, \hat{x}_0) + \tilde{\beta}_t z
+             \Rightarrow     x_{t-1} &= \tilde{\mu}_t(x_t, \hat{x}_0) + \tilde{\beta}_t z
 \end{align}
 \label{eq:reverse}
 \tag{3.6.1}
@@ -1557,7 +1557,7 @@ See [part 2][image_diffusion].
 Something else you might want to try is working with patterns other than a spiral.
 What happens if you try train a model on multiple patterns at once?
 [Part 3][classifier_free_guidance] will investigate this and provide a method to direct which pattern is produced. 
-That same method is used with text embeddings to control the direct of AI generated art.
+That same method is used with text embeddings to direct the outcome of AI art generators.
 
 
 ## Appendix
