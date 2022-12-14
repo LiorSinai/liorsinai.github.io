@@ -1171,7 +1171,7 @@ $$
 Where the expectation $\mathbb{E}$ is now simply an average.
 For more detail, please see the source papers or [Lilian Weng's post][lilianweng] or [Angus Turner's post](https://angusturner.github.io/generative_models/2021/06/29/diffusion-probabilistic-models-I.html).
 
-The end result is: since we are only predicting the noise $\epsilon_\theta$, we simply use the difference between the actual noise and the predicted noise as our loss function:
+The end result is: since we are only predicting the noise $\epsilon_\theta$, we simply use the difference between the actual noise and the predicted noise as our loss function.
 So we apply $\eqref{eq:shortcut}$ and take the difference between the model's outputs and the $\bar{z}$ term.
 This is a weak signal and will require many training time steps, but it is incredibly simple to implement.  
 
