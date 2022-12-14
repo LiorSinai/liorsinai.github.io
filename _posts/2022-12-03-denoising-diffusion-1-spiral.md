@@ -629,7 +629,7 @@ From this derivation the mean and standard deviation of the posterior distributi
 
 $$ 
 \begin{align}
-\tilde{\mu}_t &= \frac{(1-\bar{\alpha}_{t-1})\sqrt{\vphantom{1}\alpha_t}}{1-\bar{\alpha}_t} x_t 
+\tilde{\mu}_t(x_t, x_0) &= \frac{(1-\bar{\alpha}_{t-1})\sqrt{\vphantom{1}\alpha_t}}{1-\bar{\alpha}_t} x_t 
             + \frac{\beta_t \sqrt{\vphantom{1}\bar{\alpha}_{t-1}}}{1-\bar{\alpha}_t} x_0 \\
  \tilde{\beta}_t &= \beta_t\frac{1-\bar{\alpha}_{t-1}}{1-\bar{\alpha}_t} 
 \end{align}
@@ -657,7 +657,7 @@ Rather than predicting the starting image directly, we will predict the noise th
 We can substitute equation $\eqref{eq:x0_estimate}$ into $\eqref{eq:posterior}$, but this form is not very useful because we will want to retrieve our estimates as well (for example the [top image](#numbers_guided_mp4)):
 
 $$
-\tilde{\mu}_t = \frac{1}{\sqrt{\vphantom{1}\bar{\alpha}_t}}\left(x_t - \frac{\beta_t}{\sqrt{1 - \bar{\alpha}_t}}\epsilon_\theta \right)
+\tilde{\mu}_t(x_t, \epsilon_\theta) = \frac{1}{\sqrt{\vphantom{1}\bar{\alpha}_t}}\left(x_t - \frac{\beta_t}{\sqrt{1 - \bar{\alpha}_t}}\epsilon_\theta \right)
 \tag{3.6.5}
 $$
 
@@ -1135,44 +1135,45 @@ We now need to train our model.
 We first need a loss function. 
 We have two probability distributions, the forward process $q(x_{t}|x_{t-1})$ and the reverse process $p_\theta(x_{t-1} \vert x_{t})$ and ideally we would have a loss function that keeps them in sync. Put another way, if we start with $x_t$ and apply the forward process and then the reverse process, they should cancel each other out and return $x_t$. 
 
-This ideal loss function is the negative log likelihood:
-
-
+This ideal loss function is the negative log likelihood:[^expectation]
 
 $$
-L = \mathbb{E}_q\left[-\log \frac{p_\theta(x_{0:T})}{q(x_{1:T}|x_0)}\right]
+\begin{align}
+L &= \mathbb{E}_q\left[-\log \frac{p_\theta(x_{0:T})}{q(x_{1:T}\vert x_0)}\right] \\
+  &= \mathbb{E}_q\left[-\log \frac{\prod_{t=1}^T p_\theta(x_{t-1} \vert x_t)}{\prod_{t=1}^T q(x_{t}\vert x_{t-1})}\right] 
+\end{align}
 \tag{3.10.1}
 $$
 
-This function however is difficult to evaluate over all the possibilities of $p_\theta$.
-[Sohl-Dickstein et. al.][Sohl-Dickstein-2015] show that this can be approximated using the [Kullback-Liebler divergence][kl-divergence],
-which is a measure of the statistical difference between two probability distributions.
-
+[Sohl-Dickstein et. al.][Sohl-Dickstein-2015] show that by substituting in the definitions this can be reduced to:
 
 $$
 L = \mathbb{E}_q\left[
-    D_{KL}(q(x_T \vert x_0) || p(x_t)) 
-    + \sum_{t>1}D_{KL}(q(x_{t-1}|x_t, x_0)||p_\theta(x_{t-1}||x_0))
+    \log\frac{q(x_T \vert x_0)}{p(x_t)}
     - \log p_\theta(x_0 \vert x_1)
-\right] \\
-$$
-$$\tag{3.10.3}$$
-
-We can evaluate this using the known formula for the KL divergence of normal distributions.
-However [Ho et. al.][Ho-2020] propose a much simpler loss function.
-Noting that we are only predicting the noise $\epsilon_\theta$, we simply use the difference between the actual noise and the predicted noise as our loss function:
-
-[kl-divergence]: https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence
-
-$$
-L = \frac{1}{n}||\epsilon - \epsilon_\theta||^2
+    + \sum_{t=2}^ T \log\frac{q(x_{t-1} \vert x_t, x_0)}{p_\theta(x_{t-1}\vert x_t)}
+\right] 
 \tag{3.10.3}
 $$
 
+The first term is the loss for the forward process but because this is fixed and has no parameters we can ignore it. 
+The second term is called the "reconstruction error" and we can ignore it too.
+The last term is the KL divergence between two normal distributions which has a [known formula][kl-divergence].
+However [Ho et. al.][Ho-2020] show that by substituting into that we can simplifier much further:
+
+[kl-divergence]: https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence#Multivariate_normal_distributions
+
+$$
+L = \mathbb{E}\left[||\epsilon - \epsilon_\theta||^2\right]
+\tag{3.10.3}
+$$
+
+Where the expectation $\mathbb{E}$ is now simply an average.
+For more detail, please see the source papers or [Lilian Weng's post][lilianweng] or [Angus Turner's post](https://angusturner.github.io/generative_models/2021/06/29/diffusion-probabilistic-models-I.html).
+
+The end result is: since we are only predicting the noise $\epsilon_\theta$, we simply use the difference between the actual noise and the predicted noise as our loss function:
 So we apply $\eqref{eq:shortcut}$ and take the difference between the model's outputs and the $\bar{z}$ term.
 This is a weak signal and will require many training time steps, but it is incredibly simple to implement.  
-
-For more detail, please see the source papers or this [blog post](https://angusturner.github.io/generative_models/2021/06/29/diffusion-probabilistic-models-I.html).
 
 The next question is, how to implement the training loop?
 An obvious approach is to loop over every sample over very timestep and apply the above loss function.
@@ -1640,3 +1641,5 @@ $$
 
 [^newtons_method]: Another thing that we have to be aware of is that Newton's method fails when the gradient is zero. This corresponds to a horizontal line that never intercepts the x-axis.
     With this spiral function it even fails with bigger gradients (e.g. 0.3) because the slope is shallow enough to extend to another point of the periodic function, and hence will find a different root that is not close to the real minimum within our range.  
+
+[^expectation]: The expectation $$\mathbb{E}$$ is a weighted average. For a continuous random variable this is an integral that can be challenging to evaluate: $\mathbb{E}[f(x)]=\int_{-\infty}^{\infty}xf(x)dx$.
