@@ -1149,7 +1149,7 @@ $$
 
 $$
 L = \mathbb{E}_q\left[
-    \log\frac{q(x_T \vert x_0)}{p(x_t)}
+    \log\frac{q(x_T \vert x_0)}{p(x_T)}
     - \log p_\theta(x_0 \vert x_1)
     + \sum_{t=2}^ T \log\frac{q(x_{t-1} \vert x_t, x_0)}{p_\theta(x_{t-1}\vert x_t)}
 \right] 
