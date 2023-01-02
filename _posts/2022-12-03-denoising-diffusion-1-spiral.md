@@ -31,6 +31,9 @@ This is part of a series. The other articles are:
     </figure>
 </a>
 
+Full code available at [github.com/LiorSinai/DenoisingDiffusion.jl](https://github.com/LiorSinai/DenoisingDiffusion.jl).
+Examples notebooks at [github.com/LiorSinai/DenoisingDiffusion-examples](https://github.com/LiorSinai/DenoisingDiffusion-examples)
+
 ### Table of Contents
 
 <nav id="toc"></nav>

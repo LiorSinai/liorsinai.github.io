@@ -18,6 +18,10 @@ This is part of a series. The other articles are:
 [image_diffusion]: {{ "coding/2022/12/29/denoising-diffusion-2-unet" | relative_url }}
 [classifier_free_guidance]: {{ "2022-12-03-denoising-diffusion-part-3" | relative_url }}
 
+Full code available at [github.com/LiorSinai/DenoisingDiffusion.jl](https://github.com/LiorSinai/DenoisingDiffusion.jl).
+Examples notebooks at [github.com/LiorSinai/DenoisingDiffusion-examples](https://github.com/LiorSinai/DenoisingDiffusion-examples).
+Google Colab training notebook at [DenoisingDiffusion-MNIST.ipynb](https://colab.research.google.com/drive/1YCSjEOgzzg80NEKvbvySLSXHOFEgjc8A?usp=sharing).
+
 ### Table of Contents
 
 <nav id="toc"></nav>
@@ -967,7 +971,7 @@ trainset = MNIST(Float32, :train, dir=data_directory)
 testset = MNIST(Float32, :test, dir=data_directory)
 {% endhighlight %}
 
-Some quick data exploration[^convert2img]:
+Some quick data exploration:[^convert2img]
 {% highlight julia %}
 nrows = 3
 canvases = []
@@ -1177,7 +1181,7 @@ This may be because the U-Net model is only used for $\tilde{\mu}_t$ and not $\t
 Define the distance as the minimum of the mean square error of $x$ to each mean $\bar{x}_k$:
 
 $$  
-    d = \min_{k \in 0:9} \frac{1}{784}\sqrt{\sum_{i,j} (x_{ij} - \bar{x}_{k,ij})^2}
+    d = \min_{k \in 0:9} \frac{1}{WH}\sqrt{\sum_{i}^W\sum_{j}^H (x_{ij} - \bar{x}_{k,ij})^2}
 $$
 
 The score is then the average of $d$ over all samples.
@@ -1287,12 +1291,11 @@ classifier_path = "..\\models\\LeNet5\\model.bson"
 classifier = BSON.load(classifier_path)[:model]
 {% endhighlight %}
 
-To use the generated outputs we'll have to normalise them between 0 and 1:
+To use the generated outputs we'll have to normalise them between 0 and 1 (function defined in [part 1](/coding/2022/12/03/denoising-diffusion-1-spiral#spiral-dataset)):
 {% highlight julia %}
-function normalize_zero_to_one(x)
-    x_min, x_max = extrema(x)
-    x_norm = (x .- x_min) ./ (x_max - x_min)
-    x_norm
+for i in 1:n_samples
+    global X_generated
+    X_generated[:, :, :, i] = normalize_zero_to_one(X_generated[:, :, :, i])
 end
 {% endhighlight %}
 
