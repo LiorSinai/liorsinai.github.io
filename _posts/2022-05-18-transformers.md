@@ -816,11 +816,11 @@ end
 {% endhighlight %}
 
 <p>
-  <a class="btn" data-toggle="collapse" href="#EulerInterp" role="button" aria-expanded="false" aria-controls="collapseExample">
+  <a class="btn" data-toggle="collapse" href="#mul4d-rrule" role="button" aria-expanded="false" aria-controls="collapseExample">
     Backpropagation for mul4d &#8681;
   </a>
 </p>
-<div class="collapse" id="EulerInterp">
+<div class="collapse" id="mul4d-rrule">
   <div class="card card-body ">
     If we try getting gradients for <code>mul4d</code> it will not work:
     <pre><code class="language-julia">
@@ -847,7 +847,7 @@ end
     \frac{\partial L}{\partial A}_{ijkl} = \sum_r \frac{\partial L}{\partial Z}_{irkl} B_{jrkl} \\
     \frac{\partial L}{\partial B}_{ijkl} = \sum_r A_{rikl}  \frac{\partial L}{\partial Z}_{rjkl} 
     $$
-    Where we transpose along the first two dimensions of each array and apply the previous equations.
+    Where the transpose is done by swapping the indices.
     Thankfully there is an inbuilt function to do the transposition in higher order arrays: <code>PermutedDimsArray</code>. So the <code>rrule</code> is relatively short:
     <pre><code class="language-julia">
     import ChainRulesCore.rrule

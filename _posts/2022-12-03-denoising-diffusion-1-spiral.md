@@ -16,8 +16,8 @@ This is part of a series. The other articles are:
 - [Part 2: image generation with MNIST][image_diffusion].
 - [Part 3: classifier free guidance][classifier_free_guidance].
 
-[point_diffusion]: {{ "2022-12-03-denoising-diffusion-part-1" | relative_url }}
-[image_diffusion]: {{ "2022-12-03-denoising-diffusion-part-2" | relative_url }}
+[first_principles]: {{ "coding/2022/12/03/denoising-diffusion-1-spiral" | relative_url }}
+[image_diffusion]: {{ "coding/2022/12/29/denoising-diffusion-2-unet" | relative_url }}
 [classifier_free_guidance]: {{ "2022-12-03-denoising-diffusion-part-3" | relative_url }}
 
 
@@ -285,7 +285,7 @@ end
 make_spiral(n_samples::Int=1000) = make_spiral(Random.GLOBAL_RNG, n_samples)
 {% endhighlight %}
 
-Everything is normalised to lie between $-1$ and $1$. This is purely for convenience:
+Everything is normalised to lie between $-1$ and $1$:
 {%highlight julia %}
 function normalize_zero_to_one(x)
     x_min, x_max = extrema(x)
@@ -1157,7 +1157,8 @@ L = \mathbb{E}_q\left[
 $$
 
 The first term is the loss for the forward process but because this is fixed and has no parameters we can ignore it. 
-The second term is called the "reconstruction error" and we can ignore it too.
+The second term is called the "reconstruction error" and we can ignore it too because it only affects one time step.
+(The reconstruction error is more important for VAEs.)
 The last term is the KL divergence between two normal distributions which has a [known formula][kl-divergence].
 However [Ho et. al.][Ho-2020] show that by substituting into that we can simplifier much further:
 
