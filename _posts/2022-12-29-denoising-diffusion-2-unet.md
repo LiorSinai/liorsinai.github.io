@@ -242,9 +242,9 @@ Here is the full model architecture:
 <figure class="post-figure">
 <img class="img-80"
     src="/assets/posts/denoising-diffusion/UNet.png"
-	alt="U-Net with skip connections"
+	alt="U-Net"
 	>
-<figcaption>U-Net with skip connections. Only output sizes are shown.</figcaption>
+<figcaption>U-Net. Only output sizes are shown.</figcaption>
 </figure>
 
 Each downsample layer will decrease the image height and width by a factor of 2 but increase the channel dimension by a multiplication factor $m$.
