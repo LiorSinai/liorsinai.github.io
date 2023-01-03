@@ -190,11 +190,11 @@ There are three solutions:
 2. Write a custom [ChainRulesCore.rrule](https://juliadiff.org/ChainRulesCore.jl/stable/rule_author/example.html) for the operation.
 3. Manually write the backward pass instead of using automatic differentiation.
 
-The second option is best when the operation can be isolated to only one layer.[^custom_rrule]
+Option 2 is best when the operation can be isolated to only one layer.[^custom_rrule]
 However here it encompasses most of the forward pass so it essentially is the same as option 3.
-Option 3 is not a good idea because (1) it requires lots more work and (2) the forward pass and backward pass will not be automatically in sync. 
+Option 3 is not a good idea because (1) it requires much more work and (2) the forward pass and backward pass will not be automatically in sync. 
 
-So we are left with the first option.
+So we are left with option 1.
 There are two ways to implement it. 
 The first is to fix the amount of layers so that we don't need a flexible mutable array.
 For example, for the minimum working example with only two layers:
@@ -244,13 +244,11 @@ Here is the full model architecture:
     src="/assets/posts/denoising-diffusion/UNet.png"
 	alt="U-Net with skip connections"
 	>
-<figcaption>U-Net with skip connections. Channel dimension is into the page (not shown). </figcaption>
+<figcaption>U-Net with skip connections. Only output sizes are shown.</figcaption>
 </figure>
 
-I like to think of the skip connections as layered like an onion but it is easiest to draw them unwrapped in the traditional U shape.
-
-Each downsample layer will decrease the image height and width by a factor of 2 but increase the channel dimension by the same amount.
-The sample is therefore downscaled by an overall factor of $\tfrac{1}{2}\tfrac{1}{2}(2)=\tfrac{1}{2}$.
+Each downsample layer will decrease the image height and width by a factor of 2 but increase the channel dimension by a multiplication factor $m$.
+The sample is therefore downscaled by an overall factor of $\tfrac{1}{2}\tfrac{1}{2}(m)=\tfrac{m}{4}$ per level.
 This is reversed with the upsample layers.
 The model however is based on convolutional layers which are independent of the input image height and width and only depend on the channel dimension. 
 (The inference time is a factor of the image size.)
@@ -258,7 +256,7 @@ Each layer grows with a factor $d^2$ for a channel dimension $d$.
 Therefore the largest layers are the middle (bottom) layers where the channel dimension is largest.
 Also because of the concatenation on the channel dimension, the upside layers will tend to be much larger than their downside counterparts.
 
-This figure shows this exponential relationship with the channel dimension more clearly. 
+This figure shows this exponential relationship with the channel dimension: 
 
 <figure class="post-figure">
 <img class="img-80"
@@ -279,7 +277,7 @@ Again please see this source code for the printing functions.
 
 ### Conditional SkipConnection
 
-As in part 1 we need to pass two inputs the model and so we'll need to reuse the `ConditionalChain` from 
+As in part 1 we need to pass two inputs to the model and so we'll need to reuse the `ConditionalChain` from 
 [part 1][first_principles-model]. 
 We'll need a custom `ConditionalSkipConnection` layer which can handle multiple inputs too.
 
@@ -323,10 +321,10 @@ The model will have a complex constructor.
 The most important parameters are the number of in channels (1 for a grey image and 3 for RGB images), the model dimension $d$ and the number of time steps $T$. 
 The total number of parameters scales with $d^2$. So if we double the model channel we will quadruple the number of parameters.
 
-Additionally, the user will also be to specify the channel multipliers instead of the default value of 2 per level.
+Additionally, the user will also be able to specify the channel multipliers instead of the default value of 2 per level.
 The block layer (purple blocks) will be configurable (either a [ConvEmbed](#convembed) or a [ResBlock](#resblock)) as well as the number of (purple) blocks per level.
 As a simplification only the last block in each level will be connected to a skip connection.
-We will have `Flux.GroupNorm` layers which requires a number of groups `G`; this will be set the same universally. 
+We will have `Flux.GroupNorm` layers which requires a number of groups `G`; this will be set the same throughout the model. 
 Lastly we'll have a parameter for the attention layer.
 
 {% highlight julia %}
@@ -633,6 +631,15 @@ This table summarises the resultant block sizes (all values are a slight underes
     <td>3</td>
     <td>147</td>
   </tr>
+  <tr>
+    <td>4</td>
+    <td>3</td>
+    <td>3</td>
+    <td>93</td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
 </tbody>
 </table>
 
@@ -741,6 +748,15 @@ This table summarises the resultant block sizes (all values are a slight underes
     <td>3</td>
     <td>363</td>
   </tr>
+  <tr>
+    <td>4</td>
+    <td>3</td>
+    <td>3</td>
+    <td>174</td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
 </tbody>
 </table>
 
@@ -837,8 +853,8 @@ This however is not recommended because of the "checkerboard" effect that transp
 
 ### Attention 
 
-This is the most complicated block in the model and also the the largest.
-This is a block based on the transformer self-attention layer that was first introduced in Google's 2017 paper  [Attention is all you need][Attention-all-you-need].
+This is the most complicated block in the model and also the largest.
+This block is based on the transformer self-attention layer that was first introduced in Google's 2017 paper  [Attention is all you need][Attention-all-you-need].
 [Ho et. al.][Ho-2020] do not give a justification for including it in the model.
 
 [Attention-all-you-need]: https://arxiv.org/abs/1706.03762
@@ -1156,7 +1172,7 @@ Here our sample should be recognisable as one of 10 digits without ambiguity.
 At the same time it should not match any in the original dataset because we want to create new images.
 This makes it tricky to evaluate.
 
-I have come up with two techniques. The first compares the samples to the mean test images. 
+Here I propose two techniques. The first is the mean squared error compared to the mean test images. 
 See the [mean images](#mnist-means) above.
 The second is the Frechet LeNet Distance, inspired by the popular Frechet Inception Distance (FID).
 Both require generating a large amount of samples for statistical significance. 
@@ -1231,13 +1247,12 @@ That is, this mean distance metric is not sufficient at evenly distinguishing be
 ### Frechet LeNet Distance
 
 A smarter way to evaluate the model is the Frechet Inception Distance (FID).
-This was introduce in the 2017 paper [GANs Trained by a Two Time-Scale Update Rule Converge to a Local Nash Equilibrium
- by Heusel et. al.][Heusel-2017].
+This was introduced in the 2017 paper [GANs Trained by a Two Time-Scale Update Rule Converge to a Local Nash Equilibrium by Heusel et. al.][Heusel-2017].
 There are two important insights.
-Firstly, after the work of the last two decades in machine learning image classification can be considered a solved task.
+Firstly, image classification can be considered a solved task after the work of the last two decades in machine learning.
 That is we can use an image classification model to get insights into our generated data.
 Secondly, we can view the outputs of penultimate layer of the model as a probability distribution and compare the [statistical distance][wiki-stastical-distance] of it between different datasets.
-The intuition behind using the penultimate layer is that it is an abstract feature space containing essential information about the samples that we can use to compare if samples are similar rather than manually specify features.
+The intuition behind using the penultimate layer is that it is an abstract feature space containing essential information about the samples that we can use to compare samples rather than manually specifying features.
 
 [LeCun-98]: http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf
 [Heusel-2017]: https://arxiv.org/abs/1706.08500
@@ -1261,7 +1276,7 @@ Intuitively the first term represents the distance between the means and the sec
 The Inception V3 model however is overkill here.
 It has over 27 million parameters and the penultimate layer has a length of 2048.
 My proposal is to instead use the smaller LeNet-5 with 44,000 parameters and an output length of 84.
-It was first proposed in the 1998 paper [GradientBased Learning Applied to Document Recognition by Yann LeCun Leon Bottou Yoshua Bengio and Patrick Haffner][LeCun-98].
+It was first proposed in the 1998 paper [Gradient-Based Learning Applied to Document Recognition by Yann LeCun, Leon Bottou ,Yoshua Bengio and Patrick Haffner][LeCun-98].
 
 This is a Julia implementation from the [Flux model zoo](https://github.com/FluxML/model-zoo/blob/master/vision/conv_mnist/conv_mnist.jl):
 {% highlight julia %}
@@ -1285,7 +1300,7 @@ That said, you can view my script at [train_classifier.jl](https://github.com/Li
 This model gets a test accuracy of 98.54%. 
 This is good enough for us to consider it a perfect oracle.
 
-After training we can load the model::
+After training we can load the model:
 {% highlight julia %}
 classifier_path = "..\\models\\LeNet5\\model.bson"
 classifier = BSON.load(classifier_path)[:model]
