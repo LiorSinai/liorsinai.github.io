@@ -8,7 +8,7 @@ sidenav: true
 tags:  mathematics AI art diffusion 'machine learning' 'deep learning'
 ---
 
-_A denoising diffusion probabilistic model for generating numbers based on the MNIST dataset. The underlying machine learning model is a U-Net model, which is a convolutional autoencoder with skip connections._
+_A denoising diffusion probabilistic model for generating numbers based on the MNIST dataset. The underlying machine learning model is a U-Net model, which is a convolutional autoencoder with skip connections. A large part of this post is dedicated to implementing this model architecture in Julia._
 
 This is part of a series. The other articles are:
 - [Part 1: first principles][first_principles].
@@ -16,7 +16,7 @@ This is part of a series. The other articles are:
 
 [first_principles]: {{ "coding/2022/12/03/denoising-diffusion-1-spiral" | relative_url }}
 [image_diffusion]: {{ "coding/2022/12/29/denoising-diffusion-2-unet" | relative_url }}
-[classifier_free_guidance]: {{ "2022-12-03-denoising-diffusion-part-3" | relative_url }}
+[classifier_free_guidance]: {{ "coding/2023/01/04/denoising-diffusion-3-guidance" | relative_url }}
 
 Full code available at [github.com/LiorSinai/DenoisingDiffusion.jl](https://github.com/LiorSinai/DenoisingDiffusion.jl).
 Examples notebooks at [github.com/LiorSinai/DenoisingDiffusion-examples](https://github.com/LiorSinai/DenoisingDiffusion-examples).
@@ -50,7 +50,7 @@ As a reminder from the first part, the exact purpose of the machine learning mod
 It is used to predict the total noise that needs to be removed from the current iteration in order to produce a valid sample on the last iteration. 
 This total noise is then used in analytical equations to calculate the amount of noise that needs to be removed in the current iteration, which is necessarily only some fractional part.
 The purpose of multiple iterations is to refine the predicted noise and hence refine the final sample.
-Please review [part 1][first_principles-reverse] for a full explanation.
+Please review [part 1-reverse process][first_principles-reverse] for a full explanation.
 
 [first_principles-reverse]: /coding/2022/12/03/denoising-diffusion-1-spiral#reverse-process
 
@@ -109,7 +109,47 @@ It is worth reading theories on the [latent space of variational autoencoders][v
 
 [vae]: https://towardsdatascience.com/understanding-variational-autoencoders-vaes-f70510919f73
 
-The model in this post is based on code by [OpenAI][github-openai] and [LucidRains][github-lucidrains]. It uses the following layers:
+### Architecture
+
+This is the model architecture that will be implemented here:
+
+<figure class="post-figure">
+<img class="img-80"
+    src="/assets/posts/denoising-diffusion/UNet.png"
+	alt="U-Net"
+	>
+<figcaption>U-Net. Only output sizes are shown.</figcaption>
+</figure>
+
+Each downsample layer will decrease the image height and width by a factor of 2 but increase the channel dimension by a multiplication factor $m$.
+The sample is therefore downscaled by an overall factor of $\tfrac{1}{2}\tfrac{1}{2}(m)=\tfrac{m}{4}$ per level.
+This is reversed with the upsample layers.
+The model however is based on convolutional layers whose size are independent of the input image height and width and only depend on the channel dimension. 
+(The inference time is a factor of the image size.)
+Each layer grows with a factor $d^2$ for a channel dimension $d$.
+Therefore the largest layers are the middle (bottom) layers where the channel dimension is largest.
+Also because of the concatenation on the channel dimension, the upside layers will tend to be much larger than their downside counterparts.
+
+This figure shows this exponential relationship with the channel dimension: 
+
+<figure class="post-figure">
+<img class="img-80"
+    src="/assets/posts/denoising-diffusion/unet_parameter_distribution.png"
+	alt="U-Net parameter distributution"
+	>
+<figcaption>U-Net parameter distributution. Model settings: in_channels=1, model_channels=16, channel_multipliers=(1,2,3)</figcaption>
+</figure>
+
+So despite the symmetrical nature of the schematic, the model is not very symmetric.
+
+The rest of this section will detail the code for the model in a top-down fashion.
+For the full model see [UNet.jl](https://github.com/LiorSinai/DenoisingDiffusion.jl/blob/main/src/models/UNet.jl).
+Please see this source code for the printing functions, which are not detailed here.
+
+The blocks used in the model are described in the next section, [Blocks](#blocks).
+Again please see this source code for the printing functions.
+
+The model in this post is based on PyTorch models by [OpenAI][github-openai] and [LucidRains][github-lucidrains]. It uses the following layers:
 1. Convolutional layers with embeddings.
 2. Resnet type blocks.
 3. Upsample layers.
@@ -196,14 +236,13 @@ Option 3 is not a good idea because (1) it requires much more work and (2) the f
 
 So we are left with option 1.
 There are two ways to implement it. 
-The first is to fix the amount of layers so that we don't need a flexible mutable array.
+The first is to fix the amount of layers so that we don't need a mutable array.
 For example, for the minimum working example with only two layers:
 
 {%highlight julia %}
 function (u::UNet)(x::AbstractArray)
     h = u.downs[1](x)
-    h1 = h
-    h = cat(h, h1, dims=3)
+    h = cat(h, h, dims=3)
     h = u.ups[1](h)
     h
 end
@@ -219,8 +258,9 @@ For example:
 
 {%highlight julia %}
 model = Chain(
+    Conv((3, 3), 1 => 1, stride=(1, 1), pad=(1, 1)),
     SkipConnection(
-        Conv((3, 3), 1 => 1, stride=(1, 1), pad=(1, 1)),
+        identity,  # *rest of model here*
         (x, y) -> cat(x, y, dims=3)
     ),
     Conv((3, 3), 2 => 1, stride=(1, 1), pad=(1, 1)),
@@ -229,51 +269,7 @@ model = Chain(
 
 Again the backward pass code will now work.
 
-For a model with multiple skip connections we can nest layers with recursive layers like so:
-
-```
-Chain(in_layer, SkipConnection(*rest of model here*, cat), out_layer)
-```
-
-### Architecture
-
-Here is the full model architecture:
-
-<figure class="post-figure">
-<img class="img-80"
-    src="/assets/posts/denoising-diffusion/UNet.png"
-	alt="U-Net"
-	>
-<figcaption>U-Net. Only output sizes are shown.</figcaption>
-</figure>
-
-Each downsample layer will decrease the image height and width by a factor of 2 but increase the channel dimension by a multiplication factor $m$.
-The sample is therefore downscaled by an overall factor of $\tfrac{1}{2}\tfrac{1}{2}(m)=\tfrac{m}{4}$ per level.
-This is reversed with the upsample layers.
-The model however is based on convolutional layers which are independent of the input image height and width and only depend on the channel dimension. 
-(The inference time is a factor of the image size.)
-Each layer grows with a factor $d^2$ for a channel dimension $d$.
-Therefore the largest layers are the middle (bottom) layers where the channel dimension is largest.
-Also because of the concatenation on the channel dimension, the upside layers will tend to be much larger than their downside counterparts.
-
-This figure shows this exponential relationship with the channel dimension: 
-
-<figure class="post-figure">
-<img class="img-80"
-    src="/assets/posts/denoising-diffusion/unet_parameter_distribution.png"
-	alt="U-Net parameter distributution"
-	>
-<figcaption>U-Net parameter distributution. Model settings: in_channels=1, model_channels=16, channel_multipliers=(1,2,3)</figcaption>
-</figure>
-
-So despite the symmetrical nature of the schematic, the model is not very symmetric.
-
-The rest of this section will detail the code for the model in a top-down fashion.
-For the full model see [UNet.jl](https://github.com/LiorSinai/DenoisingDiffusion.jl/blob/main/src/models/UNet.jl).
-Please see this source code for the printing functions, which are not detailed here.
-
-The blocks used in the model are described in the next section, [Blocks](#blocks).
-Again please see this source code for the printing functions.
+For a model with multiple skip connections we can nest layers recursively.
 
 ### Conditional SkipConnection
 
@@ -350,7 +346,7 @@ function UNet(
 
 There are many different variations of the time embedding layer.
 This is one used by [LuicidRains](https://github.com/lucidrains/denoising-diffusion-pytorch/blob/a772416afa6940f5e306a8cc2ebbb7c9e2a8dd43/denoising_diffusion_pytorch/denoising_diffusion_pytorch.py#L311). 
-For the `SinusoidalPositionEmbedding` see [part 1][first_principles-embedding].
+For the `SinusoidalPositionEmbedding` see [part 1-sinusodial embedding][first_principles-embedding].
 {%highlight julia %}
     time_dim = 4 * model_channels
     time_embed = Chain(
@@ -380,7 +376,6 @@ We have an initial convolution to transform the image so that it has $d$ channel
 The final convolution reverses this.
 In between are the down blocks, the skip connection and the up blocks.
 The skip connection calls the recursive function `_add_unet_level` (to be defined shortly).
-(Recursion should not be overused for making a model. We'll only go four levels deep.)
 {%highlight julia %}
     chain = ConditionalChain(;
         init=Conv((3, 3), in_channels => model_channels, stride=(1, 1), pad=(1, 1)),
@@ -399,6 +394,7 @@ The skip connection calls the recursive function `_add_unet_level` (to be define
         final=Conv((3, 3), model_channels => in_channels, stride=(1, 1), pad=(1, 1))
     )
 {% endhighlight %}
+Recursion should not be overused for making a model. We'll only go four levels deep.
 
 Finally, build the struct:
 {%highlight julia %}
@@ -462,9 +458,9 @@ end
 
 ### Forward pass
 
-For the forward pass we just calculate the time embedding and pass it along with the input to the chain.
+For the forward pass we calculate the time embedding and pass it along with the input to the chain.
 As a precaution we can do an error check to make sure that the image height and width can be downsampled evenly.
-This is needed for the `cat_on_channel_dim` to be successful, else the image height or width will not match the incoming dimensions.
+This is needed for the `cat_on_channel_dim` to be successful.
 
 {%highlight julia %}
 function (u::UNet)(x::AbstractArray, timesteps::AbstractVector{Int})
@@ -821,7 +817,7 @@ This is a convolution layer with $16m_im_od^2+m_od$ parameters.
 
 If the input image has an odd length then the downsample dimension will be $\frac{i-1}{2}$.
 Then if we upsample back by 2 the size will be $i-2$ instead of $i$ and the concatenation will fail.
-This is why the image has to be evenly divisible by powers of 2.
+This is why the image has to be evenly divisible by powers of 2 in the [forward pass](#forward-pass).
 
 ### Up sampling
 
@@ -1009,16 +1005,6 @@ plot(canvases..., layout=(nrows, 10), ticks=nothing)
 	>
 </figure>
 
-Means:
-<a name="mnist-means">
-    <figure class="post-figure">
-    <img class="img-80"
-        src="/assets/posts/denoising-diffusion/MNIST_means.png"
-        alt="MNIST means"
-        >
-    </figure> 
-</a>
-
 Normalise the dataset (function defined in [part 1](/coding/2022/12/03/denoising-diffusion-1-spiral#spiral-dataset)):
 {% highlight julia %}
 norm_data = normalize_neg_one_to_one(reshape(trainset.features, 28, 28, 1, :))
@@ -1118,7 +1104,7 @@ model = UNet(in_channels, model_channels, num_timesteps;
 diffusion = GaussianDiffusion(Vector{Float32}, βs, data_shape, model)
 {% endhighlight %}  
 
-Train the model using the functions from [part 1][first_principles_train]:
+Train the model using the functions from [part 1-training][first_principles_train]:
 {% highlight julia %}
 data = Flux.DataLoader(train_x |> to_device; batchsize=32, shuffle=true);
 val_data = Flux.DataLoader(val_x |> to_device; batchsize=32, shuffle=false);
@@ -1148,17 +1134,13 @@ Sample:
 X0s, X0_ests = p_sample_loop_all(diffusion, 16; to_device=cpu);
 {% endhighlight %}
 
-Here is the resulting reverse process:[^gifs][^combine]
+Here is the resulting reverse process (left) and first image estimates made using the U-Net model:[^gifs][^combine]
 <figure class="post-figure">
-    <video controls loop class="center" style="width:90%">
+    <video controls loop  style="width:45%">
         <source src="/assets/posts/denoising-diffusion/numbers_reverse.mp4" type="video/mp4">
         Your browser does not support the video format.
     </video>
-</figure>
-
-And the first image estimates made using the U-Net model:
-<figure class="post-figure">
-    <video controls loop class="center" style="width:90%">
+    <video controls loop style="width:45%">
         <source src="/assets/posts/denoising-diffusion/numbers_estimate.mp4" type="video/mp4">
         Your browser does not support the video format.
     </video>
@@ -1172,9 +1154,8 @@ Here our sample should be recognisable as one of 10 digits without ambiguity.
 At the same time it should not match any in the original dataset because we want to create new images.
 This makes it tricky to evaluate.
 
-Here I propose two techniques. The first is the mean squared error compared to the mean test images. 
-See the [mean images](#mnist-means) above.
-The second is the Frechet LeNet Distance, inspired by the popular Frechet Inception Distance (FID).
+Here I propose two techniques. The first is the mean Euclidean distance compared to the mean test images. 
+The second is the Fréchet LeNet Distance, inspired by the popular Fréchet Inception Distance (FID).
 Both require generating a large amount of samples for statistical significance. 
 I have generated 10,000 samples to match the 10,000 test data samples.
 
@@ -1191,13 +1172,24 @@ for label in 0:9
     push!(mnist_means, x_mean[:, :, 1])
 end
 {% endhighlight %}
+
+Result:
+<a name="mnist-mean-images">
+    <figure class="post-figure">
+    <img class="img-80"
+        src="/assets/posts/denoising-diffusion/MNIST_means.png"
+        alt="MNIST means"
+        >
+    </figure> 
+</a>
+
 As an aside, the generated sample means tend to be remarkably close to these test set means.
 This may be because the U-Net model is only used for $\tilde{\mu}_t$ and not $\tilde{\beta}_t$ in the reverse equations.
 
-Define the distance as the minimum of the mean square error of $x$ to each mean $\bar{x}_k$:
+Define the distance as the minimum of the mean Euclidean distance of $x$ to each mean $\bar{x}_k$:
 
 $$  
-    d = \min_{k \in 0:9} \frac{1}{WH}\sqrt{\sum_{i}^W\sum_{j}^H (x_{ij} - \bar{x}_{k,ij})^2}
+    d = \min_{0 \leq k \leq 9} \frac{1}{WH}\sqrt{\sum_{i}^W\sum_{j}^H (x_{ij} - \bar{x}_{k,ij})^2}
 $$
 
 The score is then the average of $d$ over all samples.
@@ -1246,13 +1238,13 @@ That is, this mean distance metric is not sufficient at evenly distinguishing be
 
 ### Frechet LeNet Distance
 
-A smarter way to evaluate the model is the Frechet Inception Distance (FID).
+A smarter way to evaluate the model is the Fréchet Inception Distance (FID).
 This was introduced in the 2017 paper [GANs Trained by a Two Time-Scale Update Rule Converge to a Local Nash Equilibrium by Heusel et. al.][Heusel-2017].
 There are two important insights.
 Firstly, image classification can be considered a solved task after the work of the last two decades in machine learning.
 That is we can use an image classification model to get insights into our generated data.
 Secondly, we can view the outputs of penultimate layer of the model as a probability distribution and compare the [statistical distance][wiki-stastical-distance] of it between different datasets.
-The intuition behind using the penultimate layer is that it is an abstract feature space containing essential information about the samples that we can use to compare samples rather than manually specifying features.
+The intuition behind using the penultimate layer is that it is an abstract feature space containing essential information about the samples that we can for comparison rather than manually specifying features.
 
 [LeCun-98]: http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf
 [Heusel-2017]: https://arxiv.org/abs/1706.08500
@@ -1262,7 +1254,7 @@ The intuition behind using the penultimate layer is that it is an abstract featu
 [pytorch-inception-v3]: https://pytorch.org/hub/pytorch_vision_inception_v3/
 
 In particular, the FID score uses the [Inception V3][pytorch-inception-v3] model as the classification model
-and the Frechet Distance as the statistical measure:
+and the Fréchet Distance as the statistical measure:
 
 $$
 d(\mathcal{N}(\mu_1, \Sigma_1^2), \mathcal{N}(\mu_2, \Sigma_2^2)) = ||\mu_1 - \mu_2||^2
@@ -1306,7 +1298,7 @@ classifier_path = "..\\models\\LeNet5\\model.bson"
 classifier = BSON.load(classifier_path)[:model]
 {% endhighlight %}
 
-To use the generated outputs we'll have to normalise them between 0 and 1 (function defined in [part 1](/coding/2022/12/03/denoising-diffusion-1-spiral#spiral-dataset)):
+To use the generated outputs we'll have to normalise them between 0 and 1 (function defined in [part 1-spiral dataset](/coding/2022/12/03/denoising-diffusion-1-spiral#spiral-dataset)):
 {% highlight julia %}
 for i in 1:n_samples
     global X_generated
@@ -1327,7 +1319,7 @@ We can immediately see that our model has a bias to producing 0s and 6s and prod
 
 Now for the FLD score. We can implement equation $\ref{eq:Frechet}$ in Julia as follows:[^matrix_sqrt]
 {% highlight julia %}
-function gaussian_fretchet_distance(μ1::AbstractMatrix, Σ1::AbstractMatrix, μ2::AbstractMatrix, Σ2::AbstractMatrix)
+function gaussian_frechet_distance(μ1::AbstractMatrix, Σ1::AbstractMatrix, μ2::AbstractMatrix, Σ2::AbstractMatrix)
     diff = μ1 - μ2
     covmean = sqrt(Σ1 * Σ2)
     if eltype(covmean) <: Complex
@@ -1350,7 +1342,7 @@ activations_test = classifier_headless(X_test)
 Σ = cov(activations; dims=2, corrected=true)
 μ_test = mean(activations_test; dims=2)
 Σ_test = cov(activations_test; dims=2, corrected=true)
-fld = gaussian_fretchet_distance(μ_test, Σ_test, μ, Σ)
+fld = gaussian_frechet_distance(μ_test, Σ_test, μ, Σ)
 {% endhighlight %}
 
 Sample values:
@@ -1372,9 +1364,18 @@ For example, I did try to generate Pokemon with it, inspired by [This Pokémon D
 You can see my notebooks at [github.com/LiorSinai/DenoisingDiffusion-examples](https://github.com/LiorSinai/DenoisingDiffusion-examples).
 
 Now that we can generate numbers the next task is to tell the model which number we want.
-That way we can avoid the bias towards certain numbers that was evidenced in [Frechet LeNet Distance](#frechet-lenet-distance).
+That way we can avoid the bias towards certain numbers that was evidenced in the evaluation.
 This will be the focus of the third and final part on [Classifier-free guidance][classifier_free_guidance].
 That same method is used with text embeddings to direct the outcome of AI art generators.
+
+Now that our models are getting large, it is also desirable to improve the generation time.
+This can be accomplished with a technique introduced in the paper [Denoising Diffusion Implicit Models (DDIM) by Jiaming Song, Chenlin Meng, Stefano Ermon][song-2020]. 
+DDIM sampling allows the model to skip timesteps during image generation. 
+This results in much faster image generation with a trade off of a minor loss in quality.
+I have implemented DDIM sampling in my [code](https://github.com/LiorSinai/DenoisingDiffusion.jl/blob/main/src/GaussianDiffusion.jl#L218). 
+Please review this if you are interested.
+
+[song-2020]: https://arxiv.org/abs/2010.02502
 
 ---
 
@@ -1422,4 +1423,4 @@ That same method is used with text embeddings to direct the outcome of AI art ge
     end
     ```
 
-[^matrix_sqrt]: The one tricky part of the equation is the matrix square $A^{1/2}$, defined as a matrix $B=A^{1/2}$ such that $BB=A$. In code it is therefore important to realise that `sqrt.(A)` and `sqrt(A)` are very different operations.
+[^matrix_sqrt]: The one tricky part of the equation is the matrix square root $A^{1/2}$, defined as a matrix $B=A^{1/2}$ such that $BB=A$. In code it is therefore important to realise that `sqrt.(A)` and `sqrt(A)` are very different operations.

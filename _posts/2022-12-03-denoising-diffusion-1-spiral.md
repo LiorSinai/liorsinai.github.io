@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Denoising diffusion probabilistic models from first principles in Julia"
+title:  "Denoising diffusion probabilistic models from first principles"
 date:   2022-12-03
 author: Lior Sinai
 categories: coding
@@ -10,7 +10,7 @@ sidenav: true
 tags:  mathematics AI art diffusion 'machine learning' 'deep learning'
 ---
 
-_Denoising diffusion probabilistic models for AI art generation from first principles. This is a three part series on these models._
+_Denoising diffusion probabilistic models for AI art generation from first principles in Julia. This is part 1 of a 3 part series on these models._
 
 This is part of a series. The other articles are:
 - [Part 2: image generation with MNIST][image_diffusion].
@@ -18,8 +18,7 @@ This is part of a series. The other articles are:
 
 [first_principles]: {{ "coding/2022/12/03/denoising-diffusion-1-spiral" | relative_url }}
 [image_diffusion]: {{ "coding/2022/12/29/denoising-diffusion-2-unet" | relative_url }}
-[classifier_free_guidance]: {{ "2022-12-03-denoising-diffusion-part-3" | relative_url }}
-
+[classifier_free_guidance]: {{ "coding/2023/01/04/denoising-diffusion-3-guidance" | relative_url }}
 
 <a name="numbers_guided_mp4">
     <figure class="post-figure">
@@ -27,7 +26,7 @@ This is part of a series. The other articles are:
             <source src="/assets/posts/denoising-diffusion/numbers_guided.mp4" type="video/mp4">
             Your browser does not support the video format.
         </video>
-        Top row: denoising numbers. Bottom row: model predictions of the final time step.
+        Top row: denoising numbers. Bottom row: model predictions of the final iteration.
     </figure>
 </a>
 
@@ -654,7 +653,7 @@ x_t &= \sqrt{\vphantom{1}\bar{\alpha}_t} \hat{x}_0 +  \bar{z}\sqrt{1 - \bar{\alp
 $$
 
 The only free variable here is $\bar{z}$, the noise.
-This is the only value we'll need to predict with the model: $\bar{z}=\epsilon_\theta$.
+This is the only value we'll need to predict with the model: $\bar{z}=\epsilon_\theta(x_t, t)$.
 Rather than predicting the starting image directly, we will predict the noise that needs to be removed at each time step to get to it. 
 
 We can substitute equation $\eqref{eq:x0_estimate}$ into $\eqref{eq:posterior}$, but this form is not very useful because we will want to retrieve our estimates as well (for example the [top image](#numbers_guided_mp4)):
@@ -880,7 +879,6 @@ It is this [blog post][siddiqui] that I owe to breaking my impasse.[^large_model
 	>
 <figcaption>The ConditionalChain model</figcaption>
 </figure>
-
 
 The important observation is that the model is time dependent. 
 It takes in two inputs, $x$ and $t$, and it must satisfy two seemingly conflicting requirements: (1) its weights must be time dependent but also (2) they should be shared across time for efficiency.
@@ -1120,11 +1118,29 @@ end
 Used in a model:
 {%highlight julia%}
 model = ConditionalChain(
-    Parallel(.+, Dense(2, d_hid), Chain(SinusoidalPositionEmbedding(num_timesteps, d_hid), Dense(d_hid, d_hid))),
+    Parallel(
+        .+, 
+        Dense(2, d_hid), 
+        Chain(
+            SinusoidalPositionEmbedding(num_timesteps, d_hid), 
+            Dense(d_hid, d_hid))
+        ),
     swish,
-    Parallel(.+, Dense(d_hid, d_hid), Chain(SinusoidalPositionEmbedding(num_timesteps, d_hid), Dense(d_hid, d_hid))),
+    Parallel(
+        .+, 
+        Dense(d_hid, d_hid), 
+        Chain(
+            SinusoidalPositionEmbedding(num_timesteps, d_hid), 
+            Dense(d_hid, d_hid))
+        ),
     swish,
-    Parallel(.+, Dense(d_hid, d_hid), Chain(SinusoidalPositionEmbedding(num_timesteps, d_hid), Dense(d_hid, d_hid))),
+    Parallel(
+        .+, 
+        Dense(d_hid, d_hid), 
+        Chain(
+            SinusoidalPositionEmbedding(num_timesteps, d_hid), 
+            Dense(d_hid, d_hid))
+        ),
     swish,
     Dense(d_hid, 2),
 )
@@ -1199,6 +1215,8 @@ $\quad \nabla_\theta ||\epsilon - \epsilon_\theta||^2 $ <br>
 
 The code is slightly more generic in that you can pass any `loss` function to evaluate the difference. 
 For example, `Flux.mae` or `Flux.mse`.
+The first method calculates the losses from all three inputs (`x_start`, `timesteps` and `noise`)
+while the second generates the `timesteps` and `noise` and then calls the first.
 
 {%highlight julia %}
 function p_losses(diffusion::GaussianDiffusion, loss, x_start::AbstractArray, timesteps::AbstractVector{Int}, noise::AbstractArray)
