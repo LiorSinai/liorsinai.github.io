@@ -43,10 +43,10 @@ Even with the given limitations, this task is much more complex than the spiral.
 Each sample has 28&times;28 pixels for a total of 784 features per sample. For the spiral, each sample had 2 features: 2 co-ordinates. 
 This is therefore two orders of magnitude harder.
 We'll find we that the underlying machine learning model scales accordingly. 
-So instead of 5,400 parameters the final model will have at least 420,000.
+So instead of 5,400 parameters the final model will have at least 400,000.
 A large part of this post is solely dedicated to building the model.
 
-As a reminder from the first part, the exact purpose of the machine learning model is not exactly obvious.
+As a reminder from the first part, the purpose of the machine learning model is not exactly obvious.
 It is used to predict the total noise that needs to be removed from the current iteration in order to produce a valid sample on the last iteration. 
 This total noise is then used in analytical equations to calculate the amount of noise that needs to be removed in the current iteration, which is necessarily only some fractional part.
 The purpose of multiple iterations is to refine the predicted noise and hence refine the final sample.
@@ -66,7 +66,7 @@ Please review [part 1-reverse process][first_principles-reverse] for a full expl
     </figcaption>
 </figure>
 
-The U-Net model architecture was first introduced in the 2015 paper [U-Net: Convolutional Networks for Biomedical Image Segmentation by Olaf Ronneberger, Philipp Fischer and Thomas Brox][unet-original].
+The U-Net model architecture was first introduced in the 2015 paper [U-Net: Convolutional Networks for Biomedical Image Segmentation][unet-original] by Olaf Ronneberger, Philipp Fischer and Thomas Brox.
 The name U-Net comes from the shape of the model in the schematic that the original authors drew. 
 See above.
 It is debatable if this is the best choice of name. 
@@ -111,7 +111,11 @@ It is worth reading theories on the [latent space of variational autoencoders][v
 
 ### Architecture
 
-This is the model architecture that will be implemented here:
+[github-lucidrains]: https://github.com/lucidrains/denoising-diffusion-pytorch
+[github-openai]: https://github.com/openai/guided-diffusion
+
+This is the model architecture that will be implemented here.
+It is based on PyTorch models by [OpenAI][github-openai] and [LucidRains][github-lucidrains].
 
 <figure class="post-figure">
 <img class="img-80"
@@ -147,18 +151,6 @@ For the full model see [UNet.jl](https://github.com/LiorSinai/DenoisingDiffusion
 Please see this source code for the printing functions, which are not detailed here.
 
 The blocks used in the model are described in the next section, [Blocks](#blocks).
-Again please see this source code for the printing functions.
-
-The model in this post is based on PyTorch models by [OpenAI][github-openai] and [LucidRains][github-lucidrains]. It uses the following layers:
-1. Convolutional layers with embeddings.
-2. Resnet type blocks.
-3. Upsample layers.
-4. Transformer like attention layers.
-
-[github-lucidrains]: https://github.com/lucidrains/denoising-diffusion-pytorch
-[github-openai]: https://github.com/openai/guided-diffusion
-
-The reference models also have normalization layers, pooling layers and linear attention layers (a faster sort of attention) that are not used here.
 
 ### A slight problem
 
@@ -297,11 +289,6 @@ end
 
 ### Constructor
 
-Firstly define a helper function:
-{%highlight julia %}
-cat_on_channel_dim(h::AbstractArray, x::AbstractArray) = cat(x, h, dims=3)
-{% endhighlight %}
-
 The model is all held in a struct:
 {%highlight julia %}
 struct UNet{E,C<:ConditionalChain}
@@ -402,7 +389,12 @@ Finally, build the struct:
 end
 {% endhighlight %}
 
-Here is the `_add_unet_level` function.
+Here is the `cat_on_channel_dim` function:
+{%highlight julia %}
+cat_on_channel_dim(h::AbstractArray, x::AbstractArray) = cat(x, h, dims=3)
+{% endhighlight %}
+
+And here is the `_add_unet_level` function.
 As always for recursive functions, start with the break condition for the recursion else enter in a recursive loop:
 {%highlight julia %}
 function _add_unet_level(in_out::Vector{Tuple{Int,Int}}, emb_dim::Int, level::Int;
@@ -459,17 +451,9 @@ end
 ### Forward pass
 
 For the forward pass we calculate the time embedding and pass it along with the input to the chain.
-As a precaution we can do an error check to make sure that the image height and width can be downsampled evenly.
-This is needed for the `cat_on_channel_dim` to be successful.
 
 {%highlight julia %}
 function (u::UNet)(x::AbstractArray, timesteps::AbstractVector{Int})
-    downsize_factor = 2^(u.num_levels - 2)
-    if (size(x, 1) % downsize_factor != 0) || (size(x, 2) % downsize_factor != 0)
-        throw(DimensionMismatch(
-            "image size $(size(x)[1:2]) is not divisible by $downsize_factor which is required for concatenation during upsampling.")
-        )
-    end
     emb = u.time_embedding(timesteps)
     h = u.chain(x, emb)
     h
@@ -576,6 +560,14 @@ The `ConvEmbed` block will form the main block layer.
 It will perform a convolution on the input and add the time embedding.
 Additionally it will apply a `GroupNorm`, adjust the time embedding for a layer specific embedding and apply an activation function.
 The output is equivalent to `activation(norm(conv(x)) .+ embed_layers(emb))`.
+
+<figure class="post-figure">
+<img class="img-40"
+    src="/assets/posts/denoising-diffusion/ConvEmbed.png"
+	alt="ConvEmbed"
+	>
+<figcaption></figcaption>
+</figure>
 
 This has one convolution with $(3^2d_i + 1)d_o$ parameters, one fully connected layer with $(d_e+1)d_o$ parameters and a group norm with $2d_o$ parameters. 
 For $d_i=m_id$, $d_o=m_od$ and $d_e=4d$, the number of parameters is approximately $(9m_i+4)m_od^2$.
@@ -687,7 +679,7 @@ Only the first block will have the time embedding.
 A complication of this block is that the input channels can be different to the output channels, so an extra convolution is needed to make the skip connection the same size.
 
 <figure class="post-figure">
-<img class="img-80"
+<img class="img-60"
     src="/assets/posts/denoising-diffusion/ResBlock.png"
 	alt="ResBlock"
 	>
@@ -797,12 +789,12 @@ end
 
 The original U-Net used a 2&times;2 MaxPool layer for the down sampling. 
 This samples the maximum value from every 2&times;2 window so that the output is $o=\left \lfloor \frac{i}{2} \right \rfloor$.
-Using Flux it is made with (by default the stride is also 2&times;2):
+Using Flux it is made with:
 {% highlight julia %}
 MaxPool((2, 2))
 {% endhighlight %}
 
-There are no parameters. 
+By default the stride is also 2&times;2. There are no parameters. 
 
 By looking at equation $\ref{eq:conv}$, we can also make a down sample layer by setting $k=4$, $s=2$ and $p=1$. 
 The result is then also $o=\left \lfloor \frac{i}{2} \right \rfloor$.
@@ -817,7 +809,7 @@ This is a convolution layer with $16m_im_od^2+m_od$ parameters.
 
 If the input image has an odd length then the downsample dimension will be $\frac{i-1}{2}$.
 Then if we upsample back by 2 the size will be $i-2$ instead of $i$ and the concatenation will fail.
-This is why the image has to be evenly divisible by powers of 2 in the [forward pass](#forward-pass).
+So the image has to be evenly divisible by powers of 2 in the [forward pass](#forward-pass).
 
 ### Up sampling
 
@@ -940,7 +932,7 @@ function (mha::MultiheadAttention)(x::A) where {T,A<:AbstractArray{T,3}}
 end
 {% endhighlight %}
 
-Scaled dot attention:
+Scaled dot attention (same as for the transformer):
 {% highlight julia %}
 function scaled_dot_attention(query::A1, key::A2, value::A3) where {
     T,A1<:AbstractArray{T,4},A2<:AbstractArray{T,4},A3<:AbstractArray{T,4}}
@@ -954,7 +946,7 @@ function scaled_dot_attention(query::A1, key::A2, value::A3) where {
 end
 {% endhighlight %}
 
-Batched multiplication:
+Batched multiplication (same as for the transformer):
 {% highlight julia %}
 function batched_mul(A::AbstractArray{T,4}, B::AbstractArray{T,4}) where {T}
     if (size(A, 2) != size(B, 1)) || (size(A, 3) != size(B, 3)) || (size(A, 4) != size(B, 4))
@@ -1134,7 +1126,7 @@ Sample:
 X0s, X0_ests = p_sample_loop_all(diffusion, 16; to_device=cpu);
 {% endhighlight %}
 
-Here is the resulting reverse process (left) and first image estimates made using the U-Net model:[^gifs][^combine]
+Here is the resulting reverse process (left) and first image estimates made using the U-Net model (right):[^combine]
 <figure class="post-figure">
     <video controls loop  style="width:45%">
         <source src="/assets/posts/denoising-diffusion/numbers_reverse.mp4" type="video/mp4">
@@ -1233,13 +1225,12 @@ The counts per label look like:
 <figcaption>Distribution of closest mean images</figcaption>
 </figure>
 
-A surprising aspect of this graph is that the 1s are biased in both the test dataset as well as the generated dataset.
-That is, this mean distance metric is not sufficient at evenly distinguishing between the different digits.
+The test set labels are only 82% accurate, so this method is not good enough for a bias free evaluation.
 
 ### Frechet LeNet Distance
 
 A smarter way to evaluate the model is the Fréchet Inception Distance (FID).
-This was introduced in the 2017 paper [GANs Trained by a Two Time-Scale Update Rule Converge to a Local Nash Equilibrium by Heusel et. al.][Heusel-2017].
+This was introduced in the 2017 paper [GANs Trained by a Two Time-Scale Update Rule Converge to a Local Nash Equilibrium][Heusel-2017] by Heusel et. al..
 There are two important insights.
 Firstly, image classification can be considered a solved task after the work of the last two decades in machine learning.
 That is we can use an image classification model to get insights into our generated data.
@@ -1268,7 +1259,7 @@ Intuitively the first term represents the distance between the means and the sec
 The Inception V3 model however is overkill here.
 It has over 27 million parameters and the penultimate layer has a length of 2048.
 My proposal is to instead use the smaller LeNet-5 with 44,000 parameters and an output length of 84.
-It was first proposed in the 1998 paper [Gradient-Based Learning Applied to Document Recognition by Yann LeCun, Leon Bottou ,Yoshua Bengio and Patrick Haffner][LeCun-98].
+It was first proposed in the 1998 paper [Gradient-Based Learning Applied to Document Recognition][LeCun-98] by Yann LeCun, Leon Bottou, Yoshua Bengio and Patrick Haffner.
 
 This is a Julia implementation from the [Flux model zoo](https://github.com/FluxML/model-zoo/blob/master/vision/conv_mnist/conv_mnist.jl):
 {% highlight julia %}
@@ -1288,7 +1279,7 @@ end
 {% endhighlight %}
 
 Training this model should be covered in any introductory machine Learning material. 
-That said, you can view my script at [train_classifier.jl](https://github.com/LiorSinai/DenoisingDiffusion.jl/blob/main/examples/train_classifier.jl). 
+You can view my attempt at [train_classifier.jl](https://github.com/LiorSinai/DenoisingDiffusion.jl/blob/main/examples/train_classifier.jl). 
 This model gets a test accuracy of 98.54%. 
 This is good enough for us to consider it a perfect oracle.
 
@@ -1354,7 +1345,8 @@ Sample values:
 | generated | 23.8847 |
 | random  | 337.7282 |
 
-Our generated dataset is indeed significantly better than random however it is still noticeably different from the original dataset.
+Our generated dataset is indeed significantly better than random. 
+However it is still noticeably different from the original dataset.
 
 ## Conclusion
 
@@ -1369,7 +1361,7 @@ This will be the focus of the third and final part on [Classifier-free guidance]
 That same method is used with text embeddings to direct the outcome of AI art generators.
 
 Now that our models are getting large, it is also desirable to improve the generation time.
-This can be accomplished with a technique introduced in the paper [Denoising Diffusion Implicit Models (DDIM) by Jiaming Song, Chenlin Meng, Stefano Ermon][song-2020]. 
+This can be accomplished with a technique introduced in the paper [Denoising Diffusion Implicit Models (DDIM)][song-2020] by Jiaming Song, Chenlin Meng and Stefano Ermon. 
 DDIM sampling allows the model to skip timesteps during image generation. 
 This results in much faster image generation with a trade off of a minor loss in quality.
 I have implemented DDIM sampling in my [code](https://github.com/LiorSinai/DenoisingDiffusion.jl/blob/main/src/GaussianDiffusion.jl#L218). 
@@ -1395,18 +1387,7 @@ Please review this if you are interested.
 
 [^colab]: Google Colab does not natively support Julia so you'll have to install it every time you run the notebook. Plots.jl does not work on Google Colab. 
 
- [^gifs]: As in part 1 the GIFs were converted to mp4 using FFMPEG with the following command (Windows CMD):
-    ```
-    set filename=my_file
-    ffmpeg -i %filename%.gif ^
-        -pix_fmt yuv420p -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" ^
-        -b:v 0 -crf 25 ^
-        -movflags faststart ^
-        %filename%.mp4
-    ```
-    MP4s are smaller than GIFs and additionally have user controls.
-
-[^combine]: I've used a helper function to combine multiples images into one image:
+[^combine]: I've used a function to combine multiples images into one:
     ```
     function combine(imgs::AbstractArray, nrows::Int, ncols::Int, border::Int)
         canvas = zeros(Gray, 28 * nrows + (nrows+1) * border, 28 * ncols + (ncols+1) * border)

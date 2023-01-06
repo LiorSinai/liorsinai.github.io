@@ -48,22 +48,22 @@ This is the underlying idea behind all the popular AI art generators like [Stabl
 ## Guided diffusion
 ### Conditioning
 
-We already have time embeddings and we can include other sorts of embeddings to it.
+We already have time embeddings and we can combine other sorts of embeddings with it.
 These embeddings can be added, multiplied or concatenated to the time embeddings.
-So instead of estimating the noise $\epsilon_\theta(x_t, t)$ we'll estimate $\epsilon_\theta(x_t, t, y)$
-where $y$ is the label of the class, or $\epsilon_\theta(x_t, t, c)$ where $c$ are the conditioning parameters (text embeddings).
+So instead of estimating the noise $\epsilon_\theta(x_t | t)$ we'll estimate $\epsilon_\theta(x_t | t, y)$
+where $y$ is the label of the class, or $\epsilon_\theta(x_t | t, c)$ where $c$ are the conditioning parameters (text embeddings).
 
 It is still useful for this guided model to generate random samples.
 This gives it backwards compatibility with our previous code and as we'll see shortly, gives us a reference point for increasing the conditioning signal.
 We can do this by passing a special label denoting the empty set $\emptyset$.
-During training we sometimes randomly change the label to the empty set label so that model learns to associate it with "random choice".
+During training we sometimes randomly change the label to the empty set label so that model learns to associate it with random choice.
 
 In practice the first column of the embedding matrix (label 0 in Python or label 1 in Julia) is reserved for the empty set and the rest are used for the classes.
 
 ### Classifier-free guidance
 
 Conditioning on its own works well enough for the toy problems in this blog series.
-However for text-to-image models we need a stronger signal, and so need a way of enforcing this conditioning.
+However for text-to-image models we need a stronger signal, and so need a way of amplifying this conditioning.
 This is known as guidance. 
 
 [Ho-2020]: https://arxiv.org/abs/2006.11239
@@ -71,7 +71,7 @@ This is known as guidance.
 [Nichol-2021]: https://arxiv.org/abs/2105.05233
 [Nichol-2022]: https://arxiv.org/abs/2112.10741
 
-An early proposal for guided diffusion was classifier guidance in the paper [Diffusion Models Beat GANs on Image Synthesis by Prafulla Dhariwal and Alex Nichol][Nichol-2021]. 
+An early proposal for guided diffusion was classifier guidance in the paper [Diffusion Models Beat GANs on Image Synthesis][Nichol-2021] by Prafulla Dhariwal and Alex Nichol. 
 This technique used a classifier model to estimate a gradient through a loss function which was then added to the estimate of the sample: 
 
 $$ \mu_t = \tilde{\mu}_t(x_t | y) + s\Sigma_\theta(x_t | y)\nabla_{x_t} \log p_\phi (y | x_t) \tag{2.1} $$
@@ -80,9 +80,9 @@ Where $ \mu_t $ is the mean sample per time step, $y$ is the target class, $s$ i
 This is an incredibly complicated solution. 
 Creating a classifier model is easy (see [part 2-Frechet LeNet Distance](/coding/2022/12/29/denoising-diffusion-2-unet#frechet-lenet-distance))
 but creating a classifier model that can work throughout all the noisy time steps of diffusion is very difficult.
-This essentially becomes a second separate U-Net model that needs to be trained in parallel.
+This requires a second U-Net model that needs to be trained in parallel.
 
-Thankfully a much simpler and more effective solution was proposed in the 2022 paper [Classifier-Free Diffusion Guidance by Jonathan Ho and Tim Salimans][Ho-2022].
+Thankfully a much simpler and more effective solution was proposed in the 2022 paper [Classifier-Free Diffusion Guidance][Ho-2022] by Jonathan Ho and Tim Salimans.
 They proposed estimating the noise twice per time step: once with conditioning parameters (text embeddings) and once without.
 The predicted noise $\epsilon_\theta$ is then given as a weighted sum of the two:
 
@@ -126,7 +126,7 @@ However I will be assuming the embeddings are calculated in the model too, so th
 These will then be passed to an embedding layer.
 As a trick to combine the models for unconditioned noise and conditioned noise, a label of 1 will be considered "random choice" and higher integers are guided diffusion.
 
-As discussed above, for the special case of the `guidance_scale=1` we will pass inputs directly to the model else we will do the more computationally intensive classifier-free guidance.
+As discussed above, for the special case of the `guidance_scale=1` inputs will be passed directly to the model else the more computationally intensive classifier-free guidance will be invoked.
 {% highlight julia %}
 function p_sample(
     diffusion::GaussianDiffusion, x::AbstractArray, timesteps::AbstractVector{Int}, labels::AbstractVector{Int}, noise::AbstractArray;
@@ -164,8 +164,7 @@ end
 {% endhighlight %}
 
 Next is the implementation of classifier-free guidance through equation $\ref{eq:classifier-free-guidance}$.
-This code calculates both the conditioned noise and the unconditioned noise at the same time. 
-The labels for all the unconditioned noise samples are all set to 1.
+This code calculates both the conditioned noise and the unconditioned noise at the same time.
 {% highlight julia %}
 function _classifier_free_guidance(
     diffusion::GaussianDiffusion,
@@ -315,7 +314,7 @@ Let's test it out on both the 2D patterns and the number generation.
 ### Generate data 
 
 In part 1 we only worked with a spiral dataset. However we can work other patterns too.
-Here is a Julia implementation of the [Sci-kit learn moon dataset](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.make_moons.html):
+Here is a Julia implementation of the [Scikit-learn moon dataset](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.make_moons.html):
 {% highlight julia %}
 function make_moons(rng::AbstractRNG, n_samples::Int=1000)
     n_moons = floor(Int, n_samples / 2)
@@ -342,7 +341,7 @@ make_moons(n_samples::Int=1000) = make_moons(Random.GLOBAL_RNG, n_samples)
 	>
 </figure>
 
-Similarly for the [Sci-kit learn s-curve](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.make_s_curve.html#sklearn.datasets.make_s_curve):
+Similarly for the [Scikit-learn s-curve](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.make_s_curve.html#sklearn.datasets.make_s_curve):
 
 {% highlight julia %}
 function make_s_curve(rng::AbstractRNG, n_samples::Int=1000)
@@ -437,7 +436,7 @@ Training is the exact same as [part 1-training](/coding/2022/12/03/denoising-dif
 See [train_generated_2d_cond.jl](https://github.com/LiorSinai/DenoisingDiffusion.jl/blob/main/examples/train_generated_2d_cond.jl)
 for the full script.
 
-We can sample with our labels at a guidance scale of 1 to avoid classifier-free guidance:
+We can sample at a guidance scale of 1 to avoid classifier-free guidance:
 {% highlight julia %}
 num_samples = 1000
 x_gen = Dict{Int, Dict{Symbol, Array{Float32, 3}}}()
@@ -535,15 +534,9 @@ function UNetConditioned(
 end
 {% endhighlight %}
 
-The forward pass has an additional steps for calculating the class embedding and combining it with the time embeddings:
+The forward pass has additional steps for calculating the class embedding and combining it with the time embeddings:
 {% highlight julia%}
 function (u::UNetConditioned)(x::AbstractArray, timesteps::AbstractVector{Int}, labels::AbstractVector{Int})
-    downsize_factor = 2^(u.num_levels - 2)
-    if (size(x, 1) % downsize_factor != 0) || (size(x, 2) % downsize_factor != 0)
-        throw(DimensionMismatch(
-            "image size $(size(x)[1:2]) is not divisible by $downsize_factor which is required for concatenation during upsampling.")
-        )
-    end
     time_emb = u.time_embedding(timesteps)
     class_emb = u.class_embedding(labels)
     emb = u.combine_embeddings(time_emb, class_emb)
@@ -552,7 +545,7 @@ function (u::UNetConditioned)(x::AbstractArray, timesteps::AbstractVector{Int}, 
 end
 {% endhighlight %}
 
-We would also like to automatically set labels to random choice if none are supplied:
+Automatically set labels to random choice if none are supplied:
 {% highlight julia%}
 function (u::UNetConditioned)(x::AbstractArray, timesteps::AbstractVector{Int})
     batch_size = length(timesteps)
@@ -579,7 +572,7 @@ model = UNetConditioned(in_channels, model_channels, num_timesteps;
     combine_embeddings=vcat
 )
 {% endhighlight %}
-The whole model will have 420,497 parameters which is only an increase of 4.3% on the unconditioned `UNet`.
+The whole model will have 420,497 parameters. This is only an increase of 4.3% on the unconditioned `UNet`.
 
 ### Results MNIST
 
@@ -628,14 +621,15 @@ This gives us very uniform label counts:
 </figure>
 
 The classifier agrees very well with our desired labels.
-The weighted average recall, precision and F1 score across all labels is 99%.
+When the guidance scale is 1 the average recall, precision and F1 score across all labels is 89%.
+When it is 2 the averages increase to 99%.
 
-The FLD score is also lower. In my experiments it dropped from low 20s without conditioning to single digit numbers like 7 with conditioning.
+The FLD score is also lower. It dropped from values in the 20s without conditioning to between 4 and 8 with conditioning.
 
 ## Conclusion
 
-This three part series has sought to explain the magic behind AI art generators.
-In particular it has focused on denoising diffusion probabilistic models, the main image generation model used in the text-to-image pipelines.
+This three part series sought to explain the magic behind AI art generators.
+In particular it focused on denoising diffusion probabilistic models, the main image generation model used in text-to-image pipelines.
 I hope you understand them much better now and are able to experiment with your own models.
 
 There is still ongoing controversy over AI art generators - the way training data is collected, the quality of the outputs, the potential for forgeries and debates about the value of machine generated art.

@@ -101,7 +101,6 @@ As a partially typed language it is easy to interpret function calls, for both t
 That said, I found only one other DDPM repository in Julia (see [here][plassma]).
 It was a useful starting point but overall I found the code quality lacking.[^code_review]
 Instead I mainly tried to emulate PyTorch code - this [repository][lucidrains] in particular.
-That said, the final code is idiomatic to Julia.
 
 [lucidrains]: https://github.com/lucidrains/denoising-diffusion-pytorch
 [plassma]: https://github.com/plassma/denoising_julia
@@ -121,13 +120,10 @@ DDPMs are more stable and so are easier to train than GANs and they generalise b
 <figcaption>Diffusion of a spiral by <a href="https://arxiv.org/abs/1503.03585">Sohl-Dickstein et. al.</a></figcaption>
 </figure>
 
-DDPMs were first introduced in the 2015 paper [Deep Unsupervised Learning using Nonequilibrium Thermodynamics by Sohl-Dickstein et. al.][Sohl-Dickstein-2015]. They tested their ideas on toy datasets like the spiral as well as on the CIFAR-10 image dataset. But their results were not state of the art. Instead it was the 2020 paper 
- [Denoising Diffusion Probabilistic Models by Jonathan Ho, Ajay Jain and Pieter Abbeel][Ho-2020] from Google Brain that 
- really made an impact. This paper took the original ideas and applied several simplifications which made working with them easier. At the same time they used newer, bigger, more complex deep learning architectures, and hence were able to get state of the art high quality image generation.
+DDPMs were first introduced in the 2015 paper [Deep Unsupervised Learning using Nonequilibrium Thermodynamics][Sohl-Dickstein-2015] by Sohl-Dickstein et. al.. They tested their ideas on toy datasets like the spiral as well as on the CIFAR-10 image dataset. But their results were not state of the art. Instead it was the 2020 paper [Denoising Diffusion Probabilistic Models][Ho-2020] by Jonathan Ho, Ajay Jain and Pieter Abbeel from Google Brain that really made an impact. This paper took the original ideas and applied several simplifications which made working with them easier. At the same time they used newer, bigger, more complex deep learning architectures, and hence were able to get state of the art high quality image generation.
 
 [Sohl-Dickstein-2015]: https://arxiv.org/abs/1503.03585
 [Ho-2020]: https://arxiv.org/abs/2006.11239
-
 
 <figure class="post-figure">
     <a name="ddpm">
@@ -139,7 +135,6 @@ DDPMs were first introduced in the 2015 paper [Deep Unsupervised Learning using 
     <figcaption>Diffusion process by <a href="https://arxiv.org/abs/2006.11239">Ho et. al</a> modified at <a href="https://lilianweng.github.io/posts/2021-07-11-diffusion-models">link</a>
     </figcaption>
 </figure>
-
 
 Denoising diffusion consists of two processes: a forward process which gradually adds noise to an image (right to left in the image above) and a reverse  process which gradually removes noise (left to right).
 The forward process is denoted $q(x_t \vert x_{t-1})$.[^notation]
@@ -1455,7 +1450,7 @@ ddf(p, t) = scale - (shift - p[1]) * (2sin(t) + t * cos(t)) + (shift - p[2]) * (
 Equation $\eqref{eq:opt}$ has multiple roots as a result of the periodic nature of the spiral.
 Every full revolution there is another candidate for the closest point to the spiral.
 Depending on the range we choose the answer will be different.
-Therefore in order for Newton's method to converge to a good answer, we need to provide a good first guess. This is done by brute force: pass $n$ points a long a range to the function and choose the one with the smallest outcome. As of Julia 1.7 this is inbuilt into the `argmin` function. (You could also only use this brute force method without Newton's method because the extra precision provided is not critical.).[^newtons_method]
+Therefore in order for Newton's method to converge to a good answer, we need to provide a good first guess. This is done by brute force: pass $n$ points in a range to the function and choose the one with the smallest outcome. As of Julia 1.7 this is inbuilt into the `argmin` function. (You could also only use this brute force method without Newton's method because the extra precision provided is not critical.).[^newtons_method]
 
 {%highlight julia%}
 function argmin_func_newton(
@@ -1567,7 +1562,7 @@ If we interpolate linearly over the whole time period such that that each points
     Optimal diffusion of a spiral.
 </figure>
 
-Regretably we will not however be able to apply these optimal techniques to the harder of problem of image generation. 
+Regretably we will not however be able to apply these optimal techniques to the harder problem of image generation. 
 There is indeed no optimal solution for creativity.
 
 ## Conclusion
