@@ -286,7 +286,6 @@ function (skip::ConditionalSkipConnection)(x, ys...)
 end
 {% endhighlight %}
 
-
 ### Constructor
 
 The model is all held in a struct:
@@ -530,7 +529,6 @@ UNet(
 )         # Total: 107 trainable arrays, 403_409 parameters,
           # plus 1 non-trainable, 6_400 parameters, summarysize 1.592 MiB.
 {% endhighlight %}
-
 
 ## Blocks
 
@@ -890,24 +888,12 @@ function MultiheadAttention(dim_model::Int; nhead::Int=4)
 end
 {% endhighlight %}
 
-Helper function based on `Base.eachslice` and inspired by Pytorch's [chunck](https://pytorch.org/docs/stable/generated/torch.chunk.html).
-{% highlight julia %}
-function array_split(A::AbstractArray, n::Int, dim::Int)
-    dim <= ndims(A) || throw(DimensionMismatch("A doesn't have $dim dimensions"))
-    size(A, dim) % n == 0 || throw(DimensionMismatch("A doesn't divide evenly into $n chunks along the chosen dimension of $dim"))
-    inds_before = ntuple(Returns(:), dim - 1)
-    inds_after = ntuple(Returns(:), ndims(A) - dim)
-    chuck_size = size(A, dim) ÷ n
-    return (view(A, inds_before..., i:(i+chuck_size-1), inds_after...) for i in 1:chuck_size:size(A, dim))
-end
-{% endhighlight %}
-
-Forward pass:
+Forward pass:     
 {% highlight julia %}
 function (mha::MultiheadAttention)(x::A) where {T,A<:AbstractArray{T,4}}
     # batch multiplication version. Input is W × H × C × B
     qkv = mha.to_qkv(x)
-    Q, K, V = array_split(qkv, 3, 3)
+    Q, K, V = Flux.chunk(qkv, 3, dims=3)
 
     c = size(Q, 3)
     dh = div(c, mha.nhead)
@@ -1118,7 +1104,6 @@ The training history:
 <figcaption></figcaption>
 </figure>
 
-    
 ### Reverse diffusion
 
 Sample:
