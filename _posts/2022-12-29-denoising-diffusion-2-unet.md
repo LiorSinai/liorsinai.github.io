@@ -1108,7 +1108,7 @@ The training history:
 
 Sample:
 {% highlight julia %}
-X0s, X0_ests = p_sample_loop_all(diffusion, 16; to_device=cpu);
+Xs, X0s = p_sample_loop_all(diffusion, 16; to_device=cpu);
 {% endhighlight %}
 
 Here is the resulting reverse process (left) and first image estimates made using the U-Net model (right):[^combine]

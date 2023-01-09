@@ -1323,10 +1323,10 @@ The training history:
 
 Sampling and plotting:
 {%highlight julia %}
-X0s, X0_ests = p_sample_loop_all(diffusion, 1000) ;
+Xs, X0s = p_sample_loop_all(diffusion, 1000) ;
 anim_denoise = @animate for i ∈ 1:(num_timesteps + 10)
     i = i > num_timesteps ? num_timesteps : i
-    p1 = scatter(X0s[1, :, i], X0s[2, :, i], 
+    p1 = scatter(Xs[1, :, i], Xs[2, :, i], 
         alpha=0.5, 
         title=L"${x}_t$", 
         label="",
@@ -1334,7 +1334,7 @@ anim_denoise = @animate for i ∈ 1:(num_timesteps + 10)
         xlims=(-2, 2), ylims=(-2, 2),
         figsize=(400, 400),
     )
-    p2= scatter(X0_ests[1, :, i], X0_ests[2, :, i], 
+    p2= scatter(X0s[1, :, i], X0s[2, :, i], 
         alpha=0.5, 
         title=L"$\hat{x}_0$", 
         label="",

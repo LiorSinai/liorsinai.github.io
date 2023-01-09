@@ -442,10 +442,10 @@ num_samples = 1000
 x_gen = Dict{Int, Dict{Symbol, Array{Float32, 3}}}()
 γ = 1.0f0
 for label in 1:4
-    X0s, X0_ests = p_sample_loop_all(diffusion, 1000, label; guidance_scale=γ, clip_denoised=false)
+    Xs, X0s = p_sample_loop_all(diffusion, 1000, label; guidance_scale=γ, clip_denoised=false)
     x_gen[label] = Dict(
-        :X0s => X0s,
-        :X0_ests => X0_ests
+        :Xs => Xs,
+        :X0s => X0s
     )
 end
 {% endhighlight %}
@@ -582,7 +582,7 @@ I also have made a Jupyter Notebook hosted on Google Colab available at [Denoisi
 
 We can now finally make the video I showed at the very top of part 1:
 {% highlight julia %}
-X0s, X0_ests = p_sample_loop_all(diffusion, collect(2:11); guidance_scale=2.0f0);
+Xs, X0s = p_sample_loop_all(diffusion, collect(2:11); guidance_scale=2.0f0);
 {% endhighlight %}
 
 The video:
