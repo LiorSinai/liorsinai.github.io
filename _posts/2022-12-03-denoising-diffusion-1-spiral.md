@@ -1488,7 +1488,7 @@ closest_points = Matrix(undef, num_samples, num_timesteps);
 closest_distances = Matrix(undef, num_samples, num_timesteps);
 
 @time for timestep in 1:num_timesteps
-    points = X0s[:, :, timestep]
+    points = Xs[:, :, timestep]
     ts = [solver(points[:, i]) for i in 1:num_samples]
     ds = [f(points[:, i], ts[i]) for i in 1:num_samples]
     
@@ -1500,13 +1500,13 @@ end
 Plotting the results:
 {%highlight julia%}
 canvases = []
-max_samples = size(X0s, 2)
+max_samples = size(Xs, 2)
 n = 200
 for frac in [0.0, 0.25, 0.5, 0.75, 1.0]
     local p
     timestep = max(1, ceil(Int, frac * num_timesteps))
     p = plot(x, y, aspectratio=:equal, label="", linewidth=2, title="t=$timestep")
-    points = X0s[:, :, timestep]    
+    points = Xs[:, :, timestep]    
     ts = closest_points[:, timestep]
     xt = x_func_norm.(ts)
     yt = y_func_norm.(ts)
