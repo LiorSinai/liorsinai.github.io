@@ -8,17 +8,17 @@ Requires Jekyll. For installation please see [jekyllrb.com/docs/installation/](h
 
 ## Running
 
-In a cmd run, `jekyll serve` and on a web browser navigate to localhost:4000.
+In a cmd run `jekyll serve` and on a web browser navigate to localhost:4000.
 
 To test mobile:
 1. Run `jekyll serve --host 0.0.0.0`.
-2. On the mobile on a web browser navigate to the serving computer's IP address followed by 4000 e.g. 192.168.3.54:4000.
+2. On the mobile on a web browser navigate to the serving computer's IP address followed by port 4000 e.g. 192.168.3.54:4000.
 
 The IPv4 address can be found with `ipconfig` on Windows or `ifconfig` on Linux.
 
 ### Troubleshooting
 
-If mobile website doesn't load try disabling the Firewall. If it does then load, check that there are no Firewall rules blocking it. The rule might apply to port 4000 or the Ruby Interpreter.
+If the mobile website doesn't load try disabling the Firewall. If it then does load, check that there are no Firewall rules blocking it. The rule might apply to port 4000 or the Ruby Interpreter.
 
 ## Copyright and License
 
