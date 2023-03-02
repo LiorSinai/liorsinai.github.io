@@ -47,7 +47,7 @@ Companies have had to respond officially, whether it be Deviant Art's [DreamUp][
 Google got people talking with their impressive [Imagen][Imagen] text to image model but it was OpenAI's beta rollout for [DALLE 2][dalle2-beta] that opened it up to the world, giving people a chance to experiment with this new technology for the first time.
 Then came [Midjourney][Midjourney] offering an impressive model for a small monthly subscription fee.
 Then [Stable Diffusion][stable-diffusion] came and made everyone's draw drop by offering everything - the model included - for free.
-Anyone with the equivalent of a high-end gaming computer and 10GB of virtual RAM could download it and run it themselves. 
+Anyone with the equivalent of a high-end gaming computer and 10GB of video RAM could download it and run it themselves. 
 While these requirements are steep for the average person, it is a very low bar for a model that compresses huge amounts of human creativity into a tiny digital space and that can create art beyond the ability of most people (except for trained artists of course).
 
 [jojoesart]: https://www.instagram.com/reel/CgM0TAVoCnf/
@@ -218,10 +218,10 @@ $$
 
 I prefer the first line but the second is what you'll see in the papers.
 
-We can simulate samples from any normal distribution by sampling from a $\mathcal{N}(1, 0)$ distribution and scaling and shifting:
+We can simulate samples from any normal distribution by sampling from a $\mathcal{N}(0, 1)$ distribution and scaling and shifting:
 
 $$
-    x = \mu + \sigma z \quad , \; z \sim \mathcal{N}(1, 0) \tag{3.2.2}
+    x = \mu + \sigma z \quad , \; z \sim \mathcal{N}(0, 1) \tag{3.2.2}
 $$
 
 <h4 id="normal-distribution-code">Code</h4> 
