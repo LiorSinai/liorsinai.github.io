@@ -545,6 +545,7 @@ We can prove this by using [Bayes' theorem][bayes]:
 
 $$ q(x_{t-1} \vert x_{t}, x_0) = \frac{q(x_t \vert x_{t-1}, x_0)q(x_{t-1} \vert x_0)}{q(x_{t} \vert x_0)} 
 \tag{3.6.2}
+\label{eq:bayes}
 $$
 
 [bayes]: https://en.wikipedia.org/wiki/Bayes%27_theorem
@@ -1149,21 +1150,22 @@ We now need to train our model.
 We first need a loss function. 
 We have two probability distributions, the forward process $q(x_{t}|x_{t-1})$ and the reverse process $p_\theta(x_{t-1} \vert x_{t})$ and ideally we would have a loss function that keeps them in sync. Put another way, if we start with $x_t$ and apply the forward process and then the reverse process, they should cancel each other out and return $x_t$. 
 
-This ideal loss function is the negative log likelihood:[^expectation]
+We first start with an ideal loss function that minimises the error over the whole reconstruction process. This is the negative log likelihood:[^expectation]
 
 $$
 \begin{align}
 L &= \mathbb{E}_q\left[-\log \frac{p_\theta(x_{0:T})}{q(x_{1:T}\vert x_0)}\right] \\
-  &= \mathbb{E}_q\left[-\log \frac{\prod_{t=1}^T p_\theta(x_{t-1} \vert x_t)}{\prod_{t=1}^T q(x_{t}\vert x_{t-1})}\right] 
+  &= \mathbb{E}_q\left[-\log \frac{p_\theta(x_{T})\prod_{t=1}^T p_\theta(x_{t-1} \vert x_t)}{\prod_{t=1}^T q(x_{t}\vert x_{t-1})}\right] \\
+  &= \mathbb{E}_q\left[-\log p_\theta(x_{T}) - \sum_{t=1}^T \log \frac{p_\theta(x_{t-1} \vert x_t)}{q(x_{t}\vert x_{t-1})} \right]
 \end{align}
 \tag{3.10.1}
 $$
 
-[Sohl-Dickstein et. al.][Sohl-Dickstein-2015] show that by substituting in the definitions this can be reduced to:
+[Sohl-Dickstein et. al.][Sohl-Dickstein-2015] show that by substituting in equation $\ref{eq:bayes}$ this can be rewritten as:
 
 $$
 L = \mathbb{E}_q\left[
-    \log\frac{q(x_T \vert x_0)}{p(x_T)}
+    \log\frac{q(x_T \vert x_0)}{p_\theta(x_{T})}
     - \log p_\theta(x_0 \vert x_1)
     + \sum_{t=2}^ T \log\frac{q(x_{t-1} \vert x_t, x_0)}{p_\theta(x_{t-1}\vert x_t)}
 \right] 
@@ -1186,8 +1188,9 @@ $$
 Where the expectation $\mathbb{E}$ is now simply an average.
 For more detail, please see the source papers or [Lilian Weng's post][lilianweng] or [Angus Turner's post](https://angusturner.github.io/generative_models/2021/06/29/diffusion-probabilistic-models-I.html).
 
-The end result is: since we are only predicting the noise $\epsilon_\theta$, we simply use the difference between the actual noise and the predicted noise as our loss function.
-So we apply $\eqref{eq:shortcut}$ and take the difference between the model's outputs and the $\bar{z}$ term.
+The end result is: since we are only predicting the noise $\epsilon_\theta$, we simply use the difference between the actual noise and the predicted noise as our loss function. 
+Furthermore, we can consider each time step independently. 
+So we can apply $\eqref{eq:shortcut}$ and take the difference between the model's outputs and the $\bar{z}$ term.
 This is a weak signal and will require many training time steps, but it is incredibly simple to implement.  
 
 The next question is, how to implement the training loop?
