@@ -2,8 +2,12 @@
 .page {
   .profile {
 	  display: block;
-	  max-width: 320px; 
 	  margin: auto;
-	  margin-top: -50px;
- 	}
+	  text-align: center;
+	  font-style: italic;
+	  font-size: smaller;
+	  img {
+		max-width: 320px;
+	  }
+	}
 }
