@@ -8,7 +8,7 @@ sidenav: true
 tags:  mathematics probability
 ---
 
-_How to calculate a similarity score between two 2D distributions of points. But first, a lesson in bad statistics, the pitfalls of visual solution and over-complicating a solved problem._
+_How to calculate a similarity score between two 2D distributions of points. But first a lesson in bad statistics, the pitfalls of visual solutions and over-complicating a solved problem._
 
 <script src="https://cdn.plot.ly/plotly-gl3d-2.5.1.min.js"> </script>
 <link rel="stylesheet" href="/assets/posts/wasserstein/style.css">
@@ -102,7 +102,7 @@ I pushed back based on three points:
 2. It would take too much development time and this was only one of many tasks.
 3. <s>The convex hull method would be much slower than the Wasserstein metric.</s>
 
-I didn't realise it at the time but the convex hull method can be made fast, so I've crossed it out here.
+I've crossed out the third point because the convex hull method can be made fast which I didn't realise at the time.
 However the other two points remain valid. 
 Thankfully sense prevailed and we did implement the Wasserstein metric, mainly because of the second point.
 It worked well enough for the problem at hand. 
@@ -154,7 +154,7 @@ Instead I provide a high level overview and references are given for further inf
 </tbody>
 </table>
 
-My implementations were done in Julia. The above table shows where the code can be viewed, the the time complexity and the approximate number lines of code (LOC).[^LOC]
+My implementations were done in Julia. The above table shows where the code can be viewed, the time complexity and the approximate number lines of code (LOC).[^LOC]
 It should come as no surprise that if one bases the effort solely on LOC, the original polygon method required more than 30&times; the effort.
 A more detailed breakdown is available at the end in the [Code analysis](#code-analysis) section.
 
@@ -205,7 +205,7 @@ The general idea here is:
 2. Find the intersection of those polygons.
 3. Calculate the intersection over union: $\text{IoU}=\frac{A_i}{A_1 + A_2 - A_i}$.
 
-This gives a metric that varies between 0 and 1. 
+This gives a value that varies between 0 and 1. 
 
 Finding the convex hulls is the bottleneck in this algorithm.
 It has a time complexity $O(nh)$ for $n$ points and $h$ points on each convex hull.
@@ -230,9 +230,9 @@ While further statistical techniques can be applied to mitigate the outlier prob
 <figcaption></figcaption>
 </figure>
 
-This method returns an IoU of 0 for any distribution that does not intersect it so we have no information about the 3rd distribution.
+This method returns an IoU of 0 for any distribution that does not intersect it so we have no information about the third distribution.
 
-Another difficulty with the polygon method is that polygons are described by $n$ edges and $n$ vertices.
+Another difficulty with the polygon method is that polygons are described by $n$ edges.
 This means operations require looping through all the edges and so are of order $O(n)$ or higher, such as finding the area, the perimeter or whether or not a point lies within the polygon.
 Compare this to ellipses which are defined by a single equation, so all the previous operations can be found directly via formulas in $O(1)$ time.[^ellipse_perimeter]
 Another issue is that it is harder to account for all cases. 
@@ -284,12 +284,12 @@ whereas a vector graphics program might use the slower but more powerful [Weiler
 
 A general polygon package (e.g. Python's [Shapely][Shapely]) will use one of the slower but more robust algorithms.
 This is unnecessary for convex hulls.
-For this this use case these algorithms can be simplified because it is known that there will always only be one region of intersection.
+For this use case these algorithms can be simplified because it is known that there will always only be one region of intersection.
 
 [Shapely]: https://shapely.readthedocs.io/en/stable/manual.html
 
-A simple algorithm for the finding the intersection of convex polygons is:
-1. Mark all points of polygon 1 in polygon 2 and vice versa. This requires $n$ points compared with $m$ edges each and vice versa, for $O(nm)$ running time.
+A simple algorithm for finding the intersection of convex polygons is:
+1. Mark all points of polygon 1 in polygon 2 and vice versa. This requires $n$ points compared with $m$ edges each and vice versa, for $O(2nm)$ running time.
 2. Find all intersection points of the edges of polygon 1 with the edges of polygon 2. This requires comparing all $nm$ pairs of edges resulting in an $O(nm)$ running time.
 3. Order these points clockwise to get a single convex shape.
 
@@ -420,8 +420,7 @@ $$
 $$
 
 The promise of using ellipses is that, unlike polygons, the ellipse is represented by a single equation and all operations involving ellipses have formulas which can be evaluated directly in $O(1)$ time. 
-The bottleneck instead comes from fitting the ellipse which is done using the mean and variance. Since these operations are $O(n)$, 
-the whole process is $O(n)$.
+The bottleneck instead comes from fitting the ellipse which is done using the mean and variance. Since these operations are $O(n)$, the whole process is $O(n)$.
 
 The formulas require higher level mathematics than polygons. They involve quartic equations, more complex linear algebra, statistics and integral calculus.
 
@@ -476,7 +475,7 @@ The radii for the major and minor axis are given by the square root of the eigen
     $$
     For any value $s$. 
     Here we have replaced the whole 2&times;2 matrix with a single number, 4. We could have also used the value 1 with its own eigenvector $(-1, 1)$.
-    In general an $n\times n$ matrix will in general have $n$ eigenvalues where the trivial case of $\lambda=0$ and $v=\boldsymbol{0}$ is ignored.
+    In general an $n\times n$ matrix will have $n$ eigenvalues where the trivial case of $\lambda=0$ and $v=\boldsymbol{0}$ is ignored.
     </p>
     <p>
     This is an incredibly powerful form of dimension reduction. Conclusions about the whole matrix can be drawn from only the eigenvalues and eigenvectors.
@@ -500,20 +499,12 @@ C=\begin{bmatrix}
 \label{eq:covariance} \tag{3.2.3}
 $$
 
-The eigenvalues satisfy:
+The eigenvalues are:
 
 $$
 \begin{align}
-Cv &= \lambda v \\
-(C-\lambda I)v &= 0 \\
-\text{det}(C-\lambda I)v &= 0 \quad ; \quad \text{exclude solution of }v=\boldsymbol{0}
-\end{align}
-$$
-
-$$
-\begin{align}
-&\Rightarrow \lambda^2 - (\sigma_{x}^2 + \sigma_{y}^2)\lambda + (\sigma_{x}^2\sigma_{y}^2 - \sigma_{xy}^4) = 0 \\
-&\therefore \lambda_{1,2} = \frac{1}{2}\left(\sigma_{x}^2 + \sigma_{y}^2 \pm \sqrt{(\sigma_{x}^2-\sigma_{y}^2)^2 + 4\sigma_{xy}^4} \right)
+\lambda_{1,2} &= \frac{1}{2}\left(\sigma_{x}^2 + \sigma_{y}^2 \pm \sqrt{(\sigma_{x}^2-\sigma_{y}^2)^2 + 4\sigma_{xy}^4} \right) \\
+\therefore a &= \sqrt{\lambda_1}, b =\sqrt{\lambda_2}
 \end{align}
 \label{eq:eigenvalues} \tag{3.2.4}
 $$
@@ -554,7 +545,7 @@ $$p=1-e^{-\frac{1}{2}s^2} \label{eq:ellipse_prob} \tag{3.2.6}$$
 
 This is a Chi-squared distribution with 2 degrees of freedom. For intuition of why it is an exponential formula see this [episode][3blue1brown] on a related problem by 3Blue1Brown.
 For more details see this question on [stats.stackexchange.com][stats_exchange]
-and the [Algorithms For Confidence Circles and Ellipses, Wayne E. Hoover (1984)][Hoover_84] paper referenced in one of the answers.
+and this paper: [Algorithms For Confidence Circles and Ellipses, Wayne E. Hoover (1984)][Hoover_84].
 
 From equation $\ref{eq:ellipse_prob}$ approximately 39.3% of points will lie within the ellipse for $s=1$.
 We can invert this formula to solve for $s$ to solve for any desired confidence interval:
@@ -588,7 +579,7 @@ For a 95% confidence interval we need $s=2.4477...$. This is the result:
 There are three special edge cases of ellipse-ellipse intersections: no intersection, one inside the other and identical ellipses on top of each other. 
 These special cases can be tested using the extreme points of the ellipses.
 If they are far apart it can quickly be established that there is no intersection.
-Otherwise there are four distinct case for one to four points of intersection. Calculating these can require solving a quadratric, cubic or quartic equation.
+Otherwise there are four distinct case for one to four points of intersection. Calculating these can require solving a quadratic, cubic or quartic equation.
 
 <p>
   <a class="btn" data-toggle="collapse" href="#intersection-ellipses" role="button" aria-expanded="false" aria-controls="collapseExample">
@@ -711,7 +702,7 @@ In the Hungarian algorithm notation a 0 (zero) is a minimal cost, a 0* (zero sta
 It is an interesting algorithm in part because it was designed to be done by hand.
 The algorithm is as follows:
 
-1. First to do a greedy assignment. The other steps will iteratively improve this solution. 
+1. First do a greedy assignment. The other steps will iteratively improve this solution. 
 2. Constraint relaxation: find the smallest cost that is not in use and open it up as a possible assignment.
 3. Path augmentation: add this new smallest cost to solution, swapping old assignments to make room for it.
 4. Repeat steps 2 and/or 3 as many times as necessary until an optimal solution is found.
@@ -732,7 +723,7 @@ See these examples below:
   alt="zig-zag and a crescent"
 	>
 <figcaption>
-Asymmetric distributions (left) and shape distributions (right.)
+Asymmetric distributions (left) and shape distributions (right).
 </figcaption>
 </figure>
 
@@ -759,7 +750,7 @@ $$
     The proof is very complex and requires a deep knowledge of linear algebra.
     </p>
     <p>
-    First it is proven that the joint probability distribution of $Z=[X,Y]$ is itself a normal distribution with:
+    First they prove that the joint probability distribution of $Z=[X,Y]$ is itself a normal distribution with:
     $$
     \mu = \begin{bmatrix}
       \mu_1 \\
@@ -792,7 +783,7 @@ $$
     \end{align}
     $$
     where $I$ is the $n\times n$ identity matrix. 
-    This means that we can use the <a href="https://en.wikipedia.org/wiki/Multivariate_random_variable#Expectation_of_a_quadratic_form">trace trick for expectations of quadratic forms</a> to evaluate the integral:
+    They use this with the <a href="https://en.wikipedia.org/wiki/Multivariate_random_variable#Expectation_of_a_quadratic_form">trace trick for expectations of quadratic forms</a> to evaluate the integral:
     $$
     \begin{align}
     E[||X-Y||^2] &= E[Z^T A Z ] \\
@@ -866,7 +857,6 @@ Important things to note about this formula:
 - In 1D it simplifies to: $(\mu_1 - \mu_2)^2 + \sigma_1^2 + \sigma_2^2 -2\sigma_1\sigma_2 = (\mu_1 - \mu_2)^2 + (\sigma_1 - \sigma_2)^2$.
 - This formula is valid for distributions in 3D and beyond.
 - It is symmetric in part due to the non-trivial equality $\text{trace}(C_2^{1/2}C_1 C_2^{1/2})^{1/2}=\text{trace}(C_1^{1/2}C_2 C_1^{1/2})^{1/2}$.
-
 
 [Givens_84]: https://projecteuclid.org/journals/michigan-mathematical-journal/volume-31/issue-2/A-class-of-Wasserstein-metrics-for-probability-distributions/10.1307/mmj/1029003026.full
 
