@@ -1,0 +1,79 @@
+div.scatter-container {
+    padding: 2em;
+    border: 1px solid black;
+    display: flex;
+    flex-direction: column;
+    @media screen and (min-width: 768px), (orientation: landscape){
+        flex-direction: row;
+    }
+    @media screen and (min-width: 1024px){
+        height: 27em;
+    }
+}
+
+div.plot2d {
+    position: relative;
+    height: 10em;
+    @media only screen and (min-width: 768px), (orientation: landscape){
+        width: 90%;
+        height: 25em;
+        margin: -1em auto;
+    }
+    @media only screen and (min-width: 1024px){
+        height: 25em
+    }
+}
+
+#controls {
+    width: 100%;
+    font-size: 0.9em;
+    @media only screen and (min-width: 768px), (orientation: landscape){
+        width: 40%;
+        margin-top: -1em;
+    }
+    @media only screen and (min-width: 1024px) {
+        margin-top: 0em;
+    }
+}
+
+.plot-info {
+    position: absolute;
+    top: 5%;
+    right: 25%;
+    font-size: 14px;
+    @media only screen and (min-width: 768px), (orientation: landscape) {
+        font-size: 17px;
+    };
+    @media only screen and (min-width: 1024px) {
+        right: 15%;
+        font-size: 20px;
+    }
+}
+
+.radio-inline {
+    margin-bottom: 0.5em;
+    margin-top: 0.5em;
+}
+
+.slider {
+    display: flex;
+    margin-bottom: -1em;
+}
+
+.slider input[type="range"] {
+    cursor:pointer;
+    width: 80%;
+}
+
+.slider p.slider-text {
+    width: 6px;
+}
+
+.slider p.left{
+    width: 2em;
+}
+
+.slider p.right{
+    padding-left: 1em;
+    padding-right: 1em;
+}
