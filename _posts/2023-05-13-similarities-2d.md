@@ -172,7 +172,7 @@ A bivariate (2D) normal distribution is described by five variables:
 2. The standard deviations $\sigma_x$ and $\sigma_y$ in the $x$ and $y$ directions respectively.
 3. The correlation $\rho$ between the $x$ and $y$ direction.
 
-The [widget](#2d-similarity-widget) above allows you to adjust these five metrics to create many variants of this distribution.
+The [widget](#2d-similarity-widget) above allows you to adjust these five variables to create many variants of this distribution.
 
 A bivariate normal distribution with correlation $\rho$ can be constructed from two normal distributions $Z_1$ and $Z_2$ as follows:
 
@@ -250,7 +250,7 @@ This is the main reason the number of tests for the polygon algorithm is much hi
 </figure>
 
 The convex hull of points in 2D is the smallest convex polygon that encloses all the points.
-It edges are straight lines which connect the outermost points.
+Its edges are straight lines which connect the outermost points.
 
 There are many algorithms to find the [convex hull][wiki_convex_hull]. 
 The simple [gift-wrapping][gift_wrapping] algorithm runs in $O(nh)$ time, where $n$ is the number of points and $h$ is the number of points on the convex hull. Its worst case is $O(n^2)$ where $h=n$ - that is, all the points lie on the edge. 
@@ -262,7 +262,7 @@ GeeksForGeeks have nice tutorials on both [gift-wrapping][GeeksForGeeks_gift_wra
 
 The theoretical optimal time is $O(n\log h)$. One such algorithm is [Chan's algorithm][chans_algorith].
 
-I choose to go with gift wrapping because it is was simple and is very fast when most points lie on the inside of the convex hull.
+I choose to go with gift wrapping because it is simple and is very fast when most points lie on the inside of the convex hull.
 
 [gift_wrapping]: https://en.wikipedia.org/wiki/Gift_wrapping_algorithm
 [GeeksForGeeks_gift_wrapping]: https://www.geeksforgeeks.org/convex-hull-using-jarvis-algorithm-or-wrapping/
@@ -493,8 +493,8 @@ The covariance matrix is:
 
 $$
 C=\begin{bmatrix}
-  \sigma_{x}^2 & \sigma_{xy}^2 \\
-  \sigma_{xy}^2 & \sigma_{y}^2 \\
+  \sigma_{x}^2 & \rho\sigma_{x}\sigma_{y} \\
+  \rho\sigma_{x}\sigma_{y} & \sigma_{y}^2 \\
 \end{bmatrix}
 \label{eq:covariance} \tag{3.2.3}
 $$
@@ -503,7 +503,7 @@ The eigenvalues are:
 
 $$
 \begin{align}
-\lambda_{1,2} &= \frac{1}{2}\left(\sigma_{x}^2 + \sigma_{y}^2 \pm \sqrt{(\sigma_{x}^2-\sigma_{y}^2)^2 + 4\sigma_{xy}^4} \right) \\
+\lambda_{1,2} &= \frac{1}{2}\left(\sigma_{x}^2 + \sigma_{y}^2 \pm \sqrt{(\sigma_{x}^2-\sigma_{y}^2)^2 + 4\rho^2\sigma_{x}^2\sigma_{y}^2} \right) \\
 \therefore a &= \sqrt{\lambda_1}, b =\sqrt{\lambda_2}
 \end{align}
 \label{eq:eigenvalues} \tag{3.2.4}
@@ -514,20 +514,20 @@ With eigenvectors parallel to:
 $$
 v_{1,2}=\begin{bmatrix}
   \lambda_{1} - \sigma_{y}^2 \\
-  \sigma_{xy}^2
-\end{bmatrix}
+  \rho\sigma_{x}\sigma_{y}
+\end{bmatrix}s
 ,
 \begin{bmatrix}
   \lambda_{2} - \sigma_{y}^2 \\
-  \sigma_{xy}^2 
-\end{bmatrix}
+  \rho\sigma_{x}\sigma_{y}
+\end{bmatrix}s
 \label{eq:eigenvectors} \tag{3.2.5}
 $$
 
-If $\sigma_{xy}^2 \neq 0$ else the eigenvectors are the along the $x$ and $y$ axis respectively.
-In practice these values are normalised so that $|v|=1$.
+if $\rho\sigma_{x}\sigma_{y} \neq 0$ else the eigenvectors are the along the $x$ and $y$ axis respectively.
+In practice these values are normalised so that $|v|=1$ when $s=1$.
 
-The following shows the results for a random set of points with varying scales $s$:
+The following shows the results with varying scales $s$:
 <figure class="post-figure">
 <img class="img-80"
     src="/assets/posts/wasserstein/ellipse_eigenvalues.png"
@@ -548,7 +548,7 @@ For more details see this question on [stats.stackexchange.com][stats_exchange]
 and this paper: [Algorithms For Confidence Circles and Ellipses, Wayne E. Hoover (1984)][Hoover_84].
 
 From equation $\ref{eq:ellipse_prob}$ approximately 39.3% of points will lie within the ellipse for $s=1$.
-We can invert this formula to solve for $s$ to solve for any desired confidence interval:
+We can invert this formula to solve for $s$ for any desired confidence interval:
 
 $$ s = \sqrt{-2\ln(1-p)} \tag{3.2.7}$$
 
@@ -761,7 +761,7 @@ $$
       K^T & C_2
     \end{bmatrix}
     $$
-    Where $K$ is some $n\times n$ matrix so that $\mu \in \mathbb{R}^{1\times 2n}$ and $\Sigma \in \mathbb{R}^{2n \times 2n}$.
+    where $K$ is some $n\times n$ matrix, $\mu \in \mathbb{R}^{1\times 2n}$ and $\Sigma \in \mathbb{R}^{2n \times 2n}$.
     </p>
     <p>
     Next note that: 
