@@ -8,7 +8,7 @@ sidenav: true
 tags:  mathematics probability
 ---
 
-_How to calculate a similarity score between two 2D distributions of points. But first a lesson in bad statistics, the pitfalls of visual solutions and over-complicating a solved problem._
+_How to calculate the statistical distance between two 2D distributions of points. But first a lesson in bad statistics, the pitfalls of visual solutions and over-complicating a solved problem._
 
 <script src="https://cdn.plot.ly/plotly-gl3d-2.5.1.min.js"> </script>
 <link rel="stylesheet" href="/assets/posts/wasserstein/style.css">
@@ -24,7 +24,7 @@ _How to calculate a similarity score between two 2D distributions of points. But
     <div id="canvas-bivariate" class="plot2d">
         <script src="/assets/posts/wasserstein/plotScatter.js" type="module"></script>
         <p class="plot-info">
-            similarity:<span id="similarity">0.00</span>
+          stat. distance:<span id="statistical-distance">0.00</span>
         </p>
     </div>
     <form id="controls">
@@ -70,12 +70,12 @@ _How to calculate a similarity score between two 2D distributions of points. But
     </form>
 </div>
 
-A while back I was given an intriguing task: rank scatter plots by similarity.[^client]
+A while back I was given an intriguing task: rank scatter plots by similarity.
 It is an unusual request but not unheard of - see this [question][stackexchange] or this [one][stackoverflow].
 The above is a demo of the problem at hand. ([Source code](/assets/posts/wasserstein/).) 
 Furthermore, there are standard [statistical techniques][wiki_statistical_distance] for this sort of problem. 
 I was drawn to the [Wasserstein metric][wiki_wasserstein] which is used in the popular [Fréchet Inception Distance (FID)][machinelearningmastery] in machine learning. 
-This is the "similarity" score in the widget. 
+This is the "statistical distance" in the widget. 
 
 [machinelearningmastery]: https://machinelearningmastery.com/how-to-implement-the-frechet-inception-distance-fid-from-scratch
 [Heusel-2017]: https://arxiv.org/abs/1706.08500
@@ -102,10 +102,10 @@ I pushed back based on three points:
 2. It would take too much development time and this was only one of many tasks.
 3. <s>The convex hull method would be much slower than the Wasserstein metric.</s>
 
-I've crossed out the third point because the convex hull method can be made fast which I didn't realise at the time.
+I've crossed out the third point because the convex hull method can be made fast. I didn't realise this at the time.
 However the other two points remain valid. 
-Thankfully sense prevailed and we did implement the Wasserstein metric, mainly because of the second point.
-It worked well enough for the problem at hand. 
+Thankfully the client was open to my suggestions and we did implement the Wasserstein metric.
+It worked well enough.
 (Users weren't shown the scores; just similar plots.)
 
 Later in my own capacity I challenged myself to try the other methods.
@@ -155,7 +155,7 @@ Instead I provide a high level overview and references are given for further inf
 </table>
 
 My implementations were done in Julia. The above table shows where the code can be viewed, the time complexity and the approximate number lines of code (LOC).[^LOC]
-It should come as no surprise that if one bases the effort solely on LOC, the original polygon method required more than 30&times; the effort.
+If one bases the effort solely on LOC, the original polygon method required more than 30&times; the effort to the Wasserstein metric.
 A more detailed breakdown is available at the end in the [Code analysis](#code-analysis) section.
 
 For those who just want to compare scatter plots the right way, jump to [How to compare scatter plots](#how-to-compare-scatter-plots).
@@ -892,20 +892,21 @@ This really is the superior technique in terms of speed, ease, robustness, inter
 
 ## Conclusion
 
-This has been a long journey for a simple conclusion: to measure the difference between scatter plots, use equation $\ref{eq:wasserstein_normal}$. This formula can be implemented in a single line with any decent linear algebra package.
+This has been a long post for a simple conclusion: equation $\ref{eq:wasserstein_normal}$ can be applied in most scenarios to measure the difference between scatter plots. This formula can be implemented in a single line with a standard linear algebra package.
 However this post was not just about the conclusion. 
-It was the journey in exploring the mathematics too.
-It was also to prove that sometimes reinventing the wheel is not necessary and that visual solutions which can look simple can be complex to realise.
+It was also about the journey in exploring different solutions and comparing visual approaches with a statistical one.
 
-As someone who was always strong with mathematics, it is frustrating to hear the argument that equation $\ref{eq:wasserstein_normal}$ is too complex in favour of the whole polygon approach. The one is a maths formula; the other is a whole multi-step iterative-based algorithm with many failure points. This work justified my initial thoughts. The polygon method required over 1000 lines in code and extensive testing while the formula only 30 (with comments, documentation,  calculating the means and variances and handling numerical errors).
+I hope this post has given insight into problems like this.
+Sometimes it is better to follow established practices rather than reinvent the wheel.
+
+Some humility is important too.
+It is frustrating to hear the argument that equation $\ref{eq:wasserstein_normal}$ is too complex in favour of the whole polygon approach. The one is a maths formula; the other is a whole multi-step iterative-based algorithm with many failure points. This work justified my initial thoughts. The polygon method required over 1000 lines in code and extensive testing; the formula only 30.[^additional_lines]
 
 When creating the [widget](#2d-similarity-widget) at the start, I considered adding all the methods. 
-However JavaScript unlike Julia is not a numerical programming language.
-While the Wasserstein formula itself is still short, there are almost 190 lines of code for the basic linear algebra.
-As in the original use case, I decided the polygon and ellipse methods were way too much effort.
-
-I hope you, as the reader, appreciate this journey and will consider using the "scarier" mathematics if you ever need to. 
-Sometimes, it really is the easiest way.
+However - unlike Julia - JavaScript is not a numerical programming language.
+While the Wasserstein formula itself is still short there are almost 190 lines of code for the basic linear algebra.
+The polygon and ellipse methods would also require scaffolding code, mostly likely more so.
+As in the original use case I decided they were way too much effort.
 
 ## Code analysis
 
@@ -1015,12 +1016,12 @@ This is a detailed breakdown of the table from the [introduction](#introduction)
 
 ---
 
-[^client]: I would like to say that it was an interesting problem that they were trying to solve. However by this stage it was clear that they were a bad client and were making things up. The working relationship did not last very long after this.
-
 [^LOC]: Lines of Code is a controversial metric that can be very misleading. It can be easily gamed. For example by squeezing many characters on one line, leaving out comments, documentation or empty spaces and neglecting to count packages or tests as part of the metric. It can penalise more efficient code. For example, preallocation of objects can speed up code. That said, it can be a useful approximation of the amount of effort that goes in to code in lieu of more meaningful but abstract metrics. This is the reason I have chosen to use it. Here a line is defined as "140 characters or less". All comments, documentation and blank lines are included in the counts - these are important for humans, if not computers. Source code and test code are reported separately. Packages are only included in the count if they do not come preinstalled (so not in `Base.jl`). The final number is rounded to the nearest nice number - this is a fuzzy metric after all.
 
 [^ellipse_perimeter]: Technically the perimeter of an ellipse requires an infinite sum. However there are very good approximation formulas.
 
-[^hungarian_complexity]: Some sources claim it runs in $O(n^3)$ time. This is not entirely true. The worst case is $n^2$ runs of the outer loop and the constraint relaxation step takes $O(n^2)$ time. This is overall $O(n^4)$. In general anywhere from 0 to $n^2$ loops are required and so executions will run in $O(n^k)$ time where $2 \leq k \leq 4$.   
+[^hungarian_complexity]: Some sources claim it runs in $O(n^3)$ time. This is not my assessment. The worst case is $n^2$ runs of the outer loop and the constraint relaxation step takes $O(n^2)$ time. This is overall $O(n^4)$. In general anywhere from 0 to $n^2$ loops are required and so executions will run in $O(n^k)$ time where $2 \leq k \leq 4$.   
 
 [^infimum]: The infimum is the largest lower bound. A lower bound on the metric is 0 but to be useful it should be as close as possible to the minimum value of the integral. Ideally the lower bound is the minimum value. In the discrete case the infimum is the minimum. For the normal distribution formula you would need an infinite number of points to accurately model it and find a minimum. The infimum is the value that this minimum asymptotically tends to. 
+
+[^additional_lines]: Other lines of code are for: comments, documentation, calculating the means and variances and handling numerical errors.

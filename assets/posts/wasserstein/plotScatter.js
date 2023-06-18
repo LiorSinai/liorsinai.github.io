@@ -88,12 +88,12 @@ let plotData = [trace1, trace2];
 
 Plotly.newPlot(CANVAS, plotData, layout, config);
 
-const updateSimilarity = () => {
+const updateStatisticalDistance = () => {
   let W2 = wassersteinMetric(data1.x, data1.y, data2.x, data2.y);
-  let W2span = document.getElementById("similarity");
+  let W2span = document.getElementById("statistical-distance");
   W2span.innerHTML = W2.toFixed(2);
 }
-updateSimilarity();
+updateStatisticalDistance();
 
 /* selected */
 let selectedDescriptors = descriptors1;
@@ -145,7 +145,7 @@ const updateAllFromSlider = (slider, sliderText, property) => {
   updateTextInput(sliderText, +slider.value, precision);
   selectedDescriptors[property] = +slider.value;
   updatePlot();
-  updateSimilarity();
+  updateStatisticalDistance();
 }
 
 const updateSliderTexts = () => {
@@ -192,7 +192,7 @@ const updateSelectedAndSliders = () => {
 const updateOutputs = () => {
   updateSelectedData();
   updatePlot();
-  updateSimilarity();
+  updateStatisticalDistance();
 }
 
 let buttonRefresh = document.getElementById('buttonRefresh')
