@@ -524,7 +524,7 @@ v_{1,2}=\begin{bmatrix}
 \label{eq:eigenvectors} \tag{3.2.5}
 $$
 
-if $\rho\sigma_{x}\sigma_{y} \neq 0$ else the eigenvectors are the along the $x$ and $y$ axis respectively.
+if $\rho\sigma_{x}\sigma_{y} \neq 0$ else the eigenvectors are along the $x$ and $y$ axis respectively.
 In practice these values are normalised so that $|v|=1$ when $s=1$.
 
 The following shows the results with varying scales $s$:
