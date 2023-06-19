@@ -858,6 +858,54 @@ Important things to note about this formula:
 - This formula is valid for distributions in 3D and beyond.
 - It is symmetric in part due to the non-trivial equality $\text{trace}(C_2^{1/2}C_1 C_2^{1/2})^{1/2}=\text{trace}(C_1^{1/2}C_2 C_1^{1/2})^{1/2}$.
 
+<p>
+  <a class="btn" data-toggle="collapse" href="#wasserstein-symmetry" role="button" aria-expanded="false" aria-controls="collapseExample">
+    Proof of symmetry &#8681;
+  </a>
+</p>
+<div class="collapse" id="wasserstein-symmetry">
+  <div class="card card-body ">
+    <p>
+    We want to prove that:
+    $$
+    W_2(P_1, P_2)^2 = ||\mu_1 - \mu_2||^2 + \text{trace}\left(C_1 + C_2 -2 (C_2^{1/2}C_1 C_2^{1/2})^{1/2} \right)
+    $$
+    is the same as:
+    $$
+    W_2(P_2, P_1)^2 = ||\mu_2 - \mu_1||^2 + \text{trace}\left(C_2 + C_1 -2 (C_1^{1/2}C_2 C_1^{1/2})^{1/2} \right)
+    $$
+    </p>
+    <p>
+    It is well known that $x^2=(-x)^2$ and that addition is commutative.
+    The hard part is proving that:
+    $$
+    \text{trace}(C_2^{1/2}C_1 C_2^{1/2})^{1/2}=\text{trace}(C_1^{1/2}C_2 C_1^{1/2})^{1/2}
+    $$
+    </p>
+    <p>
+    This arises from three properties:
+    <ol>
+    <li>$\text{trace}(A)=\sum_i^n \lambda_i$ where $\lambda_i$ are the eigenvalues of $A$.</li>
+    <li>$\text{trace}(ABC)=\text{trace}(CAB)=\text{trace}(BCA)$ ... cyclic property.</li>
+    <li>$A^{1/2}=WD^{1/2}W^{-1}$ ... eigen-decomposition of symmetric matrices.</li>
+    </ol>
+    </p>
+    <p>
+    From these we can say that:
+    $$
+    \text{trace}(C_2^{1/2}C_1 C_2^{1/2})^{1/2} = \sum_i^n \lambda_i^{1/2} \\
+    \sum_i^n \lambda_i = \text{trace}(C_2^{1/2}C_1 C_2^{1/2}) = \text{trace}(C_1 C_2^{1/2}C_2^{1/2})=\text{trace}(C_1 C_2)
+    $$
+    Also that:
+    $$
+    \text{trace}(C_1^{1/2}C_2 C_1^{1/2})^{1/2} = \sum_i^n \lambda_i^{1/2} \\
+    \sum_i^n \lambda_i = \text{trace}(C_1^{1/2}C_2 C_1^{1/2}) = \text{trace}(C_1^{1/2} C_1^{1/2} C_2)=\text{trace}(C_1 C_2)
+    $$
+    So in both cases the traces are the sum of the square roots of the eigenvalues of $C_1 C_2$ and hence they are equal.
+    </p>
+  </div>
+</div>
+
 [Givens_84]: https://projecteuclid.org/journals/michigan-mathematical-journal/volume-31/issue-2/A-class-of-Wasserstein-metrics-for-probability-distributions/10.1307/mmj/1029003026.full
 
 Some examples:
@@ -905,7 +953,7 @@ It is frustrating to hear the argument that equation $\ref{eq:wasserstein_normal
 When creating the [widget](#2d-similarity-widget) at the start, I considered adding all the methods. 
 However - unlike Julia - JavaScript is not a numerical programming language.
 While the Wasserstein formula itself is still short there are almost 190 lines of code for the basic linear algebra.
-The polygon and ellipse methods would also require scaffolding code, mostly likely more so.
+The polygon and ellipse methods would probably have similar increases in code.
 As in the original use case I decided they were way too much effort.
 
 ## Code analysis
