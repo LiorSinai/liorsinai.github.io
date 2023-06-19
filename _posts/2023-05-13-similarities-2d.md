@@ -900,7 +900,7 @@ Important things to note about this formula:
       C_1^{1/2}C_2 C_1^{1/2} v &= \lambda v \\
     \times C_1^{1/2} \therefore C_1 C_2 (C_1^{1/2} v) &= \lambda (C_1^{1/2}v) \\
     \therefore C_1 C_2 u &= \lambda u \; ; \; u =C_1^{1/2}v   \\
-    \times C_2^{1/2} \therefore C_2^{1/2} C_1 C_2^{1/2} w &= \lambda w \; ; \; w =C_2^{1/2}u   \\
+    \times C_2^{1/2} \therefore C_2^{1/2} C_1 C_2^{1/2} w &= \lambda w \; ; \; w =C_2^{-1/2}u   \\
     \end{align}
     $$
     So $C_1^{1/2}C_2 C_1^{1/2}$, $C_2^{1/2} C_1 C_2^{1/2}$ and $C_1 C_2$ share the same eigenvalues (but not eigenvectors).
