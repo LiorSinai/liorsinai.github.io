@@ -883,17 +883,24 @@ Important things to note about this formula:
     $$
     </p>
     <p>
-    This arises from two properties:
-    <ol>
-    <li>$\text{trace}(A)=\sum_i^n \gamma_i$ where $\gamma_i$ are the eigenvalues of $A$.</li>
-    <li>$A^{1/2}=WD^{1/2}W^{-1}$ ... eigen-decomposition of symmetric matrices.</li>
-    </ol>
+    The main prerequisite is the cylic property of the trace: $\text{trace}(ABC)=\text{trace}(CAB)$.
     </p>
     <p>
-    Combining these two we get:
+    Then for a diagonalizable matrix (no repeated eigenvalues) with eigenvectors $W$ and eigenvalues $\gamma$ in a diagonal matrix $D$:
     $$
-    \text{trace}(A^{1/2}) = \sum_i^n \gamma_i^{1/2} \\
+    \begin{align}
+    AW &= WD \\
+    \therefore A &= WDW^{-1} \\
+    \therefore \text{trace}(A) &= \text{trace}(WDW^{-1}) \\
+    &= \text{trace}(W^{-1}WD) \\
+    &= \text{trace}(D) \\
+    &= \sum_i^n \gamma_i
+    \end{align}
     $$
+    and $\text{trace}(A^{1/2})=\text{trace}(WD^{1/2}W^{-1})=\sum_i^n \gamma_i^{1/2}$. 
+    (The Jordan normal form can be used to extend this to all square matrices.)
+    </p>
+    <p>
     Also from the definition of eigenvalues:
     $$
     \begin{align}
