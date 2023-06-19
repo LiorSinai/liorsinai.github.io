@@ -883,25 +883,28 @@ Important things to note about this formula:
     $$
     </p>
     <p>
-    This arises from three properties:
+    This arises from two properties:
     <ol>
-    <li>$\text{trace}(A)=\sum_i^n \lambda_i$ where $\lambda_i$ are the eigenvalues of $A$.</li>
-    <li>$\text{trace}(ABC)=\text{trace}(CAB)=\text{trace}(BCA)$ ... cyclic property.</li>
+    <li>$\text{trace}(A)=\sum_i^n \gamma_i$ where $\gamma_i$ are the eigenvalues of $A$.</li>
     <li>$A^{1/2}=WD^{1/2}W^{-1}$ ... eigen-decomposition of symmetric matrices.</li>
     </ol>
     </p>
     <p>
-    From these we can say that:
+    Combining these two we get:
     $$
-    \text{trace}(C_2^{1/2}C_1 C_2^{1/2})^{1/2} = \sum_i^n \lambda_i^{1/2} \\
-    \sum_i^n \lambda_i = \text{trace}(C_2^{1/2}C_1 C_2^{1/2}) = \text{trace}(C_1 C_2^{1/2}C_2^{1/2})=\text{trace}(C_1 C_2)
+    \text{trace}(A^{1/2}) = \sum_i^n \gamma_i^{1/2} \\
     $$
-    Also that:
+    Also from the definition of eigenvalues:
     $$
-    \text{trace}(C_1^{1/2}C_2 C_1^{1/2})^{1/2} = \sum_i^n \lambda_i^{1/2} \\
-    \sum_i^n \lambda_i = \text{trace}(C_1^{1/2}C_2 C_1^{1/2}) = \text{trace}(C_1^{1/2} C_1^{1/2} C_2)=\text{trace}(C_1 C_2)
+    \begin{align}
+      C_1^{1/2}C_2 C_1^{1/2} v &= \lambda v \\
+    \times C_1^{1/2} \therefore C_1 C_2 (C_1^{1/2} v) &= \lambda (C_1^{1/2}v) \\
+    \therefore C_1 C_2 u &= \lambda u \; ; \; u =C_1^{1/2}v   \\
+    \times C_2^{1/2} \therefore C_2^{1/2} C_1 C_2^{1/2} w &= \lambda w \; ; \; w =C_2^{1/2}u   \\
+    \end{align}
     $$
-    So in both cases the traces are the sum of the square roots of the eigenvalues of $C_1 C_2$ and hence they are equal.
+    So $C_1^{1/2}C_2 C_1^{1/2}$, $C_2^{1/2} C_1 C_2^{1/2}$ and $C_1 C_2$ share the same eigenvalues (but not eigenvectors).
+    Therefore their square roots have the same eigenvalues $\lambda_i^{1/2}$ and hence they have the same trace.
     </p>
   </div>
 </div>
