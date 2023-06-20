@@ -47,9 +47,7 @@ const wassersteinMetric = (x1, y1, x2, y2) => {
 
     let C1 = new Matrix([[stats1.varX, stats1.cov], [stats1.cov, stats1.varY]]);
     let C2 = new Matrix([[stats2.varX, stats2.cov], [stats2.cov, stats2.varY]]);
-    let C2sqrt = C2.sqrt();
-    let meanCovSquare = matrixMultiply(C2sqrt, matrixMultiply(C1, C2sqrt));
-    let meanCov = meanCovSquare.sqrt();
+    let meanCov = matrixMultiply(C1, C2).sqrt();
     let covDistance = matrixAdd(C1, matrixAdd(C2, meanCov.multiplyScalar(-2))).trace();
 
     let distance = meanDistance + covDistance;

@@ -734,7 +734,7 @@ Asymmetric distributions (left) and shape distributions (right).
 If the data is from a normal distribution than the Hungarian solution can be approximated in $O(n)$ time. First find the means and covariance matrix (as with the ellipses). Then apply the following formula (proof in [Givens & Short (1984)][Givens_84]):
 
 $$
-W_2(P_1, P_2)^2 = ||\mu_1 - \mu_2||^2 + \text{trace}\left(C_1 + C_2 -2 (C_2^{1/2}C_1 C_2^{1/2})^{1/2} \right)
+W_2(P_1, P_2)^2 = ||\mu_1 - \mu_2||^2 + \text{trace}\left(C_1 + C_2 -2 (C_1 C_2)^{1/2} \right)
 \tag{4.3.1}
 \label{eq:wasserstein_normal}
 $$
@@ -819,6 +819,9 @@ $$
     $$
     But this is still a difficult problem to solve. They solve it using eigen-decomposition (spectral decomposition) and Lagrange multipliers. This is well beyond the scope here. The result is that $K=(C_1^{1/2} C_2  C_1^{1/2})^{1/2}$.
     </p>
+    <p>
+    Although they don't go further, because $C_1^{1/2} C_2  C_1^{1/2}=C_1^{-1/2}(C_1 C_2)C_1^{1/2}$ and $C_1 C_2$ are <a href="https://en.wikipedia.org/wiki/Matrix_similarity">similar</a>, they share the same the eigenvalues and hence their square roots have the same trace. This is because $\text{trace}(A^{1/2})=\sum \lambda_i^{1/2}$ where $\lambda_i$ are the eigenvalues of $A$. See the <a href="#wasserstein-symmetry-button">Proof of symmetry</a> card for more information.
+    </p>
   </div>
 </div>
 
@@ -856,10 +859,10 @@ Important things to note about this formula:
 - If $C_2 = \boldsymbol{0}$ then the second term reduces to $\sigma_{1, x}^2 + \sigma_{1, y}^2$.
 - In 1D it simplifies to: $(\mu_1 - \mu_2)^2 + \sigma_1^2 + \sigma_2^2 -2\sigma_1\sigma_2 = (\mu_1 - \mu_2)^2 + (\sigma_1 - \sigma_2)^2$.
 - This formula is valid for distributions in 3D and beyond.
-- It is symmetric in part due to the non-trivial equality $\text{trace}(C_2^{1/2}C_1 C_2^{1/2})^{1/2}=\text{trace}(C_1^{1/2}C_2 C_1^{1/2})^{1/2}$.
+- It is symmetric in part due to the non-trivial equality $\text{trace}(C_1 C_2)^{1/2}=\text{trace}(C_2 C_1)^{1/2}$.
 
 <p>
-  <a class="btn" data-toggle="collapse" href="#wasserstein-symmetry" role="button" aria-expanded="false" aria-controls="collapseExample">
+  <a class="btn" data-toggle="collapse" href="#wasserstein-symmetry" role="button" aria-expanded="false" id="wasserstein-symmetry-button" aria-controls="collapseExample">
     Proof of symmetry &#8681;
   </a>
 </p>
@@ -868,18 +871,18 @@ Important things to note about this formula:
     <p>
     We want to prove that:
     $$
-    W_2(P_1, P_2)^2 = ||\mu_1 - \mu_2||^2 + \text{trace}\left(C_1 + C_2 -2 (C_2^{1/2}C_1 C_2^{1/2})^{1/2} \right)
+    W_2(P_1, P_2)^2 = ||\mu_1 - \mu_2||^2 + \text{trace}\left(C_1 + C_2 -2 (C_1 C_2)^{1/2} \right)
     $$
     is the same as:
     $$
-    W_2(P_2, P_1)^2 = ||\mu_2 - \mu_1||^2 + \text{trace}\left(C_2 + C_1 -2 (C_1^{1/2}C_2 C_1^{1/2})^{1/2} \right)
+    W_2(P_2, P_1)^2 = ||\mu_2 - \mu_1||^2 + \text{trace}\left(C_2 + C_1 -2 (C_2 C_1)^{1/2} \right)
     $$
     </p>
     <p>
     It is well known that $x^2=(-x)^2$ and that addition is commutative.
     The hard part is proving that:
     $$
-    \text{trace}(C_2^{1/2}C_1 C_2^{1/2})^{1/2}=\text{trace}(C_1^{1/2}C_2 C_1^{1/2})^{1/2}
+    \text{trace}(C_1 C_2)^{1/2}=\text{trace}(C_2 C_1)^{1/2}
     $$
     </p>
     <p>
@@ -894,11 +897,11 @@ Important things to note about this formula:
     \therefore \text{trace}(A) &= \text{trace}(WDW^{-1}) \\
     &= \text{trace}(W^{-1}WD) \\
     &= \text{trace}(D) \\
-    &= \sum_i^n \gamma_i
+    &= \sum_i^n \gamma_i \\
+    \Rightarrow \text{trace}(A^{1/2})&=\text{trace}(WD^{1/2}W^{-1}) \\
+          &= \sum_i^n \gamma_i^{1/2}
     \end{align}
     $$
-    and $\text{trace}(A^{1/2})=\text{trace}(WD^{1/2}W^{-1})=\sum_i^n \gamma_i^{1/2}$. 
-    (The Jordan normal form can be used to extend this to all square matrices.)
     </p>
     <p>
     Also from the definition of eigenvalues:
@@ -908,9 +911,11 @@ Important things to note about this formula:
     \times C_1^{1/2} \therefore C_1 C_2 (C_1^{1/2} v) &= \lambda (C_1^{1/2}v) \\
     \therefore C_1 C_2 u &= \lambda u \; ; \; u =C_1^{1/2}v   \\
     \times C_2^{1/2} \therefore C_2^{1/2} C_1 C_2^{1/2} w &= \lambda w \; ; \; w =C_2^{1/2}u   \\
+    \times C_2^{1/2} \therefore C_2 C_1 x &= \lambda x \; ; \; x =C_2^{1/2}w
     \end{align}
     $$
-    So $C_1^{1/2}C_2 C_1^{1/2}$, $C_2^{1/2} C_1 C_2^{1/2}$ and $C_1 C_2$ share the same eigenvalues (but not eigenvectors).
+    So $C_1^{1/2}C_2 C_1^{1/2}$, $C_2^{1/2} C_1 C_2^{1/2}$, $C_1 C_2$, $C_2 C_1$ share the same eigenvalues (but not eigenvectors).
+    (The technical term is they are "similar" matrices.)
     Therefore their square roots have the same eigenvalues $\lambda_i^{1/2}$ and hence they have the same trace.
     </p>
   </div>
