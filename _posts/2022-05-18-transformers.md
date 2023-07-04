@@ -68,8 +68,8 @@ More recently, DeepMind released an impressive model [Gato][Gato] that can perfo
 [TransformersLite]: https://github.com/LiorSinai/TransformersLite.jl
 
 All this development in transformers has been over the past 5 years.
-In that time they have mostly replaced the old favourite for NLP in academia and industry, recurrent neural networks (RNNs).
-However that has not been long enough for pedagogy to adapt.
+Recurrent neural networks (RNNs) used to be the favourite for NLP in academia and industry yet transformers have almost replaced them in this short time frame.
+However it has not been long enough for pedagogy to adapt.
 As of today, machine learning courses still teach RNNs for NLP.
 This has created a gap and many blogs have sprung up to full it.
 This blog post aims to be one of those.
@@ -84,13 +84,14 @@ Mathematics on the other hand is a universal language and this should be accessi
 
 [AmazonReviews]: https://huggingface.co/datasets/amazon_reviews_multi
 
-The use case is a dataset of [Amazon reviews from HuggingFace][AmazonReviews][^amazon_multi]. Only the English subset of the dataset was used with 200,000 training samples and 5,000 test samples. The models were trained on two tasks:
+The use case is a dataset of [Amazon reviews from HuggingFace][AmazonReviews]. Only the English subset of the dataset was used with 200,000 training samples and 5,000 test samples. The models were trained on two tasks:
 1. Predict the star rating given the review text. 
 2. Predict a positive or negative sentiment with 1-2 stars labelled negative, 4-5 stars labelled positive and 3 stars removed.
 
 [TFIDF]: https://github.com/LiorSinai/TFIDF.jl
 
-Using a transformer for this task can be seen as excessive because it can be solved with simpler models e.g. a term frequency inverse document infrequency (TFIDF) model with 10,000 parameters. (You can see my Julia TFIDF model [here][TFIDF].) 
+This problem can be solved with simpler models e.g. a term frequency inverse document infrequency (TFIDF) model with 10,000 parameters. (You can see my Julia TFIDF model [here][TFIDF].) 
+Using a transformer for this task can therefore be seen as excessive.
 However because the task is simple it means we can limit the transformer model to around 250,000 parameters and we have a good baseline of the accuracy we can achieve.
 
 For intuition and history behind transformers I recommend Peter Bloem's excellent post [Transformers from scratch][Bloem].
@@ -101,7 +102,7 @@ and a [video][YouTubeTransformer] by Ari Seff. I'll use pictures too but it won'
 
 This is not meant to be a full scale Julia solution.
 For that, please see the [Transformers.jl][Transformersjl] package. 
-It has better optimizations, CUDA support, APIs for HuggingFace and more. 
+It has better optimizations, APIs for HuggingFace and more. 
 My own repository with the code in this blog post can be accessed at [github.com/LiorSinai/TransformersLite.jl](https://github.com/LiorSinai/TransformersLite.jl).
 
 Lastly, transformers are built on top of research and ideas of the last decade of machine learning research.
@@ -360,7 +361,7 @@ We'll also make a small index tokenizer to map tokens to word vectors.
 
 The focus will be on the forward equations because Flux handles the backwards equation through automatic differentiation (AD).
 Other than reducing our job in half, AD also means our forward and backwards equations will always be in sync. 
-There will be collapsible blocks with backpropagation information &#8681;.
+There will be collapsible blocks with backpropagation information.
 
 To start, make a package in the Julia REPL:
 <figure class="highlight">
@@ -394,17 +395,62 @@ This is based loosely on the registered [Transformers.jl][Transformersjl] packag
 [HuggingFaceBPE]: https://huggingface.co/course/chapter6/5?fw=pt
 
 The input is a sentence that we need to break up into tokens. 
-This preprocessing step is a huge topic itself and I am not going to go into detail here.
+This preprocessing step is a huge topic itself and I am not going to go into too much detail.
 
-The first step is to clean the text. The [pipeline](#pipeline) later has basic functions for doing this and splitting sentences into words. 
-The next step is subword tokenization. 
+The first step is to simplify the text.
+The following function converts everything to lowercase, normalises letters (e.g. è to e) and removes punctuation (including "don't" to "dont"):
+{%highlight julia %}
+using Unicode
+
+function clean(s::AbstractString)
+    s = lowercase(s)
+    s = Unicode.normalize(s, :NFD)
+    s = replace(s, r"['`’\u200d\p{M}]" => "") 
+    s = replace(s, r"\n" => " ")
+end
+{% endhighlight %}
+
+The next step is to break the text into words. This is best done with a regular expression:
+{%highlight julia %}
+pattern = r"[A-Za-z][A-Za-z]+\b"
+words = map(m->string(m.match), eachmatch(pattern, document))
+{% endhighlight %}
+
+An optional step after this is subword tokenization. 
 I have made simple tokenizers for this at [github.com/LiorSinai/TokenizersLite.jl](https://github.com/LiorSinai/TokenizersLite).
 You can also use the registered BytePairEncoding.jl package.
-Or if you do not want subword tokenization use `tokenizer=identity` and the tokens will be the words themselves.
+If you do not want subword tokenization use `tokenizer=identity` and the tokens will be the words themselves.
 That is sufficient for the Amazon Reviews problem that we will investigate later.
 
 Once we have tokens we need to map them to word embeddings.
-For this we'll make a simple `IndexTokenizer`:
+For this we'll make a simple `IndexTokenizer` which will do the following:
+{%highlight julia %}
+vocab = load_vocab("amazon_reviews_train_en.txt")
+indexer = IndexTokenizer(vocab, "[UNK]")
+
+text = "This coffee from Kenya is really good."
+tokens = map(m->string(m.match), eachmatch(pattern, clean(text))) 
+tokens # [this,coffee,from,kenya,is,really,good]
+indices = indexer(tokens) # [8,534,50,1,6,56,30]
+{% endhighlight %}
+
+The vocabulary file is at this [link](https://github.com/LiorSinai/TransformersLite.jl/blob/main/examples/vocab/amazon_reviews_train_en.txt) and the `load_vocab` function is:
+{%highlight julia %}
+function load_vocab(filepath::AbstractString)
+    vocab = String[]
+    open(filepath, "r") do file
+        for line in eachline(file)
+            push!(vocab, line)
+        end
+    end
+    vocab
+end
+{% endhighlight %}
+
+The vocabulary is sorted from highest to lowest of the word counts in the original data . 
+So if we limit the vocabulary e.g. `vocab[1:1000]` we can still be confident that it will have statistical significance.
+
+Now for the `IndexTokenizer`. Start with the constructor:
 {%highlight julia %}
 struct IndexTokenizer{T}
     vocabulary::Vector{T}
@@ -432,7 +478,7 @@ end
 This `IndexTokenizer` takes in a list of tokens and an unknown symbol. 
 The constructor function checks if the unknown symbol is in the list else it adds it to the front.
 
-For the encoding process, we need to to replace a token with an index if it is in the vocabulary list and with the unknown symbol index (by default 1) if it is not:
+For the encoding process we need to replace a token with an index if it is in the vocabulary list and with the unknown symbol index (by default 1) if it is not:
 {%highlight julia %}
 encode(tokenizer::IndexTokenizer{T}, x::T) where T = something(
 	findfirst(isequal(x), tokenizer.vocabulary), tokenizer.unkidx)
@@ -441,7 +487,6 @@ encode(tokenizer::IndexTokenizer{T}, x::T) where T = something(
 This assumes we are giving a single token of type `T`. 
 We also want to do multiple dispatch on sentences which are `Vector{T}` and on batches of sentences where are `Vector{Vector{T}}`.
 When working with batches we'll need all sentence to be the same length.
-We truncate long sentences (already done in `preprocess`) and we can introduce a padding token for sentences shorter than the maximum length.
 Here the unknown token is used for padding:
 {%highlight julia %}
 function encode(tokenizer::IndexTokenizer{T}, seq::AbstractVector{T}) where T
@@ -466,32 +511,6 @@ which turns this struct into a function:
 (tokenizer::IndexTokenizer)(x) = encode(tokenizer, x)
 {% endhighlight %}
 
-In practice:
-{%highlight julia %}
-vocab = load_vocab("amazon_reviews_train_en.txt")
-indexer = IndexTokenizer(vocab, "[UNK]")
-
-text = "This coffee from Kenya is really good."
-tokens = preprocess(text, identity) # [this,coffee,from,kenya,is,really,good]
-indices = indexer(tokens) # [8,534,50,1,6,56,30]"
-{% endhighlight %}
-
-The vocabulary file is at this [link](https://github.com/LiorSinai/TransformersLite.jl/blob/main/vocab/amazon_reviews_train_en.txt) and the `load_vocab` function is:
-{%highlight julia %}
-function load_vocab(filepath)
-    vocab = String[]
-    open(filepath, "r") do file
-        for line in eachline(file)
-            push!(vocab, line)
-        end
-    end
-    vocab
-end
-{% endhighlight %}
-
-The vocabulary is sorted from highest to lowest of the word counts in the original data . 
-So if we limit the vocabulary e.g. `vocab[1:1000]` we can still be confident that it will have statistical significance.
-
 ### Word embeddings
 Word embeddings were already introduced in the [Inputs and Outputs](#inputs-and-outputs) section.
 Here we'll make a simple layer to store and retrieve them.
@@ -499,7 +518,7 @@ Here we'll make a simple layer to store and retrieve them.
 It it worth highlighting that the word embedding is unique to each model 
 and will be trained from random values for each model.
 This is not how humans work. 
-Part of what makes language so useful is that we can have generic connotations and meanings for words and then derive more specific meaning from them in specific contexts. So for example, the word "good" always has the same "embedding" in any context.
+Part of what makes language so useful is that we have generic connotations and meanings for words and then derive more specific meaning from them in a given context. For example, the word "good" always has the same "embedding" in any context.
 But here we learn a different embedding for different models and even different training runs.
 
 There are several justifications for this:
@@ -509,7 +528,7 @@ a defective product to the store. In other tasks it may be far more neutral.
 3. We can tune the model dimension $d_m$ as a hyperparameter to make bigger or smaller models.
 
 This is somewhat unfortunate as it forms a massive part of our training. 
-For the model I will use later it will be 95% of the trainable parameters.
+For the model we will use later it will be 95% of the trainable parameters.
 
 The embedding layer is a struct that holds a matrix:
 {%highlight julia %}
@@ -529,7 +548,7 @@ function Base.show(io::IO, m::MIME"text/plain", e::Embed)
     Flux._layer_show(io, e)
 end
 {% endhighlight %}
-We use `Float32` to reduce the size of the model and for performance benefits. We don't need the extra accuracy provided by `Float64`.
+The `Float32` type is used to reduce the size of the model and for performance benefits. We don't need the extra accuracy provided by `Float64`.
 We have a second show function for multimedia (MIME) types when we went prettier printing e.g. in the REPL and Jupyter notebooks.
 The `Flux.@functor Embed` line is essential for Flux to be able to perform backpropagation.
 
@@ -540,23 +559,12 @@ function (e::Embed)(x::AbstractArray{Int})
     gather(e.embedding, x)
 end
 {% endhighlight %}
-This is equivalent to `e.embedding[:, x]`. However using gather means that the `rrule` has already been defined for it.
-See [here](https://github.com/FluxML/NNlib.jl/blob/ff3ac6eb807e9b41f46f28f8b3287d19f4b722c7/src/gather.jl#L80).
+This is equivalent to `e.embedding[:, x]`. However `gather` is slightly more versatile and comes with the benefit of already having an `rrule` defined for it ([source](https://github.com/FluxML/NNlib.jl/blob/ff3ac6eb807e9b41f46f28f8b3287d19f4b722c7/src/gather.jl#L80)):
+{%highlight julia %}
+∇gather_src(Δ, src_size, idx) = scatter!(+, fill!(similar(Δ, eltype(Δ), src_size), 0), Δ, idx)
+{% endhighlight %}
 
-<div class="message-container info-message">
-	<div class="message-icon fa fa-fw fa-2x fa-exclamation-circle">
-	</div>
-	<div class="content-container">
-		<div class="message-body">
-		ChainRulesCore uses <code>rrule</code> to define backprogation rules.
-		The old standard was the badly named <code>@adjoint</code> meaining the Jacobian adjoint meaning the conjugate transpose
-		of the Jacobian. 
-		This is different to the <code>adjoint</code> function which is the complex transpose of a matrix and the classical adjoint or adjugate which is the transpose of the cofactors of a matrix.
-		</div>
-	</div>
-</div>
-
-The `rrule` is a reverse (backwards) rule that encodes the derivative for backpropagation. 
+The `rrule` is a reverse (backwards) rule that encodes the derivative for backpropagation.[^adjoint] 
 It is what makes the magic of automatic differentiation work.
 
 The function `gather` does not have a formal derivative, but scatter is the opposite of it and is what we need to apply when we calculate the loss:
@@ -572,7 +580,7 @@ At the end of backpropagation we need to distribute the error matrix amongst the
 This is what `scatter` does. Note that we use the red column twice, so we have two error columns directed towards it.
 The `rrule` applies `+` as the reducing function; that is, the two errors are added together and then to the word embedding.
 
-There is a cost to using a predefined function: it is very inefficient.
+Scatter is very inefficient.
 If we do a small experiment and call scatter we will see it results in a large matrix of mostly zeros:[^sparse]
 {%highlight julia %}
 NNlib.scatter(+, rand(8, 4), [1, 5, 11, 1]; dstsize=(8, 15))
@@ -603,7 +611,7 @@ $$
 \end{bmatrix}
 $$
 
-A problem with this encoding is that it is dependent on the parameter $n_{max}$, which fixes the sequence length.
+A problem with this encoding is that it is dependent on the parameter $n_{max}$ which fixes the sequence length.
 Instead the authors propose a more convoluted solution but one that can be easily scaled to any sequence length:
 
 $$
@@ -644,11 +652,11 @@ and on the right are the sine waves used for the odd numbered rows:
     slider.oninput = () => update();
 </script>
 
-Each column has a unique pattern so the encoding does accomplishes its task.
+Each column has a unique pattern so the encoding does accomplish its task.
 To understand how, lets focus on the first row with $i=0$. 
-This sine wave has a wavelength of $2\pi \approx 6.28$ and we sample it every $1$ timestep so it repeats every 6 blocks.
+This sine wave has a wavelength of $2\pi \approx 6.28$ and we sample it every $1$ time step so it repeats every 6 blocks.
 This leads to the 6 alternating colours in the top row: 3 light, then 3 dark, then repeat. 
-So this sine wave can only distinguish between sequences of length 6 or less.
+So this sine wave can distinguish between sequences of length 6 or less.
 Now let's move on to $i=1$. This sine wave has a period of $2\pi(10^4)^{2/32} \approx 11.17$ so it repeats approximately every 11 blocks in the 3rd row. 
 We can now distinguish between sequences of up to length 11 and we can use the first row for greater precision.
 As we add sine waves, we can distinguish between sequences of longer wave lengths.
@@ -670,7 +678,7 @@ which are linear for constant $\omega$ and $k$.
 For more detail please see [here][position_encoding].[^linear_pe]
 
 Now let's code the `PositionEncoding` layer.
-Since these values are constant, it is easiest to preallocate a matrix:
+Since these values are constant it is easiest to preallocate a matrix:
 {%highlight julia %}
 struct PositionEncoding{W <: AbstractArray}
     encoding::W
@@ -751,10 +759,10 @@ end
 Of course many programming languages already have this function built in and have highly optimised it. 
 We can do a quick time test:
 {%highlight julia %}
-    A = randn(100, 100);
-    B = randn(100, 100);
-    @time mul2d(A, B); # 0.002391s
-    @time A * B;       # 0.000265s
+A = randn(100, 100);
+B = randn(100, 100);
+@time mul2d(A, B); # 0.002391s
+@time A * B;       # 0.000265s
 {% endhighlight %}
 The naive implementation is 9&times; slower.
 One of the reasons is the indexing is very inefficient.
@@ -779,22 +787,22 @@ Or since we know the inbuilt `*` is faster we can substitute that for the three 
 {%highlight julia %}
 function mul3d(A::AbstractArray{T, 3}, B::AbstractArray{T, 3}) where T
     C = Array{Float64}(undef, size(A, 1), size(B, 2), size(A, 3))
-	for k in 1:size(A, 3)
-		C[:, :, k] = A[:, :, k] * B[:, :, k]
-	end
-	C
+    for k in 1:size(A, 3)
+        C[:, :, k] = A[:, :, k] * B[:, :, k]
+    end
+    C
 end
 {% endhighlight %}
-But this doesn't take advantage of of the fact that we are standardising the size of the matrices (all sequences are of the same length).
+But this doesn't take advantage of the fact that we are standardising the size of the matrices (all sequences are of the same length).
 It is equivalent to using type `Vector{Matrix}` rather than `Array{T, 3}`.
 NNlib has written a more optimised version called `batched_mul`. 
 Doing a time test:
 {%highlight julia %}
-    Using NNlib
-    A = randn(100, 100, 32);
-    B = randn(100, 100, 32);
-    @time mul3d(A, B);       # 0.010918s
-    @time batched_mul(A, B); # 0.006588s
+Using NNlib
+A = randn(100, 100, 32);
+B = randn(100, 100, 32);
+@time mul3d(A, B);       # 0.010918s
+@time batched_mul(A, B); # 0.006588s
 {% endhighlight %}
 The NNlib function is about 1.5&times; faster.
 
@@ -823,11 +831,9 @@ end
 <div class="collapse" id="mul4d-rrule">
   <div class="card card-body ">
     If we try getting gradients for <code>mul4d</code> it will not work:
-    <pre><code class="language-julia">
-    y, pull = Flux.pullback(mul4d, A, B);
-    errors = randn(size(y)...);
-    grads = pull(errors)
-    </code></pre>
+<pre><code class="language-julia">y, pull = Flux.pullback(mul4d, A, B);
+errors = randn(size(y)...);
+grads = pull(errors)</code></pre>
     The error is: "Mutating arrays is not supported". So we will have to make an explicit <code>rrule</code> for it.
     <br><br>
     Backpropagation is well known for a linear layer:
@@ -847,21 +853,19 @@ end
     \frac{\partial L}{\partial A}_{ijkl} = \sum_r \frac{\partial L}{\partial Z}_{irkl} B_{jrkl} \\
     \frac{\partial L}{\partial B}_{ijkl} = \sum_r A_{rikl}  \frac{\partial L}{\partial Z}_{rjkl} 
     $$
-    Where the transpose is done by swapping the indices.
+    where the transpose is done by swapping the indices.
     Thankfully there is an inbuilt function to do the transposition in higher order arrays: <code>PermutedDimsArray</code>. So the <code>rrule</code> is relatively short:
-    <pre><code class="language-julia">
-    import ChainRulesCore.rrule
-    using ChainRulesCore: @thunk, NoTangent
-    function rrule(::typeof(mul4d), A::AbstractArray{T, 4}, B::AbstractArray{T, 4}) where T
-        C = mul4d(A, B)
-        function mul4d_pullBack(C̄)
-                Ā = @thunk mul4d(C̄, PermutedDimsArray(B, (2, 1, 3, 4)))
-                B̄ = @thunk mul4d(PermutedDimsArray(A, (2, 1, 3, 4)), C̄)
-            return NoTangent(), Ā, B̄
-        end
-        return C, mul4d_pullBack
+<pre><code class="language-julia">import ChainRulesCore.rrule
+using ChainRulesCore: @thunk, NoTangent
+function rrule(::typeof(mul4d), A::AbstractArray{T, 4}, B::AbstractArray{T, 4}) where T
+    C = mul4d(A, B)
+    function mul4d_pullBack(C̄)
+            Ā = @thunk mul4d(C̄, PermutedDimsArray(B, (2, 1, 3, 4)))
+            B̄ = @thunk mul4d(PermutedDimsArray(A, (2, 1, 3, 4)), C̄)
+        return NoTangent(), Ā, B̄
     end
-    </code></pre>
+    return C, mul4d_pullBack
+end</code></pre>
     If we try the pullback again it will work now. (You might have to restart and define the rrule before <code>using Flux</code>.)
   </div>
 </div>
@@ -885,10 +889,10 @@ end
 
 Doing a time test
 {%highlight julia %}
-    A = randn(50, 50, 12, 32)
-    B = randn(50, 50, 12, 32)
-    @time mul4d(A, B);       # 0.016885
-    @time batched_mul(A, B); # 0.005216s
+A = randn(50, 50, 12, 32)
+B = randn(50, 50, 12, 32)
+@time mul4d(A, B);       # 0.016885
+@time batched_mul(A, B); # 0.005216s
 {% endhighlight %}
 The `batched_mul` version is about 3&times; faster.
 
@@ -989,22 +993,33 @@ The same matrix is used as the query, key and value, which can be interpreted as
 
 But the names aren't so important. 
 
-The query, key and value are each calculated using the dense matrices we stored in the struct based on the input matrices:[^dense_multi]
+The query, key and value are each calculated using the dense matrices we stored in the struct based on the input matrices.[^dense_multi]
+Then we calculate the attention for all the heads at once with `multi_head_scaled_dot_attention`.
+The final result is passed the dense output layer:
 {% highlight julia %}
 function (mha::MultiheadAttention)(query::A1, key::A2, value::A3) where {
     T, A1 <: AbstractArray{T, 3}, A2 <: AbstractArray{T, 3}, A3 <: AbstractArray{T, 3}}
     # batch multiplication version. Input is dm × N × B
-    qs = size(query)
-    ks = size(key)
-    vs = size(value)
-
-    #size(Q) == (dh*nhead, N, B)
     Q = mha.denseQ(query)
     K = mha.denseK(key)
     V = mha.denseV(value)
+    A = multi_head_scaled_dot_attention(mha.nhead, Q, K, V)
+    mha.denseO(A)
+end
 {% endhighlight %}
 
-We now need to split $Q$, $K$ and $V$ from $d_m \times N \times B$ to $d_h \times N \times H \times B$ matrices.
+The `multi_head_scaled_dot_attention` begins as follows:
+{% highlight julia %}
+function multi_head_scaled_dot_attention(nhead::Int, Q::A1, K::A2, V::A3) where {
+    T, A1 <: AbstractArray{T, 3}, A2 <: AbstractArray{T, 3}, A3 <: AbstractArray{T, 3}}
+    qs = size(Q)
+    ks = size(K)
+    vs = size(V)
+    dm = size(Q, 1)
+    dh = div(dm, nhead)
+{% endhighlight %}
+
+The $Q$, $K$ and $V$ matrices need to be split from $d_m \times N \times B$ to $d_h \times N \times H \times B$.
 This is done in two steps:
 1. $(d_h \times H)\times N \times B$ (break $d_m$ into $d_h$ and $H$)
 2. $d_h \times N \times H \times B$ (swap the 2nd and 3rd dimensions)
@@ -1014,12 +1029,11 @@ This is done in two steps:
     V = permutedims(reshape(V, dh, mha.nhead, vs[2], vs[3]), [1, 3, 2, 4])
 {% endhighlight %}
 
-Then we calculate the scaled dot attention for each head, combine results, and pass it through the output dense  layer:
+Then we calculate the scaled dot attention for each head, combine results and return it:
 {% highlight julia %}
     A = scaled_dot_attention(Q, K, V)
     A = permutedims(A, [1, 3, 2, 4])
     A = reshape(A, dm, size(A, 3), size(A, 4))
-    mha.denseO(A)
 end
 {% endhighlight %}
 
@@ -1079,7 +1093,14 @@ end
 We still need to complete the rest of the equations in the [table](#equations_table).
 Thankfully the rest of the layers are provided by Flux. We wrap them in an `TransformerEncoderBlock`:
 {% highlight julia %}
-struct TransformerEncoderBlock{MA<:MultiheadAttention, L1<:LayerNorm, D1<:Dense, D2<:Dense, L2<:LayerNorm, DO<:Dropout}
+struct TransformerEncoderBlock{
+    MA<:MultiheadAttention, 
+    L1<:LayerNorm, 
+    D1<:Dense,
+    D2<:Dense,
+    L2<:LayerNorm,
+    DO<:Dropout
+    }
     multihead_attention::MA
     layer_norm_attention::L1
     dense1::D1
@@ -1109,7 +1130,7 @@ In the embedding matrix that is each word, so each column in each batch of matri
 There are other kinds of normalization like batch normalization, which is a normalization across batches.
 Interestingly layer norm was only popularised after batch normalization in this [2016 paper][LayerNorm].
 
-The actual function used for layer norm is:
+The function used for layer norm is:
 
 $$
     a_{nb}\frac{X_{nb}-\mu_{nb}}{\sigma_{nb}+\epsilon} + b_{nb}
@@ -1197,12 +1218,12 @@ because they carry a strong signal both on the forward pass and with the gradien
 
 At last, our model is almost ready for use.
 There is just one last question, how to use the output embedding matrix?
-We could take a mean across each word embedding and then pass that to a dense layer.
-Or we can take a dense layer across each word, reduce it down to one dimension, and pass that to a dense layer.
-Or we could flatten the whole array into a $d_m N \times 1$ column. 
+We could take a mean across each word embedding and then pass that to a dense layer: $d_m \times N \times B \rightarrow 1 \times N \times B$.
+Similarly we can take a dense layer across each word instead of the mean and pass it to a dense layer.
+Or we could flatten the whole array into a $d_m N \times B$ matrix. 
 
-My preference is to do an aggregation on each word first and then on the full text.
-Here is a simple flatten layer which we will need to put in between:
+My preference is the second: an aggregation on each word first and then on the full text.
+Here is a flatten layer which we will need to put in between to reduce the dimension: $1\times N \times B \rightarrow N \times B$.
 {% highlight julia %}
 struct FlattenLayer end
 
@@ -1212,9 +1233,7 @@ function (f::FlattenLayer)(x::AbstractArray{T, 3}) where T
   reshape(x, :, size(x, 3)) # same as Flux.flatten
 end
 
-function (f::FlattenLayer)(x::AbstractArray{T, 2}) where T
-    reshape(x, :, 1) # returns a column vector
-end
+(f::FlattenLayer)(x::AbstractArray{T, 2}) where T = x
 
 function Base.show(io::IO, f::FlattenLayer)
   print(io, "FlattenLayer()")
@@ -1288,6 +1307,21 @@ Presented here is a subset of the results from scripts and notebooks at [github.
 
 ### Data exploration
 
+Download the data using HuggingFace's Python API:
+
+{% highlight python %}
+""" PYTHON CODE """
+from datasets import load_dataset
+dataset = load_dataset('amazon_reviews_multi', 'en', cache_dir="datasets)
+{% endhighlight %}
+
+You could download the raw data directly using curl:
+```
+curl https://amazon-reviews-ml.s3-us-west-2.amazonaws.com/json/train/dataset_en_train.json --output amazon_reviews_en_train
+curl https://amazon-reviews-ml.s3-us-west-2.amazonaws.com/json/test/dataset_en_test.json --output amazon_reviews_en_test
+```
+However the HuggingFace API is nicer because it transformers the array of JSONs to the more efficient and compact Arrow format.
+
 The [Amazon Reviews][AmazonReviews] English dataset consists of 200,000 test samples and 5,000 training samples.
 The reviews are equally divided into 5 stars where 1 is a low score and 5 is best.
 There are eight features:
@@ -1359,19 +1393,21 @@ Results between the smaller and bigger models were almost identical, except the 
 
 Initialization:
 {% highlight julia %}
+using Random
 using DataFrames
 using Arrow
 using Printf
 using BSON, JSON
 using Flux
-using Unicode
+using Flux: DataLoader
 using Dates
+using StatsBase: mean
 
-using TokenizersLite
 using TransformersLite
 
-path = "path\\to\\amazon_reviews_multi\\en\\1.0.0\\"
+path = "datasets\\amazon_reviews_multi\\en\\1.0.0\\"
 filename = "amazon_reviews_multi-train.arrow"
+to_device = cpu # gpu or cpu
 
 checksum = readdir(path)[1]
 filepath = joinpath(path, checksum, filename)
@@ -1391,37 +1427,19 @@ nlabels = hyperparameters["nlabels"]
 
 Tokenizers:
 {% highlight julia %}
-if hyperparameters["tokenizer"] == "bpe"
-    directory = "vocab\\bpe"
-    path_rules = joinpath(directory, "amazon_reviews_train_en_rules.txt")
-    path_vocab = joinpath(directory, "amazon_reviews_train_en_vocab.txt")
-    tokenizer = load_bpe(path_rules, startsym="⋅")
-elseif hyperparameters["tokenizer"] == "affixes"
-    directory = "vocab\\affixes"
-    path_vocab = joinpath(directory, "amazon_reviews_train_en_vocab.txt")
-    tokenizer = load_affix_tokenizer(path_vocab)
-elseif hyperparameters["tokenizer"] == "none"
-    path_vocab = joinpath("vocab", "amazon_reviews_train_en.txt")
-    tokenizer = identity
-end
+path_vocab = joinpath("vocab", "amazon_reviews_train_en.txt")
+tokenizer = identity
 vocab = load_vocab(path_vocab)
 indexer = IndexTokenizer(vocab, "[UNK]")
 display(tokenizer)
 display(indexer)
 {% endhighlight %}
 
-Tokens pipeline:
-- Put all text in lowercase and normalize unicode to ASCII e.g. "é" to "e" and "don't" to "dont".
-- Split passages into words. (More complex sentence splitting is in the [examples](https://github.com/LiorSinai/TransformersLite.jl/blob/main/examples/demo_sentences.jl).)
+Tokens pipeline - (see the [Tokenizers](#tokenizers) section):
 {% highlight julia %}
-function clean(s::AbstractString)
-    s = lowercase(s)
-    s = Unicode.normalize(s, :NFD)
-    s = replace(s, r"['`’\u200d\p{M}]" => "") # contractions, zero width joiner and marks from normalization
-    s = replace(s, r"\n" => " ")
-end
-
-function preprocess(document, tokenizer; pattern = r"[A-Za-z][A-Za-z]+\b", max_length::Union{Nothing, Int}=nothing)
+function preprocess(document::AbstractString, tokenizer; 
+    pattern::Regex = r"[A-Za-z][A-Za-z]+\b", max_length::Union{Nothing, Int}=nothing
+    )
     document = clean(document)
     words = map(m->string(m.match), eachmatch(pattern, document))
     tokens = tokenizer(words)
@@ -1432,7 +1450,6 @@ function preprocess(document, tokenizer; pattern = r"[A-Za-z][A-Za-z]+\b", max_l
     end
     tokens
 end
-
 documents = df[!, :review_body]
 labels = df[!, :stars]
 max_length = 50
@@ -1467,6 +1484,8 @@ println("train samples:      ", size(train_data[1]), " ", size(train_data[2]))
 println("validation samples: ", size(val_data[1]), " ", size(val_data[2]))
 {% endhighlight %}
 
+### Training
+
 Model:
 {% highlight julia %}
 dim_embedding = hyperparameters["dim_embedding"]
@@ -1483,19 +1502,23 @@ model = TransformersLite.TransformerClassifier(
     Dense(max_length, nlabels)
     )
 display(model)
+model = to_device(model) 
+
 hyperparameters["model"] = "$(typeof(model).name.wrapper)"
 hyperparameters["trainable parameters"] = sum(length, Flux.params(model));
 {% endhighlight %}
-
 
 Training helper functions. 
 The `train!` function is based off `Flux.train!` except it returns a history and uses the package `ProgressBars`.
 It is meant to be used with `Flux.DataLoader` for working with batched data.
 {% highlight julia %}
-using Random
-using ProgressBars
+using Flux
+using Flux: DataLoader
+using Random: shuffle, MersenneTwister
+using ProgressMeter
+using Printf
 
-function train!(loss, ps, data, opt, val_data; n_epochs=100)
+function train!(loss, ps, data, opt, val_data; n_epochs=10)
     history = Dict(
         "train_acc"=>Float64[], 
         "train_loss"=>Float64[], 
@@ -1504,13 +1527,13 @@ function train!(loss, ps, data, opt, val_data; n_epochs=100)
         )
     for epoch in 1:n_epochs
         ps = Flux.Params(ps)
-        iter = ProgressBar(data)
-        set_description(iter, "epoch $epoch/$n_epochs")
-        for Xy in iter
+        progress = Progress(length(data); desc="epoch $epoch/$n_epochs")
+        for Xy in data
             gs = gradient(ps) do
                 loss(Xy)
             end
             Flux.update!(opt, ps, gs)
+            ProgressMeter.next!(progress)
         end
         update_history!(history, model, loss, data, val_data)
     end
@@ -1533,19 +1556,25 @@ function update_history!(history::Dict, model, loss, train_data, val_data)
     @printf "train_loss=%.4f; " train_loss
     @printf "val_acc=%.4f%%; " val_acc * 100
     @printf "val_loss=%.4f ;" val_loss
+    println("")
 end
 
 function batched_metric(f, data; g=identity)
-    result = 0.0
+    result = 0.0f0
     num_observations = 0
     for (x, y) in data
         metric = f(g(x), y) 
-        batch_size = Flux.numobs(x) 
+        batch_size = count_observations(x) 
         result += metric * batch_size
         num_observations += batch_size
     end
     result / num_observations
 end
+
+count_observations(data::D) where {D<:DataLoader} = count_observations(data.data)
+count_observations(data::Tuple) = count_observations(data[1]) # assume data[1] are samples and data[2] are labels
+count_observations(data::AbstractArray{<:Any,N}) where {N} = size(data, N)
+count_observations(data) = length(data)
 {% endhighlight %}
 
 Training:
@@ -1562,8 +1591,8 @@ loss(x::Tuple) = loss(x[1], x[2])
 opt = ADAM()
 
 batch_size = 32
-train_data_loader = Flux.DataLoader(train_data; batchsize=batch_size, shuffle=true)
-val_data_loader = Flux.DataLoader(val_data; batchsize=batch_size, shuffle=false)
+train_data_loader = DataLoader(train_data |> to_device; batchsize=batch_size, shuffle=true)
+val_data_loader = DataLoader(val_data |> to_device; batchsize=batch_size, shuffle=false)
 
 val_acc = batched_metric(accuracy, val_data_loader; g=model)
 val_loss = batched_metric(loss, val_data_loader)
@@ -1572,7 +1601,14 @@ val_loss = batched_metric(loss, val_data_loader)
 @printf "val_loss=%.4f \n" val_loss
 
 start_time = time_ns()
-history = train!(loss, Flux.params(model), train_data_loader, opt, val_data_loader; n_epochs=10)
+history = train!(
+    loss, 
+    Flux.params(model), 
+    train_data_loader, 
+    opt, 
+    val_data_loader; 
+    n_epochs=10
+)
 end_time = time_ns() - start_time
 println("done training")
 @printf "time taken: %.2fs\n" end_time/1e9
@@ -1587,7 +1623,15 @@ output_path = joinpath(directory, "model.bson")
 history_path = joinpath(directory, "history.json")
 hyperparameter_path = joinpath(directory, "hyperparameters.json")
 
-BSON.@save output_path model
+model = model |> cpu
+BSON.bson(
+    output_path, 
+    Dict(
+        :model=> model, 
+        :tokenizer=>tokenizer,
+        :indexer=>indexer
+    )
+)
 
 open(history_path,"w") do f
   JSON.print(f, history)
@@ -1601,7 +1645,7 @@ end
 ### Evaluation
 
 The accuracy achieved was 87.4% for the binary task and 49.9% for the 5 star classification task.
-This is up from a baseline of 50% for the binary task and 20% for the 5 star classification task.
+This is up from a random baseline of 50% for the binary task and 20% for the 5 star classification task.
 
 The confusion matrix shows that the binary model does indeed mostly predict the correct class:
 <figure class="post-figure">
@@ -1651,18 +1695,11 @@ I hope you now have a working transformer and have much better insight into how 
 
 ---
 
-[^amazon_multi]: HuggingFace would prefer you use their Python API to download the dataset. This is as simple as 
-	```
-	from datasets import load_dataset
-	dataset = load_dataset('amazon_reviews_multi', 'en')
-	```
-
-	You can also use curl in a terminal:
-
-	```
-	curl https://amazon-reviews-ml.s3-us-west-2.amazonaws.com/json/train/dataset_en_train.json --output amazon_reviews_en_train.json
-	curl https://amazon-reviews-ml.s3-us-west-2.amazonaws.com/json/test/dataset_en_test.json --output amazon_reviews_en_test.json
-	```
+[^adjoint]: ChainRulesCore uses `rrule` to define backpropagation rules.
+    The old standard was the badly named `@adjoint` meaning the Jacobian adjoint meaning the conjugate transpose
+    of the Jacobian. 
+    This is different to the `adjoint` function which is the conjugate transpose of a matrix.
+    It is also different to the classical adjoint (also called the adjugate) which is the transpose of the co-factors of a matrix.
 
 [^linear_pe]: The position encoding of $\frac{j}{n_{max}}$ is also linear for constant $k$:
     $$ \frac{j+k}{n_{max}}=\frac{1}{n_{max}}j+\frac{k}{n_{max}}$$
@@ -1685,7 +1722,7 @@ I hope you now have a working transformer and have much better insight into how 
 
     But there is no valid tensor operation to reduce this 4D tensor to 3D without violating the tensor property.
 
-[^sparse]: Using `SparseArrays` in custom scatter function doesn't seem to improve efficiency.
+[^sparse]: Using `SparseArrays` in a custom scatter function doesn't seem to improve performance.
 
 [^dense_multi]: I went into great detail about [Multiplication with higher order arrays](#multiplication-with-higher-order-arrays). `Dense` is originally designed for 2D inputs. So how does it handle the 3D input? From the `Flux.jl` source code:
     ```
