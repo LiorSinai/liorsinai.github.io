@@ -1320,7 +1320,7 @@ You could download the raw data directly using curl:
 curl https://amazon-reviews-ml.s3-us-west-2.amazonaws.com/json/train/dataset_en_train.json --output amazon_reviews_en_train
 curl https://amazon-reviews-ml.s3-us-west-2.amazonaws.com/json/test/dataset_en_test.json --output amazon_reviews_en_test
 ```
-However the HuggingFace API is nicer because it transformers the array of JSONs to the more efficient and compact Arrow format.
+However the HuggingFace API is nicer because it converts the array of JSONs to the more efficient and compact Arrow format.
 
 The [Amazon Reviews][AmazonReviews] English dataset consists of 200,000 test samples and 5,000 training samples.
 The reviews are equally divided into 5 stars where 1 is a low score and 5 is best.
