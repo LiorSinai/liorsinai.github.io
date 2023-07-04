@@ -1312,7 +1312,7 @@ Download the data using HuggingFace's Python API:
 {% highlight python %}
 """ PYTHON CODE """
 from datasets import load_dataset
-dataset = load_dataset('amazon_reviews_multi', 'en', cache_dir="datasets)
+dataset = load_dataset('amazon_reviews_multi', 'en', cache_dir="datasets")
 {% endhighlight %}
 
 You could download the raw data directly using curl:
