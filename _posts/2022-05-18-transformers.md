@@ -90,7 +90,7 @@ The use case is a dataset of [Amazon reviews from HuggingFace][AmazonReviews]. O
 
 [TFIDF]: https://github.com/LiorSinai/TFIDF.jl
 
-This problem can be solved with simpler models e.g. a term frequency inverse document infrequency (TFIDF) model with 10,000 parameters. (You can see my Julia TFIDF model [here][TFIDF].) 
+This problem can be solved with simpler models e.g. a term frequency inverse document frequency (TFIDF) model with 10,000 parameters. (You can see my Julia TFIDF model [here][TFIDF].) 
 Using a transformer for this task can therefore be seen as excessive.
 However because the task is simple it means we can limit the transformer model to around 250,000 parameters and we have a good baseline of the accuracy we can achieve.
 
@@ -397,12 +397,35 @@ This is based loosely on the registered [Transformers.jl][Transformersjl] packag
 The input is a sentence that we need to break up into tokens. 
 This preprocessing step is a huge topic itself and I am not going to go into too much detail.
 
-The first step is to simplify the text.
+We will be making a fixed set of embeddings in the next section.
+That means we need to work from a fixed vocabulary list in this section.
+Any word that is not in this vocabulary will be marked as "unknown" and will have minimal impact on the output.
+I've already created a filtered list of 6653 words for the Amazon reviews task:
+[amazon_reviews_train_en.txt](https://github.com/LiorSinai/TransformersLite.jl/blob/main/examples/vocab/amazon_reviews_train_en.txt). 
+These are words which are present in at least 30 different reviews.
+The vocabulary is sorted from highest to lowest of the document frequencies in the original data. 
+So if we limit the vocabulary e.g. `vocab[1:1000]` we can still be confident that it will have statistical significance.
+
+The `load_vocab` function is used to load the words:
+{%highlight julia %}
+function load_vocab(filepath::AbstractString)
+    vocab = String[]
+    open(filepath, "r") do file
+        for line in eachline(file)
+            push!(vocab, line)
+        end
+    end
+    vocab
+end
+vocab = load_vocab("amazon_reviews_train_en.txt")
+{% endhighlight %}
+
+We need to simplify the text so that it can be found in this vocabulary.
 The following function converts everything to lowercase, normalises letters (e.g. è to e) and removes punctuation (including "don't" to "dont"):
 {%highlight julia %}
 using Unicode
 
-function clean(s::AbstractString)
+function simplify(s::AbstractString)
     s = lowercase(s)
     s = Unicode.normalize(s, :NFD)
     s = replace(s, r"['`’\u200d\p{M}]" => "") 
@@ -416,6 +439,13 @@ pattern = r"[A-Za-z][A-Za-z]+\b"
 words = map(m->string(m.match), eachmatch(pattern, document))
 {% endhighlight %}
 
+Putting it together:
+{% highlight julia %}
+text = "This coffee from Kenya is really good."
+tokens = map(m->string(m.match), eachmatch(pattern, simplify(text))) 
+tokens # [this,coffee,from,kenya,is,really,good]
+{% endhighlight %}
+
 An optional step after this is subword tokenization. 
 I have made simple tokenizers for this at [github.com/LiorSinai/TokenizersLite.jl](https://github.com/LiorSinai/TokenizersLite).
 You can also use the registered BytePairEncoding.jl package.
@@ -425,30 +455,10 @@ That is sufficient for the Amazon Reviews problem that we will investigate later
 Once we have tokens we need to map them to word embeddings.
 For this we'll make a simple `IndexTokenizer` which will do the following:
 {%highlight julia %}
-vocab = load_vocab("amazon_reviews_train_en.txt")
 indexer = IndexTokenizer(vocab, "[UNK]")
-
-text = "This coffee from Kenya is really good."
-tokens = map(m->string(m.match), eachmatch(pattern, clean(text))) 
-tokens # [this,coffee,from,kenya,is,really,good]
+tokens = ["this","coffee","from","kenya","is","really","good"]
 indices = indexer(tokens) # [8,534,50,1,6,56,30]
 {% endhighlight %}
-
-The vocabulary file is at this [link](https://github.com/LiorSinai/TransformersLite.jl/blob/main/examples/vocab/amazon_reviews_train_en.txt) and the `load_vocab` function is:
-{%highlight julia %}
-function load_vocab(filepath::AbstractString)
-    vocab = String[]
-    open(filepath, "r") do file
-        for line in eachline(file)
-            push!(vocab, line)
-        end
-    end
-    vocab
-end
-{% endhighlight %}
-
-The vocabulary is sorted from highest to lowest of the word counts in the original data . 
-So if we limit the vocabulary e.g. `vocab[1:1000]` we can still be confident that it will have statistical significance.
 
 Now for the `IndexTokenizer`. Start with the constructor:
 {%highlight julia %}
@@ -475,7 +485,7 @@ function Base.show(io::IO, tokenizer::IndexTokenizer)
 end
 {% endhighlight %}
 
-This `IndexTokenizer` takes in a list of tokens and an unknown symbol. 
+This `IndexTokenizer` takes in the vocabulary list and an unknown symbol. 
 The constructor function checks if the unknown symbol is in the list else it adds it to the front.
 
 For the encoding process we need to replace a token with an index if it is in the vocabulary list and with the unknown symbol index (by default 1) if it is not:
@@ -485,7 +495,7 @@ encode(tokenizer::IndexTokenizer{T}, x::T) where T = something(
 {% endhighlight %}
 
 This assumes we are giving a single token of type `T`. 
-We also want to do multiple dispatch on sentences which are `Vector{T}` and on batches of sentences where are `Vector{Vector{T}}`.
+We also want to do multiple dispatch on sentences which are `Vector{T}` and on batches of sentences which are `Vector{Vector{T}}`.
 When working with batches we'll need all sentence to be the same length.
 Here the unknown token is used for padding:
 {%highlight julia %}
@@ -664,7 +674,7 @@ In general the wavelengths are $2\pi(10^4)^{2i/d}$.
 
 [position_encoding]: https://kazemnejad.com/blog/transformer_architecture_positional_encoding/
 
-The remaining question, is why use both sine and cosine waves? 
+The remaining question is why use both sine and cosine waves? 
 The answer in the paper is: "We chose this function because we hypothesized it would allow the model to easily learn to attend by
 relative positions, since for any fixed offset $k$, $PE_{j+k}$ can be represented as a linear function of
 $PE_{j}$." Here they are referring to the identities:
@@ -712,7 +722,7 @@ end
 The forward pass then selects the required columns from the pre-allocated array:
 {%highlight julia %}
 (pe::PositionEncoding)(x::AbstractArray) = (pe::PositionEncoding)(size(x, 2))
-function (pe::PositionEncoding)(seq_length)
+function (pe::PositionEncoding)(seq_length::Int)
     max_length = size(pe.encoding, 2)
     if seq_length > max_length
         error("sequence length of $seq_length exceeds maximum position encoding length of $max_length")
@@ -995,7 +1005,7 @@ But the names aren't so important.
 
 The query, key and value are each calculated using the dense matrices we stored in the struct based on the input matrices.[^dense_multi]
 Then we calculate the attention for all the heads at once with `multi_head_scaled_dot_attention`.
-The final result is passed the dense output layer:
+The final result is passed to the dense output layer:
 {% highlight julia %}
 function (mha::MultiheadAttention)(query::A1, key::A2, value::A3) where {
     T, A1 <: AbstractArray{T, 3}, A2 <: AbstractArray{T, 3}, A3 <: AbstractArray{T, 3}}
@@ -1136,7 +1146,7 @@ $$
     a_{nb}\frac{X_{nb}-\mu_{nb}}{\sigma_{nb}+\epsilon} + b_{nb}
 $$
 
-For every column $n$ of every batch $b$. This has two parameters in $a_{nb}$ and $b_{nb}$. 
+for every column $n$ of every batch $b$. This has two parameters in $a_{nb}$ and $b_{nb}$. 
 They are not so important and you can turn them off with `LayerNorm(d, affine=false)`.
 $\epsilon$ is a small constant value for numerical stability.
 For backpropagation information please see 
@@ -1218,12 +1228,12 @@ because they carry a strong signal both on the forward pass and with the gradien
 
 At last, our model is almost ready for use.
 There is just one last question, how to use the output embedding matrix?
-We could take a mean across each word embedding and then pass that to a dense layer: $d_m \times N \times B \rightarrow 1 \times N \times B$.
-Similarly we can take a dense layer across each word instead of the mean and pass it to a dense layer.
+We could do on aggregation on each word first to turn it into a matrix: $d_m \times N \times B \rightarrow N \times B$.
+This aggregate could be a mean or a dense layer.
 Or we could flatten the whole array into a $d_m N \times B$ matrix. 
 
-My preference is the second: an aggregation on each word first and then on the full text.
-Here is a flatten layer which we will need to put in between to reduce the dimension: $1\times N \times B \rightarrow N \times B$.
+My preference is aggregate on each word first with a dense layer.
+Here is a flatten layer which we will need to use to reduce the dimension: $1\times N \times B \rightarrow N \times B$.
 {% highlight julia %}
 struct FlattenLayer end
 
@@ -1312,7 +1322,7 @@ Download the data using HuggingFace's Python API:
 {% highlight python %}
 """ PYTHON CODE """
 from datasets import load_dataset
-dataset = load_dataset('amazon_reviews_multi', 'en', cache_dir="datasets")
+dataset = load_dataset('amazon_reviews_multi', 'en', cache_dir='datasets')
 {% endhighlight %}
 
 You could download the raw data directly using curl:
@@ -1425,7 +1435,7 @@ hyperparameters = Dict(
 nlabels = hyperparameters["nlabels"]
 {% endhighlight %}
 
-Tokenizers:
+Tokenizers (see the [Tokenizers](#tokenizers) section):
 {% highlight julia %}
 path_vocab = joinpath("vocab", "amazon_reviews_train_en.txt")
 tokenizer = identity
@@ -1435,12 +1445,12 @@ display(tokenizer)
 display(indexer)
 {% endhighlight %}
 
-Tokens pipeline - (see the [Tokenizers](#tokenizers) section):
+Tokens pipeline:
 {% highlight julia %}
 function preprocess(document::AbstractString, tokenizer; 
     pattern::Regex = r"[A-Za-z][A-Za-z]+\b", max_length::Union{Nothing, Int}=nothing
     )
-    document = clean(document)
+    document = simplify(document)
     words = map(m->string(m.match), eachmatch(pattern, document))
     tokens = tokenizer(words)
     if !isnothing(max_length)
