@@ -2,6 +2,7 @@
 layout: post
 title:  "Backpropagation through a layer norm"
 date:   2022-05-18
+last_modified_at: 2023-07-07
 author: Lior Sinai
 categories: mathematics
 tags: mathematics transformers 'machine learning' 'deep learning'
@@ -23,7 +24,7 @@ $$
     Z^l = a^{l}\frac{X^{l}-\mu^{l}}{\sigma^{l}+\epsilon} + b^{l}
 $$
 
-Where $\mu^l$ and $\sigma^{l}$ are the mean and standard deviation for each layer $l$ respectively, 
+where $\mu^l$ and $\sigma^{l}$ are the mean and standard deviation for each layer $l$ respectively, 
 $a$ and $b$ are trainable parameters and $\epsilon$ is a small value used for numerical stability.
 
 The mean and standard deviation are calculated as follows:
@@ -38,9 +39,8 @@ $$
 ### Backpropagation
 
 Let us consider a single layer so that we can drop the $l$ superscript.
-We will ignore the trainable parameters because they will just scale the result.
-This is the same as $a=1$ and $b=0$.
-For a scalar loss function $L$, we need to find out the affect the vector $x$ will have the final loss.
+For the meantime we will ignore the trainable parameters.
+We need to calculate the contribution of the vector $x$ to the final scalar loss $L$.
 That is:
 
 $$
@@ -48,7 +48,7 @@ $$
 $$
 
 Since $z$ and $x$ are vectors the Jacobian $\frac{\partial z}{\partial x}$ is a matrix.
-We take the partial derivative of each component of $z$ with respect to every component of $x$.
+It is calculated as the partial derivative of each component of $z$ with respect to every component of $x$.
 That is:
 
 $$
@@ -65,28 +65,10 @@ Consider $z_1$:
 $$ z_1 = \frac{x_1-\mu}{\sigma+\epsilon} $$
 
 It explicitly depends on $x_1$. 
-However it is also indirectly dependent on all the other components of $x$ because $\sigma$ and $\mu$ are both calculated with them.
+However it also indirectly depends on all the other components of $x$ because $\sigma$ and $\mu$ are calculated with all of them.
 Hence we have a whole column of derivatives instead of one value.
 
-The derivative with respect to $x_1$ will look slightly different to the derivative with respect to the other components 
-because of this explicit dependency. 
-The difference is:
-
-$$ 
-\begin{align}
-    \frac{\partial }{\partial x_i} x_1 &= 
-    \begin{cases}
-        1 & i=1 \\
-        0 & i\neq 1
-    \end{cases} \\
-    &= \delta_{i1}
-\end{align}
-$$
-
-In general we can use the Kronecker delta symbol $\delta_{ik}$ for convenience. 
-
-We can now calculate the derivate for $z_k$ with respect to a component $x_i$.
-This will require repeated applications of the product rule and the chain rule:
+The derivative of $z_k$ with respect to a general component $x_i$ is:
 
 $$
 \begin{align}
@@ -99,7 +81,21 @@ $$
 \end{align}
 $$
 
-This is dependent on the derivative of the mean:
+using repeat applications of the product rule and chain rule.
+The Kronecker delta symbol $\delta_{ik}$ is used for convenience because of that one explicit dependency.
+For example the derivative of $z_1$ with respect to $x_1$ has a $1$ instead of a $0$.
+
+$$ 
+\begin{align}
+    \delta_{i1} &= 
+    \begin{cases}
+        1 & i=1 \\
+        0 & i\neq 1
+    \end{cases}
+\end{align}
+$$
+
+$\frac{\partial z_k}{\partial x_i}$ is dependent on the derivative of the mean:
 
 $$
 \begin{align}
@@ -159,7 +155,7 @@ errors = randn(size(y)...)
 grads = pull(errors)
 {% endhighlight %}
 
-Flux uses ChainRulesCore to define `rrule` for backpropagation.
+Flux uses ChainRulesCore to define a `rrule` for backpropagation.
 However it doesn't use the final rules derived above; instead it breaks the equations down into pieces much like was done in deriving them.
 One disadvantage of this is that you don't get performance gains from terms cancelling out as happened with $\frac{\partial \sigma}{\partial x_i}$.
 
@@ -171,11 +167,11 @@ stds = std(X; dims=1, corrected=false)
 x = X[:, k]
 
 dμ = ones(n, n) .* 1/n
-dσ = (x .- means[k]) ./ (n * stds[k])
-dx = (I(n) - dμ) ./ (stds[k] + model.ϵ) 
-    - dσ * transpose(x .- means[k]) ./ (stds[k] + model.ϵ).^2
-grads2 = dx * errors[:, k] 
+dσ = (x .- means[k]) / (n * stds[k])
+dx = (I(n) - dμ) / (stds[k] + model.ϵ) - 
+     dσ * transpose(x .- means[k]) / (stds[k] + model.ϵ)^2
+grads_k = dx * errors[:, k] 
 {% endhighlight %}
 
-The values in `grads[1][:, k]` and `grads2` should differ by an order of $10^{-15}$ or less.
+The values in `grads[1][:, k]` and `grads_k` should differ by an order of $10^{-15}$ or less.
 
