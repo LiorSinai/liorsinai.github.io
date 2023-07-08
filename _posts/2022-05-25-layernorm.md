@@ -2,7 +2,7 @@
 layout: post
 title:  "Backpropagation through a layer norm"
 date:   2022-05-18
-last_modified_at: 2023-07-07
+last_modified_at: 2023-07-08
 author: Lior Sinai
 categories: mathematics
 tags: mathematics transformers 'machine learning' 'deep learning'
@@ -124,6 +124,29 @@ Because
 $$
 \sum^n_r (x_r -  \mu) = \sum^n_r x_r - \mu \sum^n_r 1 = (n\mu) - \mu(n) = 0
 $$
+
+This result can also be calculated with algebra and the Taylor series expansion of $\sqrt{1+x}$.
+
+<p>
+  <a class="btn" data-toggle="collapse" href="#std-dev-gradient" role="button" aria-expanded="false" aria-controls="collapseExample">
+    Algebraic derivation &#8681;
+  </a>
+</p>
+<div class="collapse" id="std-dev-gradient">
+  <div class="card card-body ">
+    $$
+    \begin{align}
+    \sigma_\Delta &= \frac{1}{\sqrt{n}}\sqrt{\sum^n_r (x_r - \mu)^2 + (x_i + \Delta x - \mu)^2 - (x_i - \mu)^2} \\
+                  &= \frac{1}{\sqrt{n}}\sqrt{\sum^n_r (x_r - \mu)^2 + (\Delta x)^2 +2 \Delta x (x_i - \mu)} \\
+                  &\approx \frac{1}{\sqrt{n}}\sqrt{\sum^n_r (x_r - \mu)^2 +2 \Delta x (x_i - \mu)} \quad , (\Delta x)^2 \ll \Delta x \\
+                  &= \sqrt{\frac{\sum^n_r (x_r - \mu)^2}{n}} \sqrt{1 + \frac{2 \Delta x (x_i - \mu)}{\sum^n_r (x_r - \mu)^2}} \\
+                  &= \sigma \sqrt{1 + \frac{2 \Delta x (x_i - \mu)}{n\sigma^2}} \\\
+                  &\approx \sigma \left(1 + \frac{1}{2}\left(\frac{2 \Delta x (x_i - \mu)}{n\sigma^2}\right) \right) + O(h^2) \\
+                  &= \sigma + \frac{(x_i - \mu)}{n\sigma}\Delta x
+    \end{align}
+    $$
+  </div>
+</div>
 
 In summary (including the trainable parameters $a$ and $b$):
 
