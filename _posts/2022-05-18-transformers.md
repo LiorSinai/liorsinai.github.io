@@ -3,6 +3,7 @@ layout: post
 title:  "Transformers from first principles in Julia"
 date:   2022-05-18
 author: Lior Sinai
+last_modified_at: 2023-07-08
 background: '/assets/posts/transformers/transformer.png'
 sidenav: true
 categories: coding
@@ -1034,9 +1035,9 @@ This is done in two steps:
 1. $(d_h \times H)\times N \times B$ (break $d_m$ into $d_h$ and $H$)
 2. $d_h \times N \times H \times B$ (swap the 2nd and 3rd dimensions)
 {% highlight julia %}
-    Q = permutedims(reshape(Q, dh, mha.nhead, qs[2], qs[3]), [1, 3, 2, 4])
-    K = permutedims(reshape(K, dh, mha.nhead, ks[2], ks[3]), [1, 3, 2, 4])
-    V = permutedims(reshape(V, dh, mha.nhead, vs[2], vs[3]), [1, 3, 2, 4])
+    Q = permutedims(reshape(Q, dh, nhead, qs[2], qs[3]), [1, 3, 2, 4])
+    K = permutedims(reshape(K, dh, nhead, ks[2], ks[3]), [1, 3, 2, 4])
+    V = permutedims(reshape(V, dh, nhead, vs[2], vs[3]), [1, 3, 2, 4])
 {% endhighlight %}
 
 Then we calculate the scaled dot attention for each head, combine results and return it:
