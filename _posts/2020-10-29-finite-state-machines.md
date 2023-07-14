@@ -7,7 +7,7 @@ categories: coding
 tags:	'regex, finite state machines'
 ---
 
-_I recently solved a particular kind of puzzle, nonograms, using finite state machines for regex matching. This is a very efficient way to do regex matching and in fact formed the basis of the first regex matchers. But finite state machines have since been replaced with more versatile but slower backtracking algorithms._ 
+_I recently solved a particular kind of puzzle, nonograms, using finite state machines for regex matching. This is a very efficient way to do regex matching and in fact formed the basis of the first regex matchers. Finite state machines have since been replaced with more versatile but slower backtracking algorithms. Here is one case however where the older method works better._ 
 
 _Update 3 December 2022: edits to the text and updated the code._
 
@@ -25,7 +25,7 @@ I recently got hooked on a new type of puzzle, nonograms. Wikipedia has a great 
 Each puzzle consists of a grid with numbers along the rows and columns. These numbers indicate connected sets of shaded cells along that row/column, with an unknown amount of unshaded cells in between.
 For example, the clue (4, 2) along row 2 means that in this row there are an unknown number of white cells, followed by 4 shaded cells, followed by one or more white cells,
 followed by 2 shaded cells, and then another unknown number of white cells. The aim is to shade the cells so that all clues read correctly. 
-Puzzles have the added bonus that they are often designed to result in a picture. For example, here is the unique solution to the above puzzle:
+Puzzles have the added bonus that they are designed to result in a picture. For example, here is the unique solution to the above puzzle:
 
 <figure class="post-figure">
 <img class="img-50"
@@ -157,7 +157,7 @@ In order to the reuse Thompson's matching algorithm we first need to rephrase th
 	- black cell: $01_2 = 1$
 	- white cell: $10_2 = 2$
 	- either:     $11_2 = 3$
-- The starting Nonogram number _a_ corresponds to zero or more whites follwed by _a_ blacks followed by one or more whites. In regex notation: `(2)*(1){a}(2)+`.
+- The starting Nonogram number $a$ corresponds to zero or more whites followed by $a$ blacks followed by one or more whites. In regex notation: `(2)*(1){a}(2)+`.
 - Account for cells that are unknown (either): `([23]*)([13]){a}([23]+)`.
 - Repeat for pairs of blacks and whites in the middle: `([13]){b}([23]+)...`
 - The last cell can be followed by an unknown number of whites: `([13]){z}([23]*)`
