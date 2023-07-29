@@ -131,7 +131,7 @@ Instead I provide a high level overview and references are given for further inf
     <td>Polygon</td>
     <td>$O(nh_1 + mh_2)$</td>
     <td>410 / 640 <br></td>
-    <td><a href="https://github.com/LiorSinai/PolygonAlgorithms">github.com/LiorSinai/PolygonAlgorithms</a></td>
+    <td><a href="https://github.com/LiorSinai/PolygonAlgorithms.jl">github.com/LiorSinai/PolygonAlgorithms.jl</a></td>
   </tr>
   <tr>
     <td>Ellipse</td>
