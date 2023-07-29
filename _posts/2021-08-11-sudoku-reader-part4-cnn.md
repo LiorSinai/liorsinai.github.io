@@ -21,7 +21,7 @@ This post is part of a series. The other articles are:
 [machine_learning]: {{ "coding/2021/08/10/sudoku-reader-part4-cnn" | relative_url }}
 [conclusion]: {{ "coding/2021/08/10/sudoku-reader-part5" | relative_url }}
 
-All code is available online at my repository: [github.com/LiorSinai/SudokuReader.jl](https://github.com/LiorSinai/SudokuReader.jl).
+All code is available online at my repository: [github.com/LiorSinai/SudokuReader-Julia](https://github.com/LiorSinai/SudokuReader-Julia).
 
 # Part 4 - machine learning
 ## A mistaken assumption
@@ -286,7 +286,7 @@ using Random
 using Printf
 {% endhighlight %}
 
-I also wrote a few helper functions at [ml_utils.jl](https://github.com/LiorSinai/SudokuReader.jl/blob/main/DigitDetection/ml_utils.jl). For example, here is the function to load the data:
+I also wrote a few helper functions at [ml_utils.jl](https://github.com/LiorSinai/SudokuReader-Julia/blob/main/DigitDetection/ml_utils.jl). For example, here is the function to load the data:
 {% highlight Julia %}
 function load_data(inpath)
     # data is images within a folder with name inpath/label/filename.png

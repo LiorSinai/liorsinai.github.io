@@ -21,7 +21,7 @@ This post is part of a series. The other articles are:
 [machine_learning]: {{ "coding/2021/08/10/sudoku-reader-part4-cnn" | relative_url }}
 [conclusion]: {{ "coding/2021/08/10/sudoku-reader-part5" | relative_url }}
 
-All code is available online at my repository: [github.com/LiorSinai/SudokuReader.jl](https://github.com/LiorSinai/SudokuReader.jl).
+All code is available online at my repository: [github.com/LiorSinai/SudokuReader-Julia](https://github.com/LiorSinai/SudokuReader-Julia).
 
 # Part 5
 

@@ -85,7 +85,7 @@ Scikit-learn (written in Cython) is still the fastest, but that code is more hea
 [Python_post]: /coding/2020/09/29/random-forests.html
 [Python_repo]: https://github.com/LiorSinai/randomForests
 [Julia_post]: /coding/2020/12/14/random-forests-jl.html
-[Julia_repo]: https://github.com/LiorSinai/RandomForest-jl
+[Julia_repo]: https://github.com/LiorSinai/RandomForest.jl
 
 
 In general, my experience with Julia was very positive. 
@@ -170,8 +170,8 @@ For my random forest [code][Julia_repo], it essentially provided a way to make o
 For example, the [`DecisionTreeClassifier`][git_dtc_fit!] and [`RandomForestClassifier`][git_rfc_fit!] have different `fit!()` methods associated with each of them.
 I had no problem calling the `DecisionTreeClassifier` `fit!()` method from within the  `RandomForestClassifier` `fit!()` method.
 
-[git_dtc_fit!]: https://github.com/LiorSinai/RandomForest-jl/blob/89a948fe30c22bb92947f7016f7ca25135e1720b/DecisionTree.jl#L203
-[git_rfc_fit!]: https://github.com/LiorSinai/RandomForest-jl/blob/89a948fe30c22bb92947f7016f7ca25135e1720b/RandomForest.jl#L104
+[git_dtc_fit!]: https://github.com/LiorSinai/RandomForest.jl/blob/89a948fe30c22bb92947f7016f7ca25135e1720b/DecisionTree.jl#L203
+[git_rfc_fit!]: https://github.com/LiorSinai/RandomForest.jl/blob/89a948fe30c22bb92947f7016f7ca25135e1720b/RandomForest.jl#L104
 
 A mistake I made at first is to use `AbstractFloat` inside the struct, whereas the recommendation is to always have concrete types in definitions.
 This definitely slowed down my code, which is why I added the type to the struct definition: `DecisionTreeClassifier{T}`.
@@ -188,7 +188,7 @@ They are however essentially identical functions.
 For my Julia code, I wrote a single function which takes in a type of `AbstractClassifier`. 
 Since I defined both my classifiers to be subtypes of `AbstractClassifier`, calling score on those objects dispatches to this `score` function.
 
-[git_score_jl]: https://github.com/LiorSinai/RandomForest-jl/blob/89a948fe30c22bb92947f7016f7ca25135e1720b/Classifier.jl#L35
+[git_score_jl]: https://github.com/LiorSinai/RandomForest.jl/blob/89a948fe30c22bb92947f7016f7ca25135e1720b/Classifier.jl#L35
 [git_score_rfc]: https://github.com/LiorSinai/randomForests/blob/1b3737097e8d80a947aa880ce20038db09016383/TreeEnsemble.py#L98
 
 Of course you can argue I could have made a super class in Python which implements `score`, and then have both `DecisionTreeClassifier` and `RandomForestClassifier` inherit from it.
@@ -199,7 +199,7 @@ Another use case is with my [`calc_f1_score()`][git_calc_f1_score] function.
 This function prefers to take in a confusion matrix. 
 But another version will accept two vectors, use these to create a confusion matrix, and then dispatch that matrix to the main `calc_f1_score()` function.
 
-[git_calc_f1_score]: https://github.com/LiorSinai/RandomForest-jl/blob/89a948fe30c22bb92947f7016f7ca25135e1720b/Utilities.jl#L65
+[git_calc_f1_score]: https://github.com/LiorSinai/RandomForest.jl/blob/89a948fe30c22bb92947f7016f7ca25135e1720b/Utilities.jl#L65
 
 #### The keywords and syntax
 <blockquote style="font-style: normal"> <span style="font-style: italic"> The Julia keywords:</span> abstract type, baremodule, begin, break, catch, const, continue, do, else, elseif, end, export, false, finally, for, function, global, if, import, let, local, macro, module, mutable struct, primitive type, quote, return, struct, true, try, using, while
@@ -250,7 +250,7 @@ All samples which have similar values are evaluated in the same recursive call.
 In Julia, I found that these were roughly equivalent, with the [batch prediction][git_batches_jl] method being about 10% slower.
 
 [git_batches]: https://github.com/LiorSinai/randomForests/blob/1b3737097e8d80a947aa880ce20038db09016383/DecisionTree.py#L178
-[git_batches_jl]: https://github.com/LiorSinai/RandomForest-jl/blob/89a948fe30c22bb92947f7016f7ca25135e1720b/DecisionTree.jl#L330
+[git_batches_jl]: https://github.com/LiorSinai/RandomForest.jl/blob/89a948fe30c22bb92947f7016f7ca25135e1720b/DecisionTree.jl#L330
 
 If you do want to use broadcasting, there is a nice syntax using `.`. 
 This can be used to broadcast most functions e.g. `f.(x)` will apply `f` individually to each value in the array `x`.  
@@ -305,7 +305,7 @@ mutable struct BinaryTree
 end
 {% endhighlight %}
 The methods acting on it - such as 
-<a href="https://github.com/LiorSinai/RandomForest-jl/blob/8cfbf1c0a685ca3d95fadd39fd9ede6801897bcb/DecisionTree.jl#L41"><code>add_node!</code></a> -
+<a href="https://github.com/LiorSinai/RandomForest.jl/blob/8cfbf1c0a685ca3d95fadd39fd9ede6801897bcb/DecisionTree.jl#L41"><code>add_node!</code></a> -
 are all external to it.
 There is a <code>methodswith()</code> function which can retrieve methods which use a type, but this is limited to search in a single module.
 For example, calling <code>methodswith(BinaryTree)</code> will only retrieve a <code>Base.size</code> method, which was an extension.
@@ -318,9 +318,9 @@ But there is nothing forcing a subtype of `AbstractClassifier`  to implement con
 Also concrete structs cannot have children.
 For example, making a struct which is a subtype of `RandomForestClassifier` is disallowed.
 
-[git_add_node!]: https://github.com/LiorSinai/RandomForest-jl/blob/89a948fe30c22bb92947f7016f7ca25135e1720b/DecisionTree.jl#L41
-[git_abstract_predict]: https://github.com/LiorSinai/RandomForest-jl/blob/89a948fe30c22bb92947f7016f7ca25135e1720b/Classifier.jl#L26
-[git_abstract_fit!]: https://github.com/LiorSinai/RandomForest-jl/blob/89a948fe30c22bb92947f7016f7ca25135e1720b/Classifier.jl#L45
+[git_add_node!]: https://github.com/LiorSinai/RandomForest.jl/blob/89a948fe30c22bb92947f7016f7ca25135e1720b/DecisionTree.jl#L41
+[git_abstract_predict]: https://github.com/LiorSinai/RandomForest.jl/blob/89a948fe30c22bb92947f7016f7ca25135e1720b/Classifier.jl#L26
+[git_abstract_fit!]: https://github.com/LiorSinai/RandomForest.jl/blob/89a948fe30c22bb92947f7016f7ca25135e1720b/Classifier.jl#L45
 [julia_wrong]: https://youtu.be/TPuJsgyu87U?t=155
 
 ## Annoyances<a id="Annoyances"></a>
@@ -362,7 +362,7 @@ Could they not have chosen a less inconvenient name?
 
 [julia_name]: https://www.babycenter.com/baby-names-julia-2368.htm
 [julia_wiki]: https://en.wikipedia.org/wiki/Julia
-[git_rfc_construct]: https://github.com/LiorSinai/RandomForest-jl/blob/89a948fe30c22bb92947f7016f7ca25135e1720b/RandomForest.jl#L50
+[git_rfc_construct]: https://github.com/LiorSinai/RandomForest.jl/blob/89a948fe30c22bb92947f7016f7ca25135e1720b/RandomForest.jl#L50
 
 # Conclusions<a name="Conclusions"></a>
 

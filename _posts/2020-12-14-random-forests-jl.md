@@ -52,7 +52,7 @@ Next, I'll describe the high level `AbstractClassifier` type, then the two concr
 `RandomForestClassifier` and `DecisionTreeClassifier`. Lastly I'll describe the `BinaryTree` struct that is used in the `DecisionTreeClassifier`.
 All code is also explained top-down.
 
-[git_random_forests]: https://github.com/LiorSinai/RandomForest-jl
+[git_random_forests]: https://github.com/LiorSinai/RandomForest.jl
 
 
 ## Practice Data Sets

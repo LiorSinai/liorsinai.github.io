@@ -544,9 +544,9 @@ $$
 
 These are four different formulas which are based on four different branches of mathematics (Euclidean geometry, linear algebra and complex numbers, quaternions) with multiple different types of multiplications (scalar multiplication, quaternion multiplication, dot products, vector cross products and matrix multiplication), yet these formulas all represent the same physical rotation and will result in identical vectors $\vec{v}_r$. 
 
-For a comparison of all formulas in Julia, please see this repository: [Rotations.jl][RotationsLior].
+For a comparison of all formulas in Julia, please see this repository: [Rotations][RotationsLior].
 
-[RotationsLior]: https://github.com/LiorSinai/Rotations.jl
+[RotationsLior]: https://github.com/LiorSinai/Rotations
 
 Quaternions are best for interpolations and hence animations.
 But any of these methods will work for physics simulations.

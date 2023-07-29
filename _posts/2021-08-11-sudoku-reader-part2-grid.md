@@ -21,7 +21,7 @@ This post is part of a series. The other articles are:
 [machine_learning]: {{ "coding/2021/08/10/sudoku-reader-part4-cnn" | relative_url }}
 [conclusion]: {{ "coding/2021/08/10/sudoku-reader-part5" | relative_url }}
 
-All code is available online at my repository: [github.com/LiorSinai/SudokuReader.jl](https://github.com/LiorSinai/SudokuReader.jl).
+All code is available online at my repository: [github.com/LiorSinai/SudokuReader-Julia](https://github.com/LiorSinai/SudokuReader-Julia).
 
 # Part 2 - grid extraction
 ## Overall process
@@ -220,7 +220,7 @@ I copied this code and modified it slightly to (1) better follow Julia Conventio
 [Suzuki1987]: https://www.sciencedirect.com/science/article/abs/pii/0734189X85900167
 [Galetzka2012]: https://arxiv.org/abs/1207.3502
 [contour_detection]: https://juliaimages.org/stable/democards/examples/contours/contour_detection/#Contour-Detection-and-Drawing
-[Contours.jl]: https://github.com/LiorSinai/SudokuReader.jl/tree/main/Contours.jl
+[Contours.jl]: https://github.com/LiorSinai/SudokuReader-Julia/tree/main/Contours.jl
 
 
 Here is the result of calling `find_contours(blackwhite)`:
