@@ -5,9 +5,12 @@ date:   2021-08-10
 author: Lior Sinai
 categories: coding
 tags:	'machine learning'
+last_modified_at: 2023-08-05
 ---
 
 _Wrapping up the Sudoku OCR reader series._ 
+
+_Update 5 August 2023: code refactoring._
 
 This post is part of a series. The other articles are:
 - [Part 1: introduction][introduction].
@@ -36,16 +39,14 @@ First the required imports:
 {% highlight julia %}
 using Images
 using Plots
-using FileIO
 using Flux
 using BSON
 
 include("GridDetection/GridDetection.jl")
 using .GridDetection
+using .GridDetection.PerspectiveTransformations
 include("DigitDetection/DigitExtraction.jl")
-using .DigitExtration
-include("utilities/Transforms.jl")
-using .Transforms
+using .DigitExtraction
 {% endhighlight %}
 
 Now that we have all the pieces assembled, we can pass the outputs from one part as the input to the next:
@@ -60,34 +61,38 @@ blackwhite, quad = detect_grid(
     threshold_window_size=15, threshold_percentage=7);
 warped, invM = four_point_transform(blackwhite, quad)
 
-BSON.@load "DigitDetection\\models\\LeNet5_both_e20.bson" model
-grid, centres, probs = read_digits(
-    warped, model,
+grid, centres, confidences = extract_digits_from_grid(
+    warped, predictor;
     offset_ratio=0.1, 
     radius_ratio=0.25, 
-    detection_threshold=0.1
+    threshold=0.1
     );
 {% endhighlight %}
 
-`read_digits` uses a function called `prediction`. It provides a wrapper around the output of the model, which are logits.
-The softmax probability is a useful proxy for how confident the model is in its prediction. On the training data, the confidence for correct predictions is 100%.
+The `extract_digits_from_grid` function requires a `predictor` which returns a tuple of `(label, confidence)` for each extracted digit image. Here is one constructed by closing it over the model:
 
 {% highlight julia %}
-using Flux: softmax, batch, unsqueeze
-using Images: imresize
+BSON.@load "DigitDetection\\outputs\\LeNet5\\LeNet5_both_e20.bson" model
 
-function prediction(model, image::AbstractArray, pad_ratio=0.2)
-    image = pad_image(image, pad_ratio=pad_ratio)
-    image = imresize(image, (28, 28))
-    x = batch([unsqueeze(Float32.(image), 3)])
-    logits = model(x)
-    probabilities = softmax(logits)
-    idx = argmax(probabilities)
-    ŷ = idx[1] - 1
-    ŷ, probabilities[idx]
+function predictor(digit_image::AbstractArray)
+    logits = digit_image |> prepare_digit_for_model |> model
+    idx = argmax(logits)
+    probabilites = softmax(logits)
+    idx[1] - 1, probabilites[idx]
 end
 
-function pad_image(image::AbstractArray{T}; pad_ratio=0.2) where T
+MODEL_SIZE = (28, 28)
+
+function prepare_digit_for_model(digit::AbstractArray; pad_ratio=0.15)
+    x = digit
+    x = Float32.(x)
+    x = pad_image(x; pad_ratio=pad_ratio)
+    x = imresize(x, MODEL_SIZE)
+    x = reshape(x, MODEL_SIZE[1], MODEL_SIZE[2], 1, 1)
+    x
+end
+
+function pad_image(image::AbstractArray{T}; pad_ratio=0.15) where T
     height, width = size(image)
     pad = floor(Int, pad_ratio * max(height, width))
     imnew = zeros(T, (height + 2pad, width + 2pad))
@@ -98,8 +103,8 @@ end
 
 ## Presenting the result
 
-The output of `read_digits` is three 9&times;9 matrices: grid, centres and probabilities.
-The grid has the numbers, the centres has the co-ordinates of the centres of the bounding boxes in the warped image, and the probabilities has the maximum probability. The latter are zero if no prediction was made.
+The output of `extract_digits_from_grid` is three 9&times;9 matrices: `grid`, `centres` and `confidences`.
+The `grid` has the labels, the `centres` has the co-ordinates of the centres of the bounding boxes in the warped image, and the `confidences` the probability of the estimated labels. The latter are zero if no prediction was made.
 
 Drawing text over the original numbers is easy if we use Plots.jl. We will need the `perspective_transform` function from [part 3][digit_extraction] to unwarp the centres back to their positions in the original image.
 {% highlight julia %}
@@ -204,7 +209,7 @@ But I'll stop here 🙂.
 This application used several algorithms, some rather complex, to do a task that humans consider trivial. 
 This is not to downplay the effort. The task is a complex one, and we only consider it trivial because our brains have exquisitely adapted to it.
 
-We've used several algorithms along the way. It is worth taking stock of all of them and all the parameters that are needed. Some of these parameters are fixed, whether set explicitly or implied. For example, the blurring is done the same in the horizontal and vertical directions and so one parameter is fixed. 
+We've used several algorithms along the way. It is worth taking stock of all of them and all the parameters that are needed. Some of these parameters are fixed, whether set explicitly or implied. For example, the blurring the same in the horizontal and vertical directions so one parameter is fixed. 
 Others are free and may require hand tuning.
 Here is a table with an overview of all fixed and free parameters:[^LeNet5]
 
@@ -235,19 +240,29 @@ Here is a table with an overview of all fixed and free parameters:[^LeNet5]
     <td>2</td>
   </tr>
   <tr>
-    <td>detect_grid</td>
+    <td rowspan="3">detect grid</td>
     <td>find_contours</td>
     <td>0</td>
     <td>0</td>
   </tr>
+   <tr>
+    <td>fit_rectangle</td>
+    <td>0</td>
+    <td>0</td>
+  </tr>
+   <tr>
+    <td>fit_quad</td>
+    <td>0</td>
+    <td>0</td>
+  </tr>
   <tr>
-    <td rowspan="4">extract_digits</td>
-    <td>warp</td>
+    <td rowspan="5">extract digits</td>
+    <td>four_point_transform</td>
     <td>8</td>
     <td>0</td>
   </tr>
   <tr>
-    <td>read_digits</td>
+    <td>extract_digits_from_grid</td>
     <td>1</td>
     <td>1</td>
   </tr>
@@ -257,12 +272,17 @@ Here is a table with an overview of all fixed and free parameters:[^LeNet5]
     <td>2</td>
   </tr>
   <tr>
-    <td>extract_digit (label_components)</td>
+    <td>label_components</td>
     <td>0</td>
     <td>0</td>
   </tr>
   <tr>
-    <td rowspan="3">prediction</td>
+    <td>extract_component_in_square</td>
+    <td>0</td>
+    <td>0</td>
+  </tr>
+  <tr>
+    <td rowspan="3">predictor</td>
     <td>pad_image</td>
     <td>1</td>
     <td>1</td>

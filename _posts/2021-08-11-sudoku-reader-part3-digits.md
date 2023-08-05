@@ -5,10 +5,12 @@ date:   2021-08-10
 author: Lior Sinai
 categories: coding
 tags:	'machine learning'
+last_modified_at: 2023-08-05
 ---
 
 _Identifying and extracting numbers for the Sudoku OCR Reader._ 
 
+_Update 5 August 2023: code refactoring._
 
 This post is part of a series. The other articles are:
 - [Part 1: introduction][introduction].
@@ -25,6 +27,12 @@ This post is part of a series. The other articles are:
 All code is available online at my repository: [github.com/LiorSinai/SudokuReader-Julia](https://github.com/LiorSinai/SudokuReader-Julia).
 
 # Part 3 - digit extraction
+
+## Table of Contents
+
+<nav id="toc"></nav>
+<script src="/assets/makeTableOfContents.js"></script>
+
 ## Straightening the image.
 
 From [part 2][grid_extraction] we have a quadrilateral which represents our grid. 
@@ -50,7 +58,7 @@ Firstly our points should be in a consistent order.
 This is so that we map the top-left point of the quadrilateral to the top-left point of the rectangle and so on. As a sanity check, we can do the following:
 
 {%highlight julia %}
-function order_points(corners)
+function order_points(corners::Vector{<:CartesianIndex})
 	# order points: top-left, top-right, bottom-right, bottom-left
 	rect = zeros(typeof(corners[1]), 4)
 	# the top-left point will have the smallest sum, whereas the bottom-right point will have the largest sum
@@ -74,7 +82,7 @@ We can use `warp` from ImageTransformations.jl to apply the matrix to our image.
 using ImageTransformations, CoordinateTransformations
 using StaticArrays
 
-function four_point_transform(image::AbstractArray, corners::AbstractVector)
+function four_point_transform(image::AbstractArray, corners::Vector{<:CartesianIndex})
     quad = order_points(corners)
     rect = fit_rectangle(corners)
     destination = [CartesianIndex(point[1] - rect[1][1] + 1, point[2] - rect[1][2] + 1) for point in rect]
@@ -88,8 +96,7 @@ function four_point_transform(image::AbstractArray, corners::AbstractVector)
     warped, invM
 end
 {% endhighlight %}  
-We need to return the inverse matrix because it is needed for projecting text back on to the grid, which we will do in [part 5][conclusion]. The function `get_perspective_matrix` is detailed in the <b>more detail</b> block below.
-
+We need to return the inverse matrix because it is needed for projecting text back on to the grid, which we will do in [part 5][conclusion]. The function `get_perspective_matrix` is detailed in the [more detail block](#more-detail-HomographyMatrix) below.
 
 I've built the `perspective_transform` function with the function composition notation of CoordinateTransformations.jl as follows:
 {%highlight julia %}
@@ -106,7 +113,6 @@ end
 {% endhighlight %}  
 For some reason the function composition way is about 2&times; faster. I am not sure if this is because the packages work nicely together or for deeper reasons with the compiler.
 
-
 Here is the result of the warping:
 <figure class="post-figure">
 <img class="img-95"
@@ -116,7 +122,7 @@ Here is the result of the warping:
 <figcaption>Warped (straightened) grid</figcaption>
 </figure>
 
-<p>
+<p id="more-detail-HomographyMatrix">
   <a class="btn" data-toggle="collapse" href="#HomographyMatrix" role="button" aria-expanded="false" aria-controls="collapseExample">
     More detail on perspective transformations &#8681;
   </a>
@@ -124,7 +130,6 @@ Here is the result of the warping:
 <div class="collapse" id="HomographyMatrix">
   <div class="card card-body ">
   
-
 OpenCV comes with a function called <code>getPerspectiveTransform</code>. I had to write the Julia version of this myself.
 To explain it properly, I would need to explain pinhole cameras, projection matrices, rotation matrices and more. Here is a source which does that: <a style="text-decoration:underline" href="https://towardsdatascience.com/estimating-a-homography-matrix-522c70ec4b2c">estimating a homography matrix.</a> 
 For now, all I am going to say is that the calculations reduce to multiplication of every pixel with a special matrix called a homography matrix:
@@ -151,8 +156,8 @@ $$
 We then calculate the warped points as:
 
 $$
-    u = \frac{u'}{w} = \frac{c_{11}x+c_{12}y+c_{13}}{c_{31}+c_{32} + 1}, \; 
-    v = \frac{v'}{w} = \frac{c_{21}x+c_{22}y+c_{23}}{c_{31}+c_{32} + 1}
+    u = \frac{u'}{w} = \frac{c_{11}x+c_{12}y+c_{13}}{c_{31}x+c_{32}y + 1}, \; 
+    v = \frac{v'}{w} = \frac{c_{21}x+c_{22}y+c_{23}}{c_{31}x+c_{32}y + 1}
 $$
 
 We have 8 unknowns in $c_{ij}$ and 8 equations from 4 pairs of $(x, y)$ to $(u, v)$.
@@ -171,10 +176,10 @@ $$
 \end{bmatrix}
 =
 \begin{bmatrix} 
-	x_1 & y_1 & 1 & 0 & 0 & 0 & -x_1u_1 & -y_1x_1\\
-	x_2 & y_2 & 1 & 0 & 0 & 0 & -x_2u_2 & -y_2x_2\\
-    x_3 & y_3 & 1 & 0 & 0 & 0 & -x_3u_3 & -y_3x_3\\
-	x_4 & y_4 & 1 & 0 & 0 & 0 & -x_3u_3 & -y_3x_3\\
+	x_1 & y_1 & 1 & 0 & 0 & 0 & -x_1u_1 & -y_1u_1\\
+	x_2 & y_2 & 1 & 0 & 0 & 0 & -x_2u_2 & -y_2u_2\\
+    x_3 & y_3 & 1 & 0 & 0 & 0 & -x_3u_3 & -y_3u_3\\
+	x_4 & y_4 & 1 & 0 & 0 & 0 & -x_4u_4 & -y_4u_4\\
     0 & 0 & 0 & x_1 & y_1 & 1 & -x_1v_1 & -y_1v_1\\
     0 & 0 & 0 & x_2 & y_2 & 1 & -x_2v_2 & -y_2v_2\\
     0 & 0 & 0 & x_3 & y_3 & 1 & -x_3v_3 & -y_3v_3\\
@@ -266,22 +271,22 @@ I've separated the check for a digit into two questions:
 Answering the second questions allows us to extract the digit which we can then send off to our machine learning algorithm. That is explained in the [next section][machine_learning].
 For now, here is the digit extraction loop in full:
 {%highlight julia %}
-function read_digits(
+GRID_SIZE = (9, 9)
+function extract_digits_from_grid(
     image::AbstractArray,
-    model; 
-    offset_ratio=0.1,
-    radius_ratio::Float64=0.25, 
-    detection_threshold::Float64=0.10, 
+    predictor; 
+    offset_ratio::Float64=0.1,
+    detect_options...
     )
     height, width = size(image)
-    step_i = ceil(Int, height / 9)
-    step_j = ceil(Int, width / 9)
+    step_i = ceil(Int, height / GRID_SIZE[1])
+    step_j = ceil(Int, width / GRID_SIZE[2])
     offset_i = round(Int, offset_ratio * step_i)
     offset_j = round(Int, offset_ratio * step_j)
 
-    grid = zeros(Int, (9, 9))
-    centres =  [(-1.0, -1.0) for i in 1:9, j in 1:9]
-    probabilities = zeros(Float32, (9, 9))
+    grid = zeros(Int, GRID_SIZE)
+    centres =  [(-1.0, -1.0) for i in 1:GRID_SIZE[1], j in 1:GRID_SIZE[2]]
+    confidences = zeros(Float32, GRID_SIZE)
 
     for (i_grid, i_img) in enumerate(1:step_i:height)
         for (j_grid, j_img) in enumerate(1:step_j:width)
@@ -290,24 +295,23 @@ function read_digits(
             next_i = min(i_img + step_i + offset_i, height)
             next_j = min(j_img + step_j + offset_j, width)
             RoI = image[prev_i:next_i, prev_j:next_j]
-            if detect_in_centre(RoI)
-                centre, digit = extract_digit(RoI, radius_ratio=radius_ratio, threshold=detection_threshold)
-                ŷ, prob = prediction(model, digit)
-                grid[i_grid, j_grid] = ŷ
-                centre = (centre[1] + prev_i, centre[2] + prev_j)
-                probabilities[i_grid, j_grid] = prob
+            if detect_in_centre(RoI; detect_options...)
+                digit, centre = extract_digit(RoI; detect_options...)
+                label, confidence = predictor(digit)
+                grid[i_grid, j_grid] = label
+                confidences[i_grid, j_grid] = confidence
             else
-                centre = (prev_i + step_i/2, prev_j + step_j/2)
+                centre = (step_i/2, step_j/2)
             end
-            centres[i_grid, j_grid] = centre
+            centres[i_grid, j_grid] = (centre[1] + prev_i, centre[2] + prev_j)
         end
     end
-    grid, centres, probabilities
+    grid, centres, confidences
 end
 {% endhighlight %}
 
 The next two sections detail the centre component detection and bounding box algorithms.
-`Prediction` is detailed in [part 5][conclusion].
+The `predictor` is detailed in [part 5][conclusion].
 
 ### Centre component detection
 
@@ -327,7 +331,9 @@ This is what it looks like:
 
 Here is the code:
 {%highlight julia %}
-function detect_in_centre(image::AbstractArray; radius_ratio::Float64=0.25, threshold::Float64=0.10)
+function detect_in_centre(image::AbstractArray; 
+    radius_ratio::Float64=0.25, threshold::Float64=0.10
+    )
     height, width = size(image)
     radius = min(height, width) * radius_ratio
     kernel = make_circle_kernel(height, width, radius)
@@ -381,43 +387,39 @@ For example, here is a label map for the whole image:
 Doing this for each small region of interest allows us to extract the digits with a tight bounding box while removing all other components.
 Here is the full code:[^binarization]
 {%highlight julia %}
-function extract_digit(
-    image_in::AbstractArray; 
-    radius_ratio::Float64=0.25, 
-    threshold::Float64=0.10
-    )
-    
-    image = copy(image_in) 
+function extract_digit(image_in::AbstractArray; detect_options...)
+    image = copy(image_in)
     # have to binarize again because of warping
-    image = binarize(image, Otsu()) # global binarization
-
+    image = binarize(image, Otsu()) # global binarization algorithm
+    # check each unique connected component in the image
     labels = label_components(image) 
-
-    height, width = size(image)
     for i in 1:length(unique(labels))
         image_label = copy(image)
         image_label[labels .!= i] .= 0
-        if detect_in_centre(image_label, radius_ratio=radius_ratio, threshold=threshold)
-            stats = calc_connected_component_statistics(labels, i)
-            width_label = abs(stats.right - stats.left)
-            height_label = abs(stats.bottom - stats.top)
-            length_  = max(width_label, height_label)
-
-            # note: the centroid is not a good chocie for a visual centre 
-            centre = (
-                stats.top + Int(round(height_label/2)), 
-                stats.left + Int(round(width_label/2))
-            )
-
-            # make square
-            top = max(1, floor(Int, centre[1] - length_/2))
-            left = max(1, floor(Int,centre[2] - length_/2))
-            bottom = min(height, ceil(Int, centre[1] + length_/2))
-            right = min(width, ceil(Int, centre[2] + length_/2))
-            return centre, image_label[top:bottom, left:right]
+        if detect_in_centre(image_label; detect_options...)
+            return extract_component_in_square(image_label)
         end
     end
-    (height/2, width/2), image
+    height, width = size(image)
+    image, (height/2, width/2)
+end
+
+function extract_component_in_square(image_label::AbstractArray)
+    stats = calc_connected_component_statistics(image_label .> 0, 1)
+    width_label = abs(stats.right - stats.left)
+    height_label = abs(stats.bottom - stats.top)
+    length_  = max(width_label, height_label)
+
+    # note: the centroid is not a good choice for a visual centre
+    centre = (stats.top + Int(round(height_label/2)), stats.left + Int(round(width_label/2)))
+
+    # make square
+    height, width = size(image_label)
+    top = max(1, floor(Int, centre[1] - length_/2))
+    left = max(1, floor(Int,centre[2] - length_/2))
+    bottom = min(height, ceil(Int, centre[1] + length_/2))
+    right = min(width, ceil(Int, centre[2] + length_/2))
+    image_label[top:bottom, left:right], centre
 end
 {% endhighlight %}
 

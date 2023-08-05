@@ -5,9 +5,12 @@ date:   2021-08-10
 author: Lior Sinai
 categories: coding
 tags:	'machine learning'
+last_modified_at: 2023-08-05
 ---
 
 _Extracting the grid for the Sudoku OCR reader._ 
+
+_Update 5 August 2023: code refactoring._
 
 This post is part of a series. The other articles are:
 - [Part 1: introduction][introduction].
@@ -24,6 +27,11 @@ This post is part of a series. The other articles are:
 All code is available online at my repository: [github.com/LiorSinai/SudokuReader-Julia](https://github.com/LiorSinai/SudokuReader-Julia).
 
 # Part 2 - grid extraction
+## Table of Contents
+
+<nav id="toc"></nav>
+<script src="/assets/makeTableOfContents.js"></script>
+
 ## Overall process
 
 The main goal here is to find contours in the image. The largest contour is then assumed to be the grid.
@@ -62,18 +70,15 @@ For grayscale images, calling `Float64.(image)` converts the image directly to a
 With this knowledge in mind, we can start by loading our image.
 {%highlight julia %}
 using Images
-using FileIO  
 
 image_path = "images/nytimes_20210807.jpg"
 image = load(image_path)
 {% endhighlight %}
 
-
 [JuliaImages]: https://juliaimages.org/stable/
 
-
 ## Preprocessing
-## Resizing 
+### Resizing 
 
 Resizing the image is useful because:
 1. This speeds up all other operations. Most of them are $O(p)$ where $p=hw$ is the number of pixels. Reducing an image size by 2 in both dimensions reduces the number of pixels by 4, which speeds up operations by the same factor.
@@ -87,7 +92,7 @@ if ratio < 1
 end
 {% endhighlight %}    
 
-## Binarize
+### Binarize
 
 The next step is to convert the image to black and white. 
 This is because it simplifies the calculations greatly for classic image processing techniques.
@@ -215,12 +220,12 @@ We can finally start looking for contours. The de facto algorithm for doing this
 
 I couldn't find a package with this algorithm (a common occurrence for a young language like Julia).
 However thankfully the people at JuliaImages.jl wrote a Julia port of it: [contour_detection][contour_detection].
-I copied this code and modified it slightly to (1) better follow Julia Conventions and (2) have the option to only return external contours. The code is available here: [Contours.jl][Contours.jl]. Please note: this is work in progress. Also I am very proud of the `point_in_polygon` function, which uses a very robust method from a fairly recent [paper][Galetzka2012]. 
+I copied this code and modified it slightly to (1) better follow Julia Conventions and (2) have the option to only return external contours. The code is available here: [ImageContours.jl][ImageContours.jl]. Please note: this is work in progress. Also I am very proud of the `point_in_polygon` function, which uses a very robust method from a fairly recent [paper][Galetzka2012]. 
 
 [Suzuki1987]: https://www.sciencedirect.com/science/article/abs/pii/0734189X85900167
 [Galetzka2012]: https://arxiv.org/abs/1207.3502
-[contour_detection]: https://juliaimages.org/stable/democards/examples/contours/contour_detection/#Contour-Detection-and-Drawing
-[Contours.jl]: https://github.com/LiorSinai/SudokuReader-Julia/tree/main/Contours.jl
+[contour_detection]: https://juliaimages.org/stable/examples/contours/contour_detection/#Contour-Detection-and-Drawing
+[ImageContours.jl]: https://github.com/LiorSinai/SudokuReader-Julia/tree/main/ImageContours/
 
 
 Here is the result of calling `find_contours(blackwhite)`:
@@ -239,13 +244,12 @@ idx_max = argmax(map(area_contour, contours))
 contour _max = contours[idx_max]
 {% endhighlight %}  
 
-
 ## Quadrilateral fitting
 
 The contour we have is comprised  of many points (in this case, 2163). We want to simplify it to a 4 point quadrilateral.
 There are few ways to do this. I found the easiest was to first fit a rectangle to the contour. Its corners can be found as the min and max of the $x$ and $y$ values of the contour points. Then fit a quadrilateral by finding the points on the contour that minimise the rectangular distance to each corner. In a single equation:
 
-$$ min(|x_i - r_{x,j}| + |y_i - r_{y,j}|) \; \forall (x_i, y_i) \in c, \; j \in \{1, 2, 3, 4 \} $$
+$$ min(|x_i - r_{x,j}| + |y_i - r_{y,j}|) \; \forall \; i \in c, \; j \in \{1, 2, 3, 4 \} $$
 
 Where $r$ is the rectangle and $c$ is the contour.
 

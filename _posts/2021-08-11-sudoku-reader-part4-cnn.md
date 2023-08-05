@@ -5,9 +5,12 @@ date:   2021-08-10
 author: Lior Sinai
 categories: coding
 tags:	'machine learning'
+last_modified_at: 2023-08-05
 ---
 
 _On convolutional neural networks, overly large models and the importance of understanding your data._ 
+
+_Update 5 August 2023: code refactoring and notice on changes in Flux 0.13.9._
 
 This post is part of a series. The other articles are:
 - [Part 1: introduction][introduction].
@@ -24,6 +27,11 @@ This post is part of a series. The other articles are:
 All code is available online at my repository: [github.com/LiorSinai/SudokuReader-Julia](https://github.com/LiorSinai/SudokuReader-Julia).
 
 # Part 4 - machine learning
+## Table of Contents
+
+<nav id="toc"></nav>
+<script src="/assets/makeTableOfContents.js"></script>
+
 ## A mistaken assumption
 
 When I initially envisioned this blog post, I thought I wouldn't have much to talk about with regards to machine learning.
@@ -137,7 +145,9 @@ model = Chain(
 	Dense(128, 10),
     )
 {% endhighlight %}
-This model is similar to LeNet5 but it has a few key differences. Firstly, it does 2&times; the amount of convolutions per `Conv` step. Secondly, and very importantly, it only down samples once with a `MaxPool`. 
+This model is similar to LeNet5 but it has a few key differences. Firstly, it has about 4.3&times; the number of kernels.
+Secondly, it does 2&times; the amount of convolutions per `Conv` step (steps of 3 instead of 5). 
+Lastly it only down samples once with a `MaxPool`. 
 Down sampling again by a factor 2 in both directions would have reduced the total pixel size by 4, which in turn reduces
 the parameter space by approximately 4. So 225,034 parameters instead of over a million.
 
@@ -230,8 +240,7 @@ It reduces the feature space by a factor of 3 from 784 pixels to 256 kernel pixe
 I still think it is too large - the smallest model in the table is 1/8th its size. 
 But for 183kB against 28kB, I think it's a reasonable tradeoff for a 1% increase in accuracy.
 
-
-## The code
+## Training
 
 I followed the tutorials of [Nigel Adams][Adams] and [Clark Fitzgerald][Fitzgerald].
 Julia is a young language and is still short on resources and tutorials for Flux.  I am therefore glad these two ventured into the unknown early with their articles.
@@ -243,7 +252,6 @@ I used the digits from the [Char74k][Char74k] dataset, specifically Sample001-Sa
 It is useful to convert the Char74k dataset to the MNIST format so the same model can be used for both datasets.
 This script will do that (be sure to have the correct `inpath` for your data):
 {% highlight Julia %}
-using FileIO
 using Images
 
 inpath = "..\\..\\datasets\\74k_numbers"
@@ -276,99 +284,95 @@ Now we can look into the training.
 Here are all the imports we will need:
 {% highlight Julia %}
 using Flux
-using Flux: Data.DataLoader, unsqueeze
+using Flux: Data.DataLoader
 using Flux: onehotbatch, onecold, logitcrossentropy
-using BSON # for saving models
-
+using BSON
 using StatsBase: mean
 using Random
-
 using Printf
 {% endhighlight %}
 
 I also wrote a few helper functions at [ml_utils.jl](https://github.com/LiorSinai/SudokuReader-Julia/blob/main/DigitDetection/ml_utils.jl). For example, here is the function to load the data:
 {% highlight Julia %}
-function load_data(inpath)
-    # data is images within a folder with name inpath/label/filename.png
+function load_digit_images(data_dir::AbstractString)
+    # data is images within a folder with name data_dir/label/filename.png
     digits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
     data = Array{Float32, 3}[] # Flux expects Float32 only, else raises a warning
     labels = Int[]
     for digit in digits
-        indir = joinpath(inpath, string(digit))
-        println("loading data from $indir")
-        for filename in readdir(indir)
-            image = load(joinpath(inpath, string(digit), filename))
+        digit_dir = joinpath(data_dir, string(digit))
+        println("Loading data from $digit_dir")
+        for filename in readdir(digit_dir)
+            image = load(joinpath(data_dir, string(digit), filename))
             image = Flux.unsqueeze(Float32.(image), 3)
             push!(data, image)
             push!(labels, digit)
         end
     end
-    data, labels
+    batch(data), labels
 end
 {% endhighlight %}
 An important caveat is that the data should be of type `Float32`. This does noticeably increase the speed of training the model.
+Also, the  data needs to be in the form height&times;width&times;channels&times;batch_size.
+The functions `Flux.unsqueeze` and `Flux.batch` do this transform.
 
 Next split the data into train, validation and test sets.
 Here is the `split_data` function:
 {% highlight Julia %}
-function split_data(X, y; rng=Random.GLOBAL_RNG, test_split=0.2)
-    n = length(X)
+function split_data(rng::AbstractRNG, X::Array, y::Vector; test_split::Float64=0.2)
+    n = size(X)[end]
     n_train = n - round(Int, test_split * n)
-    
     idxs = collect(1:n)
     randperm!(rng, idxs)
-
-    X_ = X[idxs]
+    inds_start = ntuple(Returns(:), ndims(data) - 1)
+    X_ = X[inds_start..., idxs]
     y_ = y[idxs]
-
-    x_train = X_[1:n_train]
+    x_train = X_[inds_start..., 1:n_train]
     y_train = y_[1:n_train]
-    x_test  = X_[n_train+1:end]
+    x_test  = X_[inds_start..., n_train+1:end]
     y_test  = y_[n_train+1:end]
-
     x_train, y_train, x_test, y_test
 end
 {% endhighlight %}
 
 It's best to fix the seed at an arbitrary number so that the data is always "randomly" sorted the same way. 
 This makes comparisons between training runs consistent.
+
 {% highlight Julia %}
 seed = 227
 rng = MersenneTwister(seed)
-x_train, y_train, x_test, y_test = split_data(data, labels, rng=rng);
-{% endhighlight %}
-
-Now we need to get the data into the required format for Flux.
-The sample data needs to be in the form height&times;width&times;channels&times;batch_size.
-To prevent using extra space, we can use `Flux.DataLoader` which lazily batches the data. This means it doesn't create a copy of the data (unlike `split_data`) when allocating a batch for a small gradient descent step.
-The test data and validation data however are all evaluated at once, and are much smaller, so I eagerly batch them with `Flux.batch`.  This does create duplicates.
-{% highlight Julia %}
-train_data = Flux.DataLoader((Flux.batch(x_train), y_train), batchsize=128)
-n_valid = floor(Int, 0.8*size(y_test, 2))
-valid_data = (Flux.batch(x_test[1:n_valid]), y_test[:, 1:n_valid])
-test_data = (Flux.batch(x_test[n_valid+1:end]), y_test[:, n_valid+1:end])
-{% endhighlight %}
-
-The labels need to be one hot matrices for the loss function:
-{% highlight Julia %}
+x_train, y_train, x_test, y_test = split_data(rng, data, labels);
 y_train = onehotbatch(y_train, 0:9)
-y_test =  onehotbatch(y_test, 0:9)
+n_valid = floor(Int, 0.8*size(y_test, 2))
+val_data = (x_test[:, :, :, 1:n_valid], onehotbatch(y_test[1:n_valid], 0:9))
+test_data = (x_test[:, :, :, n_valid+1:end], onehotbatch(y_test[n_valid+1:end], 0:9))
+{% endhighlight %}
+
+The labels need to be one hot matrices for the loss function.
+
+To prevent using extra space, we can use `Flux.DataLoader` which lazily batches the data. This means it doesn't create a copy of the data (unlike `split_data`) when allocating a batch for a small gradient descent step.
+
+{% highlight Julia %}
+
+train_loader = Flux.DataLoader((x_train, y_train); batchsize=128, shuffle=true)
+val_loader = Flux.DataLoader(val_data; shuffle=false)
+test_loader = Flux.DataLoader(test_data; shuffle=false)
 {% endhighlight %}
 
 Now we can load the LeNet5 model from before:
 {% highlight Julia %}
 function LeNet5()
-	return Chain(
-            Conv((5, 5), 1=>6, relu),
-            MaxPool((2, 2)),
-            Conv((5, 5), 6=>16, relu),
-            MaxPool((2, 2)),
-            Flux.flatten,
-            Dense(256, 120, relu), 
-            Dense(120, 84, relu), 
-            Dense(84, 10),
-          )
+  return Chain(
+      Conv((5, 5), 1=>6, relu),
+      MaxPool((2, 2)),
+      Conv((5, 5), 6=>16, relu),
+      MaxPool((2, 2)),
+      Flux.flatten,
+      Dense(256, 120, relu), 
+      Dense(120, 84, relu), 
+      Dense(84, 10),
+    )
 end
 model = LeNet5()
 {% endhighlight %}
@@ -400,11 +404,11 @@ Apply this repeatedly to get the final output dimension size.
 For example, for LeNet5:
 {% highlight julia %}
 output_dim = 28
-output_dim = calc_output_size(output_dim, 5, 1, 0)
-output_dim = calc_output_size(output_dim, 2, 2, 0)
-output_dim = calc_output_size(output_dim, 5, 1, 0)
-output_dim = calc_output_size(output_dim, 2, 2, 0)
-output_size = prod((output_dim, output_dim, 16)) # prod((4, 4, 16))=256
+output_dim = calc_output_size(output_dim, 5, 1, 0) # 24
+output_dim = calc_output_size(output_dim, 2, 2, 0) # 12
+output_dim = calc_output_size(output_dim, 5, 1, 0) # 8
+output_dim = calc_output_size(output_dim, 2, 2, 0) # 4
+output_size = prod((output_dim, output_dim, 16)) # 256
 {% endhighlight %}
 </p>
   </div>
@@ -417,22 +421,40 @@ loss(x::Tuple) = Flux.logitcrossentropy(model(x[1]), x[2])
 loss(x, y) = Flux.logitcrossentropy(model(x), y)
 opt=ADAM()
 {% endhighlight %}
+
+<div class="message-container info-message">
+	<div class="message-icon fa fa-fw fa-2x fa-exclamation-circle">
+	</div>
+	<div class="content-container">
+		<div class="message-body">
+		In Flux 0.13.9 the training syntax was updated. Shown here is the old "implicit" form.
+    In the new syntax <code>Flux.Params</code> is no longer required and the loss no longer closes over the model:
+    <br><code>loss(x, y) = Flux.logitcrossentropy(x, y)</code><br>
+    Also, the optimiser state is passed instead of the optimiser itself.
+    For updated code, see the repository: <a href="https://github.com/LiorSinai/SudokuReader-Julia/blob/main/DigitDetection/ml_utils.jl#L75">github.com/LiorSinai/SudokuReader-Julia/blob/main/DigitDetection/ml_utils.jl</a>
+    </div>
+	</div>
+</div>
+
 The `Flux.logitcrossentropy` calculates the following:
 
-$$ \frac{\sum y \cdot log(\sigma(\hat{y}))}{n}; \;\; \sigma(y_i)=\frac{e^{y_i}}{\sum e^y} $$
+$$ \frac{\sum y \cdot \log(\sigma(\hat{y}))}{n}; \;\; \sigma(y_i)=\frac{e^{y_i}}{\sum e^y} $$
 
 The logits are the direct outputs of the model, which can be any real number. 
 The softmax function $\sigma$ converts them to values between to 0 and 1 which sum to 1.
 That is, it converts them to a probability distribution.
-[ADAM][ADAM_gd] is a well known and stable gradient descent algorithm that works well without much fine tuning.
+[Adam][Adam_gd] is a well known and stable gradient descent algorithm that works well without much fine tuning.
 
-[ADAM_gd]: https://arxiv.org/abs/1412.6980
+[Adam_gd]: https://arxiv.org/abs/1412.6980
 
 With these function in place, we can simply call `Flux.train!(loss, params(model), train_data, opt)` and wait for our model to train. But I wanted more. I wanted to create a history of the change in accuracy during training and return it. I wanted to have a print out each time a batch was completed. I wanted to save after every epoch, where an epoch is one full run through the entire training set. 
 So I copied the definition for `Flux.train!` and edited it as follows:
 {% highlight julia %}
 function train!(loss, ps, train_data, opt, acc, valid_data; n_epochs=100)
-    history = Dict("train_acc"=>Float64[], "valid_acc"=>Float64[])
+    history = Dict(
+        "train_acc" => Float64[], 
+        "val_acc" => Float64[], 
+        )
     for e in 1:n_epochs
         print("$e ")
         ps = Flux.Params(ps)
@@ -444,25 +466,26 @@ function train!(loss, ps, train_data, opt, acc, valid_data; n_epochs=100)
             print('.')
         end
         # update history
-        train_acc = 0.0
-        n_samples = 0
-        for batch_ in train_data
-            train_acc += sum(onecold(model(batch_[1])) .== onecold(batch_[2]))
-            n_samples += size(batch_[1], 4)
-        end
-        train_acc = train_acc/n_samples
-        valid_acc = acc(model(valid_data[1]), valid_data[2])
-        push!(history["train_acc"], train_acc)
-        push!(history["valid_acc"], valid_acc)
-
-        @printf "\ntrain_acc=%.4f valid_acc=%.4f\n" train_acc*100 valid_acc*100
-
+        update_history!(history, model, train_data.data, val_data.data)
+        println("")
         # save model
         save_path = output_path * "_e$e" * ".bson"
         BSON.@save save_path model history
     end
     history
 end
+
+function update_history!(history::Dict, model, train_data, val_data)
+    result = model(train_data[1])
+    train_acc = accuracy(result, train_data[2])
+    val_result = model(val_data[1])
+    val_acc = accuracy(val_result, val_data[2])
+    push!(history["train_acc"], train_acc)
+    push!(history["val_acc"], val_acc)
+    @printf "train_acc=%.4f%%; " train_acc * 100
+    @printf "val_acc=%.4f%%; " val_acc * 100
+end
+
 start_time = time_ns()
 history = train!(
     loss, params(model), train_data, opt, 

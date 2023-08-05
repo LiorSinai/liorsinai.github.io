@@ -5,6 +5,7 @@ date:   2021-08-10
 author: Lior Sinai
 categories: coding
 tags:	'machine learning'
+last_modified_at: 2023-08-05
 ---
 
 _A Sudoku OCR reader written in Julia._ 
@@ -43,13 +44,11 @@ Then 2 weeks back it was the [Julia conference] [JuliaCon] which I really enjoye
 While I still like Python, I much prefer Julia. I find it to be a much more robust, stable and clean programming language.
 So I decided to implement an OCR reader for Sudoku in this new, growing programming language. This post details my journey. To the best of my knowledge, there are no other articles detailing this in Julia at this moment in time.
 
-
 [SudokuSolver]: {{ "coding/2020/07/27/sudoku-solver" | relative_url }}
 [JuliaCon]: https://live.juliacon.org/about
 [PyImage]: https://www.pyimagesearch.com/2020/08/10/opencv-sudoku-solver-and-ocr/
 [AiShack]: https://aishack.in/tutorials/sudoku-grabber-opencv-plot/
 [raghav]: https://www.linkedin.com/posts/robovirmani_computervision-ai-ml-activity-6676143042518507520-c2pG
-
 
 # Pipeline
 
@@ -62,8 +61,6 @@ So I decided to implement an OCR reader for Sudoku in this new, growing programm
 </figure>
 
 I followed the same algorithm as the original C++ and Python tutorials. It uses classic image processing techniques to extract the grid and then the digits, and then it uses machine learning to classify the digits.
-
-
 
 The algorithm is as follows:
 1. Input an image.
@@ -79,7 +76,6 @@ The algorithm is as follows:
 7. Pass the digit to a machine learning network and receive a prediction back. If the softmax probability is above a threshold, accept the prediction, else reject it.
 
 [Suzuki1987]: https://www.sciencedirect.com/science/article/abs/pii/0734189X85900167
-
 
 <figure class="post-figure">
 <img class="img-95"
@@ -107,9 +103,7 @@ For an in-depth explanation of each step, please see the following posts:
 - Digit classification using machine learning: [part 4][machine_learning].
 - Demonstration of the full pipeline and conclusion: [part 5][conclusion].
 
-
 [Char74K]: http://www.ee.surrey.ac.uk/CVSSP/demos/chars74k/
-
 
 # Comparison with Python
 
@@ -250,9 +244,7 @@ There is a negative aspect to this sharing: packages don't always "play nice" so
 
 The coding tutorial starts next at [part 2][grid_extraction].
 
-
 [wiki_sigma]: https://en.wikipedia.org/wiki/Sigma
-
 
 ---
 
