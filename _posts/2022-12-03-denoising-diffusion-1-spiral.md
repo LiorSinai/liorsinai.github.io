@@ -183,6 +183,16 @@ julia> using Revise
 julia> using DenoisingDiffusion
 {% endhighlight %}  
 
+To follow this tutorial, it is recommended to load the dependencies directly:
+{%highlight julia %}
+using Flux
+using NNlib
+using BSON
+using Printf
+using ProgressMeter
+using Random
+{% endhighlight %}  
+
 You can see my final code at [github.com/LiorSinai/DenoisingDiffusion.jl](https://github.com/LiorSinai/TransformersLite.jl).
 
 ### Normal distribution
@@ -415,6 +425,8 @@ More detail can be found [here][wiki_sum_normal].
 As an early optimisation we'll pre-calculate all the $\beta$, $\alpha$ and $\bar{\alpha}$ values and store them in a struct.
 First create a `GaussianDiffusion` struct (more will be added to this struct later):
 {%highlight julia %}
+import Base.eltype
+
 struct GaussianDiffusion{V<:AbstractVector}
     num_timesteps::Int
     data_shape::NTuple
@@ -428,6 +440,8 @@ struct GaussianDiffusion{V<:AbstractVector}
     sqrt_α_cumprods::V
     sqrt_one_minus_α_cumprods::V
 end
+
+eltype(::Type{<:GaussianDiffusion{V}}) where {V} = V
 
 function GaussianDiffusion(V::DataType, βs::AbstractVector, data_shape::NTuple, denoise_fn)
     αs = 1 .- βs
@@ -461,9 +475,16 @@ end
 
 Next the `q_sample` function. The first method is the main definition.
 The other two are convenience functions so we can pass in time steps as a vector or integer without worrying about the noise.
+These other methods however need to be told where to place the noise: on the CPU or the GPU.
+If the model is on the GPU - as is commonly done with larger models - then all the data that is created also needs to be on the GPU.
+The Flux methods `cpu` and `gpu` are used for this through the `to_device` option.
+By default, `to_device=cpu`.
 {%highlight julia %}
+using Flux
+
 function q_sample(
-    diffusion::GaussianDiffusion, x_start::AbstractArray, timesteps::AbstractVector{Int}, noise::AbstractArray
+    diffusion::GaussianDiffusion, x_start::AbstractArray,
+    timesteps::AbstractVector{Int}, noise::AbstractArray
     )
     coeff1 = _extract(diffusion.sqrt_α_cumprods, timesteps, size(x_start))
     coeff2 = _extract(diffusion.sqrt_one_minus_α_cumprods, timesteps, size(x_start))
@@ -471,7 +492,8 @@ function q_sample(
 end
 
 function q_sample(
-    diffusion::GaussianDiffusion, x_start::AbstractArray, timesteps::AbstractVector{Int}
+    diffusion::GaussianDiffusion, x_start::AbstractArray,
+    timesteps::AbstractVector{Int}
     ; to_device=cpu
     )
     T = eltype(eltype(diffusion))
@@ -676,6 +698,8 @@ To recap:
 
 As before we'll pre-calculate all the co-efficients in the preceding equations.
 {%highlight julia %}
+import Base.eltype
+
 struct GaussianDiffusion{V<:AbstractVector}
     num_timesteps::Int
     data_shape::NTuple
@@ -739,14 +763,18 @@ end
 First is equation $\eqref{eq:x0_estimate}$ for $\hat{x}_0$:
 {%highlight julia %}
 function predict_start_from_noise(
-    diffusion::GaussianDiffusion, x_t::AbstractArray, timesteps::AbstractVector{Int}, noise::AbstractArray
+    diffusion::GaussianDiffusion, x_t::AbstractArray,
+    timesteps::AbstractVector{Int}, noise::AbstractArray
     )
     coeff1 = _extract(diffusion.sqrt_recip_α_cumprods, timesteps, size(x_t))
     coeff2 = _extract(diffusion.sqrt_recip_α_cumprods_minus_one, timesteps, size(x_t))
     coeff1 .* x_t - coeff2 .* noise
 end
 
-function model_predictions(diffusion::GaussianDiffusion, x::AbstractArray, timesteps::AbstractVector{Int})
+function model_predictions(
+    diffusion::GaussianDiffusion, x::AbstractArray,
+    timesteps::AbstractVector{Int}
+    )
     noise = diffusion.denoise_fn(x, timesteps)
     x_start = predict_start_from_noise(diffusion, x, timesteps, noise)
     x_start, noise
@@ -756,7 +784,8 @@ end
 Then we can now use $\hat{x}_0$ in equation $\eqref{eq:posterior}$ for $\tilde{\mu}_t$ and $\tilde{\beta}_t$:
 {%highlight julia %}
 function q_posterior_mean_variance(
-    diffusion::GaussianDiffusion, x_start::AbstractArray, x_t::AbstractArray, timesteps::AbstractVector{Int}
+    diffusion::GaussianDiffusion, x_start::AbstractArray, x_t::AbstractArray,
+    timesteps::AbstractVector{Int}
     )
     coeff1 = _extract(diffusion.posterior_mean_coef1, timesteps, size(x_t))
     coeff2 = _extract(diffusion.posterior_mean_coef2, timesteps, size(x_t))
@@ -769,7 +798,8 @@ end
 And finally equation $\eqref{eq:reverse}$ for the reverse process for $x_{t-1}$, additionally returning $\hat{x}_0$:
 {%highlight julia %}
 function p_sample(
-    diffusion::GaussianDiffusion, x::AbstractArray, timesteps::AbstractVector{Int}, noise::AbstractArray
+    diffusion::GaussianDiffusion, x::AbstractArray,
+    timesteps::AbstractVector{Int}, noise::AbstractArray
     ; clip_denoised::Bool=true, add_noise::Bool=true
     )
     x_start, pred_noise = model_predictions(diffusion, x, timesteps)
@@ -805,8 +835,11 @@ x_prev = posterior_mean + sqrt.(posterior_variance) .* noise
 Let's create a full loop through the reverse process:
 
 {%highlight julia %}
-using ProgressMeter
-function p_sample_loop(diffusion::GaussianDiffusion, shape::NTuple; clip_denoised::Bool=true, to_device=cpu)
+using Flux, ProgressMeter
+function p_sample_loop(
+    diffusion::GaussianDiffusion, shape::NTuple
+    ; clip_denoised::Bool=true, to_device=cpu
+    )
     T = eltype(eltype(diffusion))
     x = randn(T, shape) |> to_device
     @showprogress "Sampling..." for i in diffusion.num_timesteps:-1:1
@@ -838,7 +871,10 @@ If we were using an interpreted language like Python it might be acceptable to a
 Julia however is a compiled language and because the returned type is different it is better to have a separate function to preserve type safety:
 
 {%highlight julia %}
-function p_sample_loop_all(diffusion::GaussianDiffusion, shape::NTuple; clip_denoised::Bool=true, to_device=cpu)
+function p_sample_loop_all(
+    diffusion::GaussianDiffusion, shape::NTuple
+    ; clip_denoised::Bool=true, to_device=cpu
+    )
     T = eltype(eltype(diffusion))
     x = randn(T, shape) |> to_device
     x_all = Array{T}(undef, size(x)..., 0) |> to_device
@@ -1217,7 +1253,10 @@ The first method calculates the losses from all three inputs (`x_start`, `timest
 while the second generates the `timesteps` and `noise` and then calls the first.
 
 {%highlight julia %}
-function p_losses(diffusion::GaussianDiffusion, loss, x_start::AbstractArray, timesteps::AbstractVector{Int}, noise::AbstractArray)
+function p_losses(
+    diffusion::GaussianDiffusion, loss, x_start::AbstractArray,
+    timesteps::AbstractVector{Int}, noise::AbstractArray
+    )
     x = q_sample(diffusion, x_start, timesteps, noise)
     model_out = diffusion.denoise_fn(x, timesteps)
     loss(model_out, noise)
