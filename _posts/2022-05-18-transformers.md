@@ -3,7 +3,7 @@ layout: post
 title:  "Transformers from first principles in Julia"
 date:   2022-05-18
 author: Lior Sinai
-last_modified_at: 2023-07-08
+last_modified_at: 2023-08-19
 background: '/assets/posts/transformers/transformer.png'
 sidenav: true
 categories: coding
@@ -11,6 +11,8 @@ tags: mathematics transformers 'machine learning' 'deep learning'
 ---
 
 _Transformers for natural language processing from first principles. This a long post which details a full implementation of transformers and the mathematics behind them. The use case is predicting Amazon review stars based on the review text. The language of choice is Julia utilising the Flux machine learning framework._ 
+
+_Update 19 August 2023: code refactoring and update to Flux 0.13.11 explicit syntax._
 
 <link rel="stylesheet" href="/assets/posts/transformers/style.css">
 
@@ -389,6 +391,13 @@ julia> using Revise
 julia> using TransformersLite
 {% endhighlight %}  
 
+To follow this tutorial, it is recommended to load the dependencies directly:
+{%highlight julia %}
+using Flux
+using NNlib
+using ChainRulesCore
+{% endhighlight %}  
+
 You can see my final code at [github.com/LiorSinai/TransformersLite.jl](https://github.com/LiorSinai/TransformersLite.jl).
 This is based loosely on the registered [Transformers.jl][Transformersjl] package. 
 
@@ -401,10 +410,48 @@ This preprocessing step is a huge topic itself and I am not going to go into too
 We will be making a fixed set of embeddings in the next section.
 That means we need to work from a fixed vocabulary list in this section.
 Any word that is not in this vocabulary will be marked as "unknown" and will have minimal impact on the output.
-I've already created a filtered list of 6653 words for the Amazon reviews task:
+
+Firstly it is recommended to simplify the text to reduce the diversity of tokens.
+The following function converts everything to lowercase, normalises letters (e.g. è to e) and removes punctuation (including "don't" to "dont"):
+{%highlight julia %}
+using Unicode
+
+function simplify(s::AbstractString)
+    s = lowercase(s)
+    s = Unicode.normalize(s, :NFD)
+    s = replace(s, r"['`’\u200d\p{M}]" => "") 
+    s = replace(s, r"\n" => " ")
+end
+{% endhighlight %}
+
+Then we can use the following function to create a vocabulary list:
+{% highlight julia %}
+using DataStructures
+
+function select_vocabulary(corpus::AbstractVector{<:AbstractString}; 
+    min_document_frequency::Int=10, pattern::Regex=r"\w\w+\b")
+    document_frequencies = DefaultDict{String, Int}(0)
+    for document in corpus
+        words = Set{String}()
+        for m in eachmatch(pattern, simplify(document))
+            word = m.match
+            if !(word in words)
+                push!(words, word)
+                document_frequencies[word] += 1
+            end
+        end
+    end
+    filter!(x->x[2] ≥ min_document_frequency, document_frequencies)
+    vocab = collect(document_frequencies)
+    sort!(vocab, by=x->x[2], rev=true)
+    [v[1] for v in vocab]
+end
+{% endhighlight %}
+
+I've already created such a list of 6653 words for the Amazon reviews task:
 [amazon_reviews_train_en.txt](https://github.com/LiorSinai/TransformersLite.jl/blob/main/examples/vocab/amazon_reviews_train_en.txt). 
 These are words which are present in at least 30 different reviews.
-The vocabulary is sorted from highest to lowest of the document frequencies in the original data. 
+Note that the vocabulary is sorted from highest to lowest of the document frequencies in the original data. 
 So if we limit the vocabulary e.g. `vocab[1:1000]` we can still be confident that it will have statistical significance.
 
 The `load_vocab` function is used to load the words:
@@ -421,22 +468,9 @@ end
 vocab = load_vocab("amazon_reviews_train_en.txt")
 {% endhighlight %}
 
-We need to simplify the text so that it can be found in this vocabulary.
-The following function converts everything to lowercase, normalises letters (e.g. è to e) and removes punctuation (including "don't" to "dont"):
-{%highlight julia %}
-using Unicode
-
-function simplify(s::AbstractString)
-    s = lowercase(s)
-    s = Unicode.normalize(s, :NFD)
-    s = replace(s, r"['`’\u200d\p{M}]" => "") 
-    s = replace(s, r"\n" => " ")
-end
-{% endhighlight %}
-
 The next step is to break the text into words. This is best done with a regular expression:
 {%highlight julia %}
-pattern = r"[A-Za-z][A-Za-z]+\b"
+pattern = r"\w\w+\b"
 words = map(m->string(m.match), eachmatch(pattern, document))
 {% endhighlight %}
 
@@ -696,7 +730,7 @@ struct PositionEncoding{W <: AbstractArray}
 end
 
 Flux.@functor PositionEncoding # make this layer discoverable by Flux
-Flux.trainable(m::PositionEncoding) = () # but specify no weights are trainable
+Flux.trainable(m::PositionEncoding) = (;) # but specify no weights are trainable
 
 function PositionEncoding(dim_embedding::Int, max_length::Int=1000)
     W = make_position_encoding(dim_embedding, max_length)
@@ -1229,11 +1263,12 @@ because they carry a strong signal both on the forward pass and with the gradien
 
 At last, our model is almost ready for use.
 There is just one last question, how to use the output embedding matrix?
-We could do on aggregation on each word first to turn it into a matrix: $d_m \times N \times B \rightarrow N \times B$.
+We could do an aggregation on each word first to turn it into a matrix: $d_m \times N \times B \rightarrow N \times B$.
 This aggregate could be a mean or a dense layer.
 Or we could flatten the whole array into a $d_m N \times B$ matrix. 
+Either way this is followed by a `Dense` layer with $k \times B$ outputs for $k$ classes.
 
-My preference is aggregate on each word first with a dense layer.
+My preference is to aggregate on each word first with a dense layer.
 Here is a flatten layer which we will need to use to reduce the dimension: $1\times N \times B \rightarrow N \times B$.
 {% highlight julia %}
 struct FlattenLayer end
@@ -1308,7 +1343,6 @@ TransformerClassifier(
 )        # Total: 21 trainable arrays, 251_552 parameters,
           # plus 1 non-trainable, 32_000 parameters, summarysize 1.083 MiB
 {% endhighlight %}
-
 
 Finally, we have a working transformer!
 
@@ -1402,20 +1436,23 @@ Otherwise the default is an embedding dimension of 32 and 4 heads, which results
 This takes about 1 hour to train.
 Results between the smaller and bigger models were almost identical, except the bigger model converged slightly faster.
 
-Initialization:
+Imports:
 {% highlight julia %}
 using Random
 using DataFrames
 using Arrow
+using ProgressMeter
 using Printf
 using BSON, JSON
 using Flux
 using Flux: DataLoader
 using Dates
 using StatsBase: mean
-
 using TransformersLite
+{% endhighlight %}
 
+Initialisation:
+{% highlight julia %}
 path = "datasets\\amazon_reviews_multi\\en\\1.0.0\\"
 filename = "amazon_reviews_multi-train.arrow"
 to_device = cpu # gpu or cpu
@@ -1470,11 +1507,23 @@ max_length = 50
 
 Train/validation data split.
 {% highlight julia %}
-function split_validation(X::AbstractMatrix, Y::AbstractMatrix, frac=0.1; rng=Random.GLOBAL_RNG)
-    nsamples = size(X, 2)
-    idxs = shuffle(rng, 1:nsamples)
+function split_validation(
+    rng::AbstractRNG, data::AbstractArray, labels::AbstractVecOrMat
+    ; frac::Float64=0.1
+    )
+    nsamples = size(data)[end]
+    idxs = randperm(rng, nsamples)
     ntrain = nsamples - floor(Int, frac * nsamples)
-    (X[:, idxs[1:ntrain]], Y[:, idxs[1:ntrain]]), (X[:, idxs[ntrain+1:end]], Y[:, idxs[ntrain+1:end]])
+    inds_start = ntuple(Returns(:), ndims(data) - 1)
+    ## train data
+    idxs_train = idxs[1:ntrain]
+    train_data = data[inds_start..., idxs_train]
+    train_labels = ndims(labels) == 2 ? labels[:, idxs_train] : labels[idxs_train]
+    ## validation data
+    idxs_val = idxs[(ntrain + 1):end]
+    val_data = data[inds_start..., idxs_val]
+    val_labels = ndims(labels) == 2 ? labels[:, idxs_val] : labels[idxs_val]
+    (train_data, train_labels), (val_data, val_labels)
 end
 
 y_train = copy(labels)
@@ -1489,7 +1538,8 @@ else
 end
 
 X_train, y_train = indices[:, idxs], y_train[:, idxs];
-train_data, val_data = split_validation(X_train, y_train; rng=MersenneTwister(hyperparameters["seed"]))
+rng = MersenneTwister(hyperparameters["seed"])
+train_data, val_data = split_validation(rng, X_train, y_train)
 
 println("train samples:      ", size(train_data[1]), " ", size(train_data[2]))
 println("validation samples: ", size(val_data[1]), " ", size(val_data[2]))
@@ -1520,33 +1570,32 @@ hyperparameters["trainable parameters"] = sum(length, Flux.params(model));
 {% endhighlight %}
 
 Training helper functions. 
-The `train!` function is based off `Flux.train!` except it returns a history and uses the package `ProgressBars`.
+The `train!` function is based off `Flux.train!` except it returns a history and uses the package `ProgressMeter`.
 It is meant to be used with `Flux.DataLoader` for working with batched data.
 {% highlight julia %}
-using Flux
-using Flux: DataLoader
-using Random: shuffle, MersenneTwister
-using ProgressMeter
-using Printf
-
-function train!(loss, ps, data, opt, val_data; n_epochs=10)
+function train!(loss, model, train_data, opt_state, val_data; num_epochs=10)
     history = Dict(
-        "train_acc"=>Float64[], 
-        "train_loss"=>Float64[], 
-        "val_acc"=>Float64[], 
-        "val_loss"=>Float64[]
+        "train_acc" => Float64[], 
+        "train_loss" => Float64[], 
+        "val_acc" => Float64[], 
+        "val_loss" => Float64[],
+        "mean_batch_loss" => Float64[],
         )
-    for epoch in 1:n_epochs
-        ps = Flux.Params(ps)
-        progress = Progress(length(data); desc="epoch $epoch/$n_epochs")
-        for Xy in data
-            gs = gradient(ps) do
-                loss(Xy)
+    for epoch in 1:num_epochs
+        print(stderr, "") # flush stderr for the progress meter
+        progress = Progress(length(train_data); desc="epoch $epoch/$n_epochs")
+        total_loss = 0.0    
+        for (i, Xy) in enumerate(train_data)
+            batch_loss, grads = Flux.withgradient(model) do m
+                loss(m(Xy[1]), Xy[2])
             end
-            Flux.update!(opt, ps, gs)
+            total_loss += batch_loss
+            Flux.update!(opt_state, model, grads[1])
             ProgressMeter.next!(progress)
         end
-        update_history!(history, model, loss, data, val_data)
+        mean_batch_loss = total_loss / length(train_data)
+        push!(history["mean_batch_loss"], mean_batch_loss)
+        update_history!(history, model, loss, train_data, val_data)
     end
     println("")
     history
@@ -1570,13 +1619,13 @@ function update_history!(history::Dict, model, loss, train_data, val_data)
     println("")
 end
 
-function batched_metric(f, data; g=identity)
+function batched_metric(g, f, data)
     result = 0.0f0
     num_observations = 0
     for (x, y) in data
-        metric = f(g(x), y) 
+        val = f(g(x), y) 
         batch_size = count_observations(x) 
-        result += metric * batch_size
+        result += val * batch_size
         num_observations += batch_size
     end
     result / num_observations
@@ -1591,34 +1640,32 @@ count_observations(data) = length(data)
 Training:
 {% highlight julia %}
 if nlabels == 1
-    loss(x, y) = Flux.logitbinarycrossentropy(model(x), y)
+    loss(x, y) = Flux.logitbinarycrossentropy(x, y)
     accuracy(ŷ, y) = mean((Flux.sigmoid.(ŷ) .> 0.5) .== y)
 else
-    loss(x, y) = Flux.logitcrossentropy(model(x), y)
+    loss(x, y) = Flux.logitcrossentropy(x, y)
     accuracy(ŷ, y) = mean(Flux.onecold(ŷ) .== Flux.onecold(y))
 end
-loss(x::Tuple) = loss(x[1], x[2])
-
-opt = ADAM()
 
 batch_size = 32
 train_data_loader = DataLoader(train_data |> to_device; batchsize=batch_size, shuffle=true)
 val_data_loader = DataLoader(val_data |> to_device; batchsize=batch_size, shuffle=false)
 
-val_acc = batched_metric(accuracy, val_data_loader; g=model)
-val_loss = batched_metric(loss, val_data_loader)
+val_acc = batched_metric(model, accuracy, val_data_loader)
+val_loss = batched_metric(model, loss, val_data_loader)
 
 @printf "val_acc=%.4f ; " val_acc * 100
 @printf "val_loss=%.4f \n" val_loss
 
 start_time = time_ns()
+opt_state = Flux.setup(Adam(), model)
 history = train!(
     loss, 
-    Flux.params(model), 
+    model, 
     train_data_loader, 
-    opt, 
-    val_data_loader; 
-    n_epochs=10
+    opt_state, 
+    val_data_loader
+    ; num_epochs=n_epochs
 )
 end_time = time_ns() - start_time
 println("done training")
