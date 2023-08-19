@@ -429,11 +429,11 @@ Then we can use the following function to create a vocabulary list:
 using DataStructures
 
 function select_vocabulary(corpus::AbstractVector{<:AbstractString}; 
-    min_document_frequency::Int=10, pattern::Regex=r"\w\w+\b")
+    min_document_frequency::Int=10, pattern::Regex=r"\w\w+\b", transform=simplify)
     document_frequencies = DefaultDict{String, Int}(0)
     for document in corpus
         words = Set{String}()
-        for m in eachmatch(pattern, simplify(document))
+        for m in eachmatch(pattern, transform(document))
             word = m.match
             if !(word in words)
                 push!(words, word)
@@ -1485,11 +1485,10 @@ display(indexer)
 
 Tokens pipeline:
 {% highlight julia %}
-function preprocess(document::AbstractString, tokenizer; 
-    pattern::Regex = r"[A-Za-z][A-Za-z]+\b", max_length::Union{Nothing, Int}=nothing
+function preprocess(document::AbstractString, tokenizer;
+    pattern::Regex = r"\w\w+\b", max_length::Union{Nothing, Int}=nothing, transform=simplify
     )
-    document = simplify(document)
-    words = map(m->string(m.match), eachmatch(pattern, document))
+    words = map(m->string(m.match), eachmatch(pattern, transform(document)))
     tokens = tokenizer(words)
     if !isnothing(max_length)
         if length(tokens) > max_length
