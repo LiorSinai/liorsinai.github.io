@@ -157,46 +157,7 @@ As a secondary source this [blog post][lilianweng] provides a succinct mathemati
 [lilianweng]: https://lilianweng.github.io/posts/2021-07-11-diffusion-models/
 [outlier]: https://youtu.be/HoKDTa5jHvg
 
-## Implementation
-### Project setup
-
-To start, make a package in the Julia REPL:
-<figure class="highlight">
-    <code class="language-julia-repl hljs" data-lang="julia-repl">
-        <span class="hljs-meta">julia&gt;</span><span class="julia"> cd(<span class="hljs-string">"path\\to\\project\\directory"</span>)</span>
-        <br>
-        <span class="hljs-meta">julia&gt;</span><span class="julia"> ] <span class="hljs-comment"># enter package mode</span></span>
-        <br>
-        <span class="hljs-meta">(@v1.x) pkg&gt;</span><span class="julia"> generate DenoisingDiffusion <span class="hljs-comment"># make a directory structure</span></span>
-        <br> 
-        <span class="hljs-meta">(@v1.x) pkg&gt;</span><span class="julia"> activate DenoisingDiffusion <span class="hljs-comment"># activate package environment</span></span>
-        <span class="hljs-meta">(DenoisingDiffusion) pkg&gt;</span><span class="julia"> add Flux NNlib BSON Printf ProgressMeter Random Test</span>
-        <br> 
-        <span class="hljs-meta">(DenoisingDiffusion) pkg&gt;</span><span class="julia"> activate </span>
-        <br> 
-        <span class="hljs-meta">(@v1.x) pkg&gt;</span><span class="julia"> dev "path\\to\\project\\directory\\DenoisingDiffusion"</span>
-    </code>
-</figure>
-
-The purpose of making a package is that we can now use the super helpful Revise package,
-which will dynamically update most changes during development without errors:
-{%highlight julia-repl %}
-julia> using Revise
-julia> using DenoisingDiffusion
-{% endhighlight %}  
-
-To follow this tutorial, it is recommended to load the dependencies directly:
-{%highlight julia %}
-using Flux
-using NNlib
-using BSON
-using Printf
-using ProgressMeter
-using Random
-{% endhighlight %}  
-
-You can see my final code at [github.com/LiorSinai/DenoisingDiffusion.jl](https://github.com/LiorSinai/TransformersLite.jl).
-
+## Preliminaries
 ### Normal distribution
 <h4 id="normal-distribution-theory">Theory</h4> 
 
@@ -325,6 +286,46 @@ scatter(X[1, :], X[2, :],
 	>
 <figcaption></figcaption>
 </figure>
+
+## Implementation
+### Project setup
+
+To start, make a package in the Julia REPL:
+<figure class="highlight">
+    <code class="language-julia-repl hljs" data-lang="julia-repl">
+        <span class="hljs-meta">julia&gt;</span><span class="julia"> cd(<span class="hljs-string">"path\\to\\project\\directory"</span>)</span>
+        <br>
+        <span class="hljs-meta">julia&gt;</span><span class="julia"> ] <span class="hljs-comment"># enter package mode</span></span>
+        <br>
+        <span class="hljs-meta">(@v1.x) pkg&gt;</span><span class="julia"> generate DenoisingDiffusion <span class="hljs-comment"># make a directory structure</span></span>
+        <br> 
+        <span class="hljs-meta">(@v1.x) pkg&gt;</span><span class="julia"> activate DenoisingDiffusion <span class="hljs-comment"># activate package environment</span></span>
+        <span class="hljs-meta">(DenoisingDiffusion) pkg&gt;</span><span class="julia"> add Flux NNlib BSON Printf ProgressMeter Random Test</span>
+        <br> 
+        <span class="hljs-meta">(DenoisingDiffusion) pkg&gt;</span><span class="julia"> activate </span>
+        <br> 
+        <span class="hljs-meta">(@v1.x) pkg&gt;</span><span class="julia"> dev "path\\to\\project\\directory\\DenoisingDiffusion"</span>
+    </code>
+</figure>
+
+The purpose of making a package is that we can now use the super helpful Revise package,
+which will dynamically update most changes during development without errors:
+{%highlight julia-repl %}
+julia> using Revise
+julia> using DenoisingDiffusion
+{% endhighlight %}  
+
+To follow this tutorial, it is recommended to load the dependencies directly:
+{%highlight julia %}
+using Flux
+using NNlib
+using BSON
+using Printf
+using ProgressMeter
+using Random
+{% endhighlight %}  
+
+You can see my final code at [github.com/LiorSinai/DenoisingDiffusion.jl](https://github.com/LiorSinai/TransformersLite.jl).
 
 ### Forward process
 <h4 id="forward-process-theory">Theory</h4> 
@@ -1408,7 +1409,8 @@ gif(anim_denoise, joinpath(directory, "reverse_x0.gif"), fps=8)
     </video>
 </figure>
 
-## Optimal solutions
+## Evaluation
+### Optimal solutions
 <h4 id="optimal-solutions-theory">Theory</h4> 
 Given a random point in space:
 
