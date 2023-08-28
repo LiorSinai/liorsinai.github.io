@@ -10,6 +10,8 @@ tags:  mathematics AI art diffusion 'machine learning' 'deep learning'
 
 _Classifier-free guidance for denoising diffusion probabilistic model in Julia._
 
+_Update 28 August 2023: code refactoring and update to Flux 0.13.11 explicit syntax._
+
 This is part of a series. The other articles are:
 - [Part 1: first principles][first_principles].
 - [Part 2: image generation with MNIST][image_diffusion].
@@ -131,11 +133,11 @@ As discussed above, for the special case of the `guidance_scale=1` inputs will b
 function p_sample(
     diffusion::GaussianDiffusion, x::AbstractArray, timesteps::AbstractVector{Int}, labels::AbstractVector{Int}, noise::AbstractArray;
     clip_denoised::Bool=true, add_noise::Bool=true, guidance_scale::AbstractFloat=1.0f0
-)
+    )
     if guidance_scale == 1.0f0
-        x_start, pred_noise = model_predictions(diffusion, x, timesteps, labels)
+        x_start, pred_noise = denoise(diffusion, x, timesteps, labels)
     else
-        x_start, pred_noise = _classifier_free_guidance(
+        x_start, pred_noise = classifier_free_guidance(
             diffusion, x, timesteps, labels; guidance_scale=guidance_scale
         )
     end
@@ -151,12 +153,12 @@ function p_sample(
 end
 {% endhighlight %}
 
-We need a new method for the `model_predictions` function to handle three inputs:
+We need a new method for the `denoise` function to handle three inputs:
 {% highlight julia %}
-function model_predictions(
+function denoise(
     diffusion::GaussianDiffusion,
     x::AbstractArray, timesteps::AbstractVector{Int}, labels::AbstractVector{Int}
-)
+    )
     noise = diffusion.denoise_fn(x, timesteps, labels)
     x_start = predict_start_from_noise(diffusion, x, timesteps, noise)
     x_start, noise
@@ -166,7 +168,7 @@ end
 Next is the implementation of classifier-free guidance through equation $\ref{eq:classifier-free-guidance}$.
 This code calculates both the conditioned noise and the unconditioned noise at the same time.
 {% highlight julia %}
-function _classifier_free_guidance(
+function classifier_free_guidance(
     diffusion::GaussianDiffusion,
     x::AbstractArray, timesteps::AbstractVector{Int}, labels::AbstractVector{Int}
     ; guidance_scale=1.0f0
@@ -379,7 +381,6 @@ Plotting all at once:
 	alt="combined_patterns"
 	>
 </figure>
-
 
 Make the labels. Remember that 1 is reserved for random choice.
 {% highlight julia %}

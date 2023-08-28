@@ -10,6 +10,8 @@ tags:  mathematics AI art diffusion 'machine learning' 'deep learning'
 
 _A denoising diffusion probabilistic model for generating numbers based on the MNIST dataset. The underlying machine learning model is a U-Net model, which is a convolutional autoencoder with skip connections. A large part of this post is dedicated to implementing this model architecture in Julia._
 
+_Update 28 August 2023: code refactoring and update to Flux 0.13.11 explicit syntax._
+
 This is part of a series. The other articles are:
 - [Part 1: first principles][first_principles].
 - [Part 3: classifier free guidance][classifier_free_guidance].
@@ -1084,13 +1086,16 @@ diffusion = GaussianDiffusion(Vector{Float32}, βs, data_shape, model)
 
 Train the model using the functions from [part 1-training][first_principles_train]:
 {% highlight julia %}
-data = Flux.DataLoader(train_x |> to_device; batchsize=32, shuffle=true);
+train_data = Flux.DataLoader(train_x |> to_device; batchsize=32, shuffle=true);
 val_data = Flux.DataLoader(val_x |> to_device; batchsize=32, shuffle=false);
 loss(diffusion, x) = p_losses(diffusion, loss_type, x; to_device=to_device)
 opt = Adam(learning_rate)
-
 output_directory = "outputs\\MNIST_" * Dates.format(now(), "yyyymmdd_HHMM")
-history = train!(loss, diffusion, data, opt, val_data; num_epochs=15, save_dir=output_directory)
+opt_state = Flux.setup(opt, diffusion)
+history = train!(
+    loss, diffusion, train_data, opt_state, val_data
+    ; num_epochs=20
+)
 {% endhighlight %}  
 
 [first_principles_train]: /coding/2022/12/03/denoising-diffusion-1-spiral#training
@@ -1123,7 +1128,7 @@ Here is the resulting reverse process (left) and first image estimates made usin
     </video>
 </figure>
 
-### Evaluation 
+## Evaluation 
 
 We would now like to evaluate how good our image generation model is.
 In [part 1][first_principles] we had a clear defined target - a spiral defined by mathematical equations - and hence a clear defined measure of error: the shortest distance from each point to the spiral.
@@ -1270,7 +1275,7 @@ This is good enough for us to consider it a perfect oracle.
 
 After training we can load the model:
 {% highlight julia %}
-classifier_path = "..\\models\\LeNet5\\model.bson"
+classifier_path = "models\\LeNet5\\model.bson"
 classifier = BSON.load(classifier_path)[:model]
 {% endhighlight %}
 

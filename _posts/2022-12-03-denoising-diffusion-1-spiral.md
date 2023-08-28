@@ -12,6 +12,8 @@ tags:  mathematics AI art diffusion 'machine learning' 'deep learning'
 
 _Denoising diffusion probabilistic models for AI art generation from first principles in Julia. This is part 1 of a 3 part series on these models._
 
+_Update 28 August 2023: code refactoring and update to Flux 0.13.11 explicit syntax._
+
 This is part of a series. The other articles are:
 - [Part 2: image generation with MNIST][image_diffusion].
 - [Part 3: classifier free guidance][classifier_free_guidance].
@@ -722,6 +724,9 @@ end
 
 eltype(::Type{<:GaussianDiffusion{V}}) where {V} = V
 
+Flux.@functor GaussianDiffusion
+Flux.trainable(g::GaussianDiffusion) = (; g.denoise_fn) # only the denoise_fn is trainable
+
 function GaussianDiffusion(
     V::DataType, βs::AbstractVector, data_shape::NTuple, denoise_fn
     )
@@ -771,7 +776,7 @@ function predict_start_from_noise(
     coeff1 .* x_t - coeff2 .* noise
 end
 
-function model_predictions(
+function denoise(
     diffusion::GaussianDiffusion, x::AbstractArray,
     timesteps::AbstractVector{Int}
     )
@@ -802,7 +807,7 @@ function p_sample(
     timesteps::AbstractVector{Int}, noise::AbstractArray
     ; clip_denoised::Bool=true, add_noise::Bool=true
     )
-    x_start, pred_noise = model_predictions(diffusion, x, timesteps)
+    x_start, pred_noise = denoise(diffusion, x, timesteps)
     if clip_denoised
         clamp!(x_start, -1, 1)
     end
@@ -824,7 +829,7 @@ diffusion = GaussianDiffusion(Vector{Float32}, βs, (2,), (x, t) -> randn(size(x
 XT = randn((2, 100))
 timesteps = fill(num_timesteps, 100)
 
-x_start, pred_noise = DenoisingDiffusion.model_predictions(diffusion, XT, timesteps)
+x_start, pred_noise = DenoisingDiffusion.denoise(diffusion, XT, timesteps)
 posterior_mean, posterior_variance = q_posterior_mean_variance(diffusion, x_start, XT, timesteps)
 noise =  randn(size(XT))
 x_prev = posterior_mean + sqrt.(posterior_variance) .* noise
@@ -842,10 +847,13 @@ function p_sample_loop(
     )
     T = eltype(eltype(diffusion))
     x = randn(T, shape) |> to_device
-    @showprogress "Sampling..." for i in diffusion.num_timesteps:-1:1
-        timesteps = fill(i, shape[end]) |> to_device;
+    @showprogress "Sampling..." for t in diffusion.num_timesteps:-1:1
+        timesteps = fill(t, shape[end]) |> to_device;
         noise =  randn(T, size(x)) |> to_device
-        x, x_start = p_sample(diffusion, x, timesteps, noise; clip_denoised=clip_denoised, add_noise=(i != 1))
+        x, x_start = p_sample(
+            diffusion, x, timesteps, noise
+            ; clip_denoised=clip_denoised, add_noise=(t != 1)
+        )
     end
     x
 end
@@ -880,10 +888,13 @@ function p_sample_loop_all(
     x_all = Array{T}(undef, size(x)..., 0) |> to_device
     x_start_all = Array{T}(undef, size(x)..., 0) |> to_device
     tdim = ndims(x_all)
-    @showprogress "Sampling..." for i in diffusion.num_timesteps:-1:1
-        timesteps = fill(i, shape[end]) |> to_device;
+    @showprogress "Sampling..." for t in diffusion.num_timesteps:-1:1
+        timesteps = fill(t, shape[end]) |> to_device;
         noise =  randn(T, size(x)) |> to_device
-        x, x_start = p_sample(diffusion, x, timesteps, noise; clip_denoised=clip_denoised, add_noise=(i != 1))
+        x, x_start = p_sample(
+            diffusion, x, timesteps, noise
+            ; clip_denoised=clip_denoised, add_noise=(t!= 1)
+        )
         x_all = cat(x_all, x, dims=tdim)
         x_start_all = cat(x_start_all, x_start, dims=tdim)
     end
@@ -1119,7 +1130,7 @@ struct SinusoidalPositionEmbedding{W<:AbstractArray}
 end
 
 Flux.@functor SinusoidalPositionEmbedding
-Flux.trainable(emb::SinusoidalPositionEmbedding) = () # mark it as an non-trainable array
+Flux.trainable(emb::SinusoidalPositionEmbedding) = (;) # mark it as an non-trainable array
 
 function SinusoidalPositionEmbedding(in::Int, out::Int)
     W = make_positional_embedding(out, in)
@@ -1262,7 +1273,10 @@ function p_losses(
     loss(model_out, noise)
 end
 
-function p_losses(diffusion::GaussianDiffusion, loss, x_start::AbstractArray{T, N}; to_device=cpu) where {T, N}
+function p_losses(
+    diffusion::GaussianDiffusion, loss, x_start::AbstractArray{T, N}
+    ; to_device=cpu
+    ) where {T, N}
     timesteps = rand(1:diffusion.num_timesteps, size(x_start, N)) |> to_device
     noise = randn(eltype(eltype(diffusion)), size(x_start)) |> to_device
     p_losses(diffusion, loss, x_start, timesteps, noise)
@@ -1274,61 +1288,56 @@ Here is also a custom function which additionally returns a training history, sa
 
 {%highlight julia %}
 using Flux: update!, DataLoader
-using Flux.Optimise: AbstractOptimiser
 using Flux.Zygote: sensitivity, pullback
 using Printf: @sprintf
 using ProgressMeter
 
-function train!(
-    loss, diffusion::GaussianDiffusion, data, opt::AbstractOptimiser, val_data;
+function train!(loss, model, data::DataLoader, opt_state, val_data;
     num_epochs::Int=10,
     save_after_epoch::Bool=false,
     save_dir::String=""
     )
     history = Dict(
-        "epoch_size" => count_observations(data),
-        "train_loss" => Float64[],
+        "epoch_size" => length(data),
+        "mean_batch_loss" => Float64[],
         "val_loss" => Float64[],
+        "batch_size" => data.batchsize
     )
     for epoch = 1:num_epochs
-        losses = Vector{Float64}()
+        print(stderr, "") # clear stderr for Progress
         progress = Progress(length(data); desc="epoch $epoch/$num_epochs")
-        params = Flux.params(diffusion) # keep here in case of data movement between devices (this might happen during saving)
-        for x in data
-            batch_loss, back = pullback(params) do
-                loss(diffusion, x)
+        total_loss = 0.0
+        for (idx, x) in enumerate(data)
+            batch_loss, grads = Flux.withgradient(model) do m
+                loss(m, x)
             end
-            grads = back(sensitivity(batch_loss))
-            Flux.update!(opt, params, grads)
-            push!(losses, batch_loss)
-            ProgressMeter.next!(progress; showvalues=[("batch loss", @sprintf("%.5f", batch_loss))])
+            total_loss += batch_loss
+            ProgressMeter.next!(
+                progress; 
+                showvalues=[("batch loss", @sprintf("%.5f", batch_loss))]
+                )
+            Flux.update!(opt_state, model, grads[1])
         end
         if save_after_epoch
-            path = joinpath(save_dir, "diffusion_epoch=$(epoch).bson")
-            let diffusion = cpu(diffusion) # keep main diffusion on device
-                BSON.bson(path, Dict(:diffusion => diffusion))
+            path = joinpath(save_dir, "model_epoch=$(epoch).bson")
+            let model = cpu(model) # keep main model on device
+                BSON.bson(path, Dict(:model => model))
             end
         end
-        update_history!(diffusion, history, loss, losses, val_data)
+        push!(history["mean_batch_loss"], total_loss / length(data))
+        @printf("mean batch loss: %.5f ; ", history["mean_batch_loss"][end])
+        update_history!(model, history, loss, val_data)
     end
     history
 end
 
-count_observations(data::D) where {D<:DataLoader} = count_observations(data.data)
-count_observations(data::Tuple) = count_observations(data[1])
-count_observations(data::AbstractArray{<:Any,N}) where {N} = size(data, N)
-count_observations(data) = length(data)
-
-function update_history!(diffusion, history, loss, train_losses, val_data)
-    push!(history["train_loss"], sum(train_losses) / length(train_losses))
-
+function update_history!(model, history, loss, val_data)
     val_loss = 0.0
     for x in val_data
-        val_loss += loss(diffusion, x)
+        val_loss += loss(model, x)
     end
-    push!(history["val_loss"], val_loss / length(val_data))
-
-    @printf("train loss: %.5f ; ", history["train_loss"][end])
+    val_loss /= length(val_data)
+    push!(history["val_loss"], val_loss)
     @printf("val loss: %.5f", history["val_loss"][end])
     println("")
 end
@@ -1344,14 +1353,17 @@ diffusion = GaussianDiffusion(Vector{Float32}, βs, (2,), model)
 
 diffusion = diffusion |> to_device
 
-data = Flux.DataLoader(X |> to_device; batchsize=32, shuffle=true);
+train_data = Flux.DataLoader(X |> to_device; batchsize=32, shuffle=true);
 X_val = normalize_neg_one_to_one(make_spiral(floor(Int, 0.1 * n_batch)))
 val_data = Flux.DataLoader(X_val |> to_device; batchsize=32, shuffle=false);
 loss_type = Flux.mse;
 loss(diffusion, x) = p_losses(diffusion, loss_type, x; to_device=to_device)
 opt = Adam(0.001);
-
-history = train!(loss, diffusion, data, opt, val_data; num_epochs=num_epochs)
+opt_state = Flux.setup(opt, diffusion)
+history = train!(
+    loss, diffusion, train_data, opt_state, val_data
+    ; num_epochs=100
+)
 {% endhighlight %}
 
 The training history:
