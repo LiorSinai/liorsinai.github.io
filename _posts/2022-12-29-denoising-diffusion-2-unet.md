@@ -687,7 +687,7 @@ A complication of this block is that the input channels can be different to the 
 </figure>
 
 The `ConvEmbed` block has approximately $(9m_i+4)m_od^2$ parameters, the convolution layer has approximately $3^2m_o^2d^2$ and 
-the skip connection has approximately $3^2m_im_od^2$ parameters where $m_i\neq m_o$.
+the skip connection has approximately $3^2m_im_od^2$ where $m_i\neq m_o$.
 In total there are $(9(m_i+m_o) + 4)m_od^2$ parameters on the down blocks and $(9(2m_i+m_o) + 4)m_od^2$ on the up blocks.
 
 This table summarises the resultant block sizes (all values are a slight underestimate):
@@ -948,6 +948,205 @@ function batched_mul(A::AbstractArray{T,4}, B::AbstractArray{T,4}) where {T}
     new_C
 end
 {% endhighlight %}
+
+### Accounting
+
+The following is a summary of all the (approximate) equations for the parameters:
+
+<table>
+<thead>
+  <tr>
+    <th>Type</th>
+    <th>Parameters</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>Conv</td>
+    <td>$k^2 m_i m_o d^2 +m_o d$</td>
+  </tr>
+  <tr>
+    <td>ConvEmbed</td>
+    <td>$(9 m_i + 4)m_o d^2$</td>
+  </tr>
+  <tr>
+    <td>ResBlock</td>
+    <td>$(9(m_i + m_o) + 4)m_o d^2 $</td>
+  </tr>
+  <tr>
+    <td>ResBlock (up)</td>
+    <td>$(9(2m_i + m_o) + 4)m_o d^2 $</td>
+  </tr>
+  <tr>
+    <td>Downsample</td>
+    <td>$16m_i m_od^2 +m_o d$</td>
+  </tr>
+  <tr>
+    <td>Upsample</td>
+    <td>$9m_i m_od^2 +m_o d$</td>
+  </tr>
+  <tr>
+    <td>Attention</td>
+    <td>$36m_i^2d^2 + m_i d$</td>
+  </tr>
+</tbody>
+</table>
+
+With these we can construct a table for the full UNet model:
+
+<table>
+<thead>
+  <tr>
+    <th></th>
+    <th>Key</th>
+    <th>Type</th>
+    <th>$m_i$</th>
+    <th>$m_o$</th>
+    <th>$d^2$</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>1</td>
+    <td>init</td>
+    <td>Conv</td>
+    <td>0</td>
+    <td>1</td>
+    <td>0</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>down_1</td>
+    <td>ResBlock</td>
+    <td>1</td>
+    <td>1</td>
+    <td>22</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>downsample_1</td>
+    <td>Conv</td>
+    <td>1</td>
+    <td>1</td>
+    <td>16</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>down_2</td>
+    <td>ResBlock</td>
+    <td>1</td>
+    <td>1</td>
+    <td>22</td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>downsample_2</td>
+    <td>Conv</td>
+    <td>1</td>
+    <td>2</td>
+    <td>32</td>
+  </tr>
+  <tr>
+    <td>6</td>
+    <td>down_3</td>
+    <td>ResBlock</td>
+    <td>2</td>
+    <td>2</td>
+    <td>80</td>
+  </tr>
+  <tr>
+    <td>7</td>
+    <td>down_4</td>
+    <td>Conv</td>
+    <td>2</td>
+    <td>3</td>
+    <td>54</td>
+  </tr>
+  <tr>
+    <td>8</td>
+    <td>middle_1</td>
+    <td>ResBlock</td>
+    <td>3</td>
+    <td>3</td>
+    <td>174</td>
+  </tr>
+  <tr>
+    <td>9</td>
+    <td>middle_attention</td>
+    <td>MultiHeadAttention</td>
+    <td>3</td>
+    <td>3</td>
+    <td>324</td>
+  </tr>
+  <tr>
+    <td>10</td>
+    <td>middle_2</td>
+    <td>ResBlock</td>
+    <td>3</td>
+    <td>3</td>
+    <td>174</td>
+  </tr>
+  <tr>
+    <td>11</td>
+    <td>up_3</td>
+    <td>ResBlock</td>
+    <td>5</td>
+    <td>3</td>
+    <td>363</td>
+  </tr>
+  <tr>
+    <td>12</td>
+    <td>upsample_3</td>
+    <td>Conv</td>
+    <td>3</td>
+    <td>2</td>
+    <td>54</td>
+  </tr>
+  <tr>
+    <td>13</td>
+    <td>up_2</td>
+    <td>ResBlock</td>
+    <td>3</td>
+    <td>2</td>
+    <td>152</td>
+  </tr>
+  <tr>
+    <td>14</td>
+    <td>upsample_2</td>
+    <td>Conv</td>
+    <td>2</td>
+    <td>1</td>
+    <td>18</td>
+  </tr>
+  <tr>
+    <td>15</td>
+    <td>up_1</td>
+    <td>ResBlock</td>
+    <td>2</td>
+    <td>1</td>
+    <td>49</td>
+  </tr>
+  <tr>
+    <td>16</td>
+    <td>final</td>
+    <td>Conv</td>
+    <td>1</td>
+    <td>0</td>
+    <td>0</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td></td>
+    <td>Total</td>
+    <td>1</td>
+    <td>1</td>
+    <td>1534</td>
+  </tr>
+</tbody>
+</table>
+
+Setting `model_channels` to $d=16$ results in $1534d^2=392,704$ parameters which is 97.3% of the true total of 403,409.
+The difference comes from ignoring bias terms and terms in $d$.
 
 ## MNIST
 

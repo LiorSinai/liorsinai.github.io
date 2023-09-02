@@ -643,8 +643,22 @@ It is now a matter of substituting in equations $\eqref{eq:normal}$, $\eqref{eq:
             -2 \sqrt{\vphantom{1}\bar{\alpha}_t} x_t x_0 + \bar{\alpha}_t x_0^2 ) \\
         &= \frac{1}{1-\bar{\alpha}_t}(x_t - \sqrt{\vphantom{1}\bar{\alpha}_t}x_0)^2
     \end{align}
-    Which remarkably cancels out with our denominator.
+    which remarkably cancels out with our denominator.
+    <p>
+    We are now left with:
+    $$
+    \begin{align}
+    q(x_{t-1} \vert x_{t}, x_0) &= \sqrt{\frac{(1-\bar{\alpha}_{t})}{2\pi\beta_t(1-\bar{\alpha}_{t-1})}}
+        \exp\left( \frac{-1}{2\tilde{\beta}}(x_{t-1} - \tilde{\mu}_t)^2 \right) \\
+        &= \frac{1}{\sqrt{2\pi\tilde{\beta}}}
+        \exp\left(\frac{-1}{2\tilde{\beta}_t}(x_{t-1} - \tilde{\mu}_t)^2 \right)
+    \end{align}
+    $$
+    which is a normal distribution with mean $\tilde{\mu}_t$ and variance $\tilde{\beta}_t$.
+    </p>
+    <p>
     For a generalisation of this result, see the <a href="#bayes-theorem-for-normal-distributions">appendix</a>.
+    </p>
   </div>
 </div>
 
@@ -812,7 +826,9 @@ function p_sample(
     if clip_denoised
         clamp!(x_start, -1, 1)
     end
-    posterior_mean, posterior_variance = q_posterior_mean_variance(diffusion, x_start, x, timesteps)
+    posterior_mean, posterior_variance = q_posterior_mean_variance(
+        diffusion, x_start, x, timesteps
+    )
     x_prev = posterior_mean
     if add_noise
         x_prev += sqrt.(posterior_variance) .* noise
@@ -959,10 +975,16 @@ Definitions:
 {%highlight julia %}
 abstract type AbstractParallel end
 
-_maybe_forward(layer::AbstractParallel, x::AbstractArray, ys::AbstractArray...) = layer(x, ys...)
-_maybe_forward(layer::Parallel, x::AbstractArray, ys::AbstractArray...) = layer(x, ys...)
-_maybe_forward(layer, x::AbstractArray, ys::AbstractArray...) = layer(x)
+_maybe_forward(layer::AbstractParallel, x::AbstractArray, ys::AbstractArray...) = 
+    layer(x, ys...)
+_maybe_forward(layer::Parallel, x::AbstractArray, ys::AbstractArray...) = 
+    layer(x, ys...)
+_maybe_forward(layer, x::AbstractArray, ys::AbstractArray...) = 
+    layer(x)
 
+struct ConditionalChain{T<:Union{Tuple,NamedTuple}} <: AbstractParallel
+    layers::T
+end
 Flux.@functor ConditionalChain 
 
 ConditionalChain(xs...) = ConditionalChain(xs)
@@ -1285,27 +1307,19 @@ end
 {% endhighlight %}
 
 This can be used with the inbuilt `Flux.train!` function.
-Here is also a custom function which additionally returns a training history, saves after each epoch, and displays a progress bar.
+Here is also a custom function which additionally returns a training history and displays a progress bar.
+For more functionality like calculating the validation loss after each epoch, see the [train.jl](https://github.com/LiorSinai/DenoisingDiffusion.jl/blob/main/src/train.jl) script in the repository.
 
 {%highlight julia %}
-using Flux: update!, DataLoader
-using Flux.Zygote: sensitivity, pullback
-using Printf: @sprintf
+using Flux: DataLoader
 using ProgressMeter
+using Printf
 
-function train!(loss, model, data::DataLoader, opt_state, val_data;
+function train!(loss, model, data::DataLoader, opt_state;
     num_epochs::Int=10,
-    save_after_epoch::Bool=false,
-    save_dir::String=""
     )
-    history = Dict(
-        "epoch_size" => length(data),
-        "mean_batch_loss" => Float64[],
-        "val_loss" => Float64[],
-        "batch_size" => data.batchsize
-    )
+    history = Dict("mean_batch_loss" => Float64[])
     for epoch = 1:num_epochs
-        print(stderr, "") # clear stderr for Progress
         progress = Progress(length(data); desc="epoch $epoch/$num_epochs")
         total_loss = 0.0
         for (idx, x) in enumerate(data)
@@ -1313,34 +1327,13 @@ function train!(loss, model, data::DataLoader, opt_state, val_data;
                 loss(m, x)
             end
             total_loss += batch_loss
-            ProgressMeter.next!(
-                progress; 
-                showvalues=[("batch loss", @sprintf("%.5f", batch_loss))]
-                )
             Flux.update!(opt_state, model, grads[1])
-        end
-        if save_after_epoch
-            path = joinpath(save_dir, "model_epoch=$(epoch).bson")
-            let model = cpu(model) # keep main model on device
-                BSON.bson(path, Dict(:model => model))
-            end
+            ProgressMeter.next!(progress)
         end
         push!(history["mean_batch_loss"], total_loss / length(data))
-        @printf("mean batch loss: %.5f ; ", history["mean_batch_loss"][end])
-        update_history!(model, history, loss, val_data)
+        @printf("mean batch loss: %.5f\n", history["mean_batch_loss"][end])
     end
     history
-end
-
-function update_history!(model, history, loss, val_data)
-    val_loss = 0.0
-    for x in val_data
-        val_loss += loss(model, x)
-    end
-    val_loss /= length(val_data)
-    push!(history["val_loss"], val_loss)
-    @printf("val loss: %.5f", history["val_loss"][end])
-    println("")
 end
 {% endhighlight %}
 
@@ -1355,14 +1348,12 @@ diffusion = GaussianDiffusion(Vector{Float32}, βs, (2,), model)
 diffusion = diffusion |> to_device
 
 train_data = Flux.DataLoader(X |> to_device; batchsize=32, shuffle=true);
-X_val = normalize_neg_one_to_one(make_spiral(floor(Int, 0.1 * n_batch)))
-val_data = Flux.DataLoader(X_val |> to_device; batchsize=32, shuffle=false);
 loss_type = Flux.mse;
 loss(diffusion, x) = p_losses(diffusion, loss_type, x; to_device=to_device)
 opt = Adam(0.001);
 opt_state = Flux.setup(opt, diffusion)
 history = train!(
-    loss, diffusion, train_data, opt_state, val_data
+    loss, diffusion, train_data, opt_state
     ; num_epochs=100
 )
 {% endhighlight %}
@@ -1506,7 +1497,8 @@ ddf(p, t) = scale - (shift - p[1]) * (2sin(t) + t * cos(t)) + (shift - p[2]) * (
 Equation $\eqref{eq:opt}$ has multiple roots as a result of the periodic nature of the spiral.
 Every full revolution there is another candidate for the closest point to the spiral.
 Depending on the range we choose the answer will be different.
-Therefore in order for Newton's method to converge to a good answer, we need to provide a good first guess. This is done by brute force: pass $n$ points in a range to the function and choose the one with the smallest outcome. As of Julia 1.7 this is inbuilt into the `argmin` function. (You could also only use this brute force method without Newton's method because the extra precision provided is not critical.).[^newtons_method]
+Therefore in order for Newton's method to converge to a good answer, we need to provide a good first guess.[^newtons_method]
+This is done by brute force: pass $n$ points in a range to the function and choose the one with the smallest outcome. As of Julia 1.7 this is inbuilt into the `argmin` function. (You could also only use this brute force method without Newton's method because the extra precision provided is not critical.)
 
 {%highlight julia%}
 function argmin_func_newton(
