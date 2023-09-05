@@ -2,6 +2,7 @@
 layout: post
 title:  "Guided denoising diffusion"
 date:   2023-01-04
+last_modified_at: 2023-09-05
 author: Lior Sinai
 categories: coding
 sidenav: true
@@ -126,6 +127,7 @@ This is the guided version of the reverse process from [part 1](/coding/2022/12/
 For text embeddings coming from a language model we have to pass an array of floats to `p_sample`.
 However I will be assuming the embeddings are calculated in the model too, so the `p_sample` will expect an integer label or an array of integer labels. 
 These will then be passed to an embedding layer.
+(For modifications which can take in external embeddings, see the [feature/external-embeddings](https://github.com/LiorSinai/DenoisingDiffusion.jl/pull/5) branch on the repository.)
 As a trick to combine the models for unconditioned noise and conditioned noise, a label of 1 will be considered "random choice" and higher integers are guided diffusion.
 
 As discussed above, for the special case of the `guidance_scale=1` inputs will be passed directly to the model else the more computationally intensive classifier-free guidance will be invoked.
@@ -284,30 +286,74 @@ function p_losses(
 end
 {% endhighlight %}
 
-The second generates the `timesteps` and `noise` (as before), randomly sets a proportion `p_uncond` of sample labels to 1 and then calls the first method. 
-The model will learn to ignore labels with a value of 1 because any sample can be part of the `p_uncond` batch.[^rand_labels]
+The second will generate the `timesteps` and `noise` based on `x_start` (as before):
 {% highlight julia %}
 function p_losses(
-    diffusion::GaussianDiffusion, loss, xy::Tuple{AbstractArray,AbstractVector};
-    to_device=cpu, p_uncond::Float64=0.20
-)
-    x_start = xy[1]
-    labels = xy[2]
+    diffusion::GaussianDiffusion,
+    loss,
+    x_start::AbstractArray,
+    labels::AbstractVector{Int},
+    ; to_device=cpu
+    )
     batch_size = size(x_start)[end]
-    if (batch_size != length(labels))
-        throw(DimensionMismatch("batch size != label length, $batch_size != $(length(labels))"))
-    end
+    @assert(batch_size == length(labels),
+        "batch size != label length, $batch_size != $(length(labels))"
+    )
     timesteps = rand(1:diffusion.num_timesteps, batch_size) |> to_device
     noise = randn(eltype(eltype(diffusion)), size(x_start)) |> to_device
-    # with probability p_uncond we train without class conditioning
-    labels = labels |> cpu
-    is_class_cond = rand(batch_size) .>= p_uncond
-    is_not_class_cond = .~is_class_cond
-    labels = (labels .* is_class_cond) + is_not_class_cond # set is_not_class_cond to 1
-    labels = labels |> to_device
     p_losses(diffusion, loss, x_start, timesteps, labels, noise)
 end
 {% endhighlight %}
+
+We need to update the training loop so that it can randomly set labels to that of the empty set $\emptyset$.[^p_losses]
+This `train!` function from [part 1](/coding/2022/12/03/denoising-diffusion-1-spiral#training) is extended as follows:
+{% highlight julia %}
+using Flux: DataLoader
+using ProgressMeter
+
+function train!(loss, model, data::DataLoader, opt_state;
+    num_epochs::Int=10,
+    prob_uncond::Float64=0.0,
+    )
+    history = Dict("mean_batch_loss" => Float64[],)
+    for epoch = 1:num_epochs
+        progress = Progress(length(data); desc="epoch $epoch/$num_epochs")
+        total_loss = 0.0
+        for (idx, x) in enumerate(data)
+            if (x isa Tuple)
+                y = prob_uncond == 0.0 ? 
+                    x[2] : 
+                    randomly_set_unconditioned(x[2]; prob_uncond=prob_uncond) 
+                x_splat = (x[1], y)
+            else
+                x_splat = (x,)
+            end
+            batch_loss, grads = Flux.withgradient(model) do m
+                loss(m, x_splat...)
+            end
+            total_loss += batch_loss
+            Flux.update!(opt_state, model, grads[1])
+            ProgressMeter.next!(progress)
+        end
+        push!(history["mean_batch_loss"], total_loss / length(data))
+        @printf("mean batch loss: %.5f ; ", history["mean_batch_loss"][end])
+    end
+    history
+end
+
+function randomly_set_unconditioned(
+    labels::AbstractVector{Int}; prob_uncond::Float64=0.20
+    )
+    # with probability prob_uncond we train without class conditioning
+    labels = copy(labels)
+    batch_size = length(labels)
+    is_not_class_cond = rand(batch_size) .<= prob_uncond
+    labels[is_not_class_cond] .= 1
+    labels
+end
+{% endhighlight %}
+
+For more functionality like calculating the validation loss after each epoch, see the [train.jl](https://github.com/LiorSinai/DenoisingDiffusion.jl/blob/main/src/train.jl) script in the repository.
 
 That's it. Our code can now do guided diffusion.
 Let's test it out on both the 2D patterns and the number generation.
@@ -645,17 +691,17 @@ That is not something can be taken away easily.
 
 [^classifier-guidance]: For an implementation of the classifier guidance equation, see OpenAI's [classifier_sample.py](https://github.com/openai/guided-diffusion/blob/22e0df8183507e13a7813f8d38d51b072ca1e67c/scripts/classifier_sample.py#L54) from the guided-diffusion repository. To be honest, I don't understand this equation or the code. Why is there is a $\log$ in the gradient? Why are they computing the sum of the probabilities?
 
-[^rand_labels]: We don't use mutating array operations in `p_losses` because else we'll get an error during the backward pass with Zygote. So instead of using:
-    ```
-    is_not_class_cond = rand(batch_size) .< p_uncond
+[^p_losses]: The original code put the `randomly_set_unconditioned` logic in the `p_losses` function. Other than that this was not the best logical place for it to be it created the problem that this logic fell under the `Flux.withgradient` scope and so it needed to be differentiated. However `Zygote` can not differentiate mutating operations like `.=`. So instead of using:
+    ```Julia
+    is_not_class_cond = rand(batch_size) .< prob_uncond
     labels[is_not_class_cond] .= 1
     ```
-    We do:
-    ```
-    is_class_cond = rand(batch_size) .>= p_uncond
+    I used:
+    ```Julia
+    is_class_cond = rand(batch_size) .>= prob_uncond
     is_not_class_cond = .~is_class_cond
     labels = (labels .* is_class_cond) + is_not_class_cond
     ```
-    The output is equivalent.
+    This hack worked. However it is better to not do unnecessary differentiation.
 
 [^colab]: Google Colab does not natively support Julia so you'll have to install it every time you run the notebook. Plots.jl does not work on Google Colab. 
