@@ -54,14 +54,16 @@ This is the underlying idea behind all the popular AI art generators like [Stabl
 We already have time embeddings and we can combine other sorts of embeddings with it.
 These embeddings can be added, multiplied or concatenated to the time embeddings.
 So instead of estimating the noise $\epsilon_\theta(x_t | t)$ we'll estimate $\epsilon_\theta(x_t | t, y)$
-where $y$ is the label of the class, or $\epsilon_\theta(x_t | t, c)$ where $c$ are the conditioning parameters (text embeddings).
+where $y$ is the label of the class.
+We can also directly pass in the conditioning parameters (text embeddings) $c$ and estimate $\epsilon_\theta(x_t | t, c)$.
 
 It is still useful for this guided model to generate random samples.
 This gives it backwards compatibility with our previous code and as we'll see shortly, gives us a reference point for increasing the conditioning signal.
-We can do this by passing a special label denoting the empty set $\emptyset$.
-During training we sometimes randomly change the label to the empty set label so that model learns to associate it with random choice.
+We can do this by passing a special label/embedding denoting the empty set $\emptyset$. Mathematically we can write $\epsilon_\theta(x_t | t) = \epsilon_\theta(x_t | t, \emptyset)$.
+During training we sometimes randomly change the label/embedding to the empty set label/embedding so that model learns to associate it with random choice.
 
-In practice the first column of the embedding matrix (label 0 in Python or label 1 in Julia) is reserved for the empty set and the rest are used for the classes.
+In practice when conditioning on the label, the first column of the embedding matrix (label 0 in Python or label 1 in Julia) is reserved for the empty set and the rest are used for the classes.
+Or when conditioning on the embedding vectors directly, a vector of all zeros can be used for the empty set.
 
 ### Classifier-free guidance
 
@@ -119,18 +121,19 @@ This is significant because it means that for $s=1$ we can use conditioning with
 We can now implement this in Julia. 
 We can reuse the same functions and use multiple dispatch to differentiate between them: the guided versions will have three inputs ($x_t$, $t$, $c$) while the originals will have two ($x_t$, $t$).
 
-For the full code see [classifier_free_guidance.jl](https://github.com/LiorSinai/DenoisingDiffusion.jl/blob/main/src/classifier_free_guidance.jl). 
+For the full code see [guidance.jl](https://github.com/LiorSinai/DenoisingDiffusion.jl/blob/main/src/guidance.jl). 
 
 ### Reverse diffusion
 
 This is the guided version of the reverse process from [part 1](/coding/2022/12/03/denoising-diffusion-1-spiral#reverse-process).
-For text embeddings coming from a language model we have to pass an array of floats to `p_sample`.
-However I will be assuming the embeddings are calculated in the model too, so the `p_sample` will expect an integer label or an array of integer labels. 
+For text embeddings coming from a language model the new argument to `p_sample` would be a matrix.
+However here the embeddings are calculated in the model too, so `p_sample` will expect a vector of integer labels instead. 
 These will then be passed to an embedding layer.
 (For modifications which can take in external embeddings, see the [feature/external-embeddings](https://github.com/LiorSinai/DenoisingDiffusion.jl/pull/5) branch on the repository.)
-As a trick to combine the models for unconditioned noise and conditioned noise, a label of 1 will be considered "random choice" and higher integers are guided diffusion.
+A label of 1 will be considered random choice and other integers will correspond to the classes.
 
-As discussed above, for the special case of the `guidance_scale=1` inputs will be passed directly to the model else the more computationally intensive classifier-free guidance will be invoked.
+As discussed above, for the special case of the `guidance_scale=1` inputs will be passed directly to the model.
+Otherwise the more computationally intensive classifier-free guidance will be invoked.
 {% highlight julia %}
 function p_sample(
     diffusion::GaussianDiffusion, x::AbstractArray, timesteps::AbstractVector{Int}, labels::AbstractVector{Int}, noise::AbstractArray;
@@ -167,8 +170,8 @@ function denoise(
 end
 {% endhighlight %}
 
-Next is the implementation of classifier-free guidance through equation $\ref{eq:classifier-free-guidance}$.
-This code calculates both the conditioned noise and the unconditioned noise at the same time.
+Next is the implementation of classifier-free guidance with equation $\ref{eq:classifier-free-guidance}$.
+This code calculates the conditioned noise and the unconditioned noise at the same time.
 {% highlight julia %}
 function classifier_free_guidance(
     diffusion::GaussianDiffusion,
@@ -183,7 +186,6 @@ function classifier_free_guidance(
     labels_both = vcat(labels, fill(1, batch_size))
 
     noise_both = diffusion.denoise_fn(x_double, timesteps_double, labels_both)
-
     inds = ntuple(Returns(:), ndims(x_double) - 1)
     ϵ_cond = view(noise_both, inds..., 1:batch_size)
     ϵ_uncond = view(noise_both, inds..., (batch_size+1):(2*batch_size))
@@ -229,7 +231,7 @@ function p_sample_loop(diffusion::GaussianDiffusion, labels::AbstractVector{Int}
 end
 {% endhighlight %}
 
-Sampling loops returning the first image estimate as well:
+Sampling loop returning all diffusion time steps and $x_0$ estimates:
 {% highlight julia %}
 function p_sample_loop_all(
     diffusion::GaussianDiffusion, shape::NTuple, labels::AbstractVector{Int}
@@ -305,7 +307,7 @@ function p_losses(
 end
 {% endhighlight %}
 
-We need to update the training loop so that it can randomly set labels to that of the empty set $\emptyset$.[^p_losses]
+The training loop needs to be updated so that it can randomly set labels to that of the empty set $\emptyset$.[^p_losses]
 This `train!` function from [part 1](/coding/2022/12/03/denoising-diffusion-1-spiral#training) is extended as follows:
 {% highlight julia %}
 using Flux: DataLoader
@@ -479,7 +481,12 @@ model = ConditionalChain(
 
 ### Results patterns
 
-Training is the exact same as [part 1-training](/coding/2022/12/03/denoising-diffusion-1-spiral#training).
+Training is the same as [part 1-training](/coding/2022/12/03/denoising-diffusion-1-spiral#training). The only difference is that the `loss` function must now take in three arguments:
+
+{% highlight julia %}
+loss(diffusion, x, y) = p_losses(diffusion, loss_type, x, y; to_device=to_device)
+{% endhighlight %}
+
 See [train_generated_2d_cond.jl](https://github.com/LiorSinai/DenoisingDiffusion.jl/blob/main/examples/train_generated_2d_cond.jl)
 for the full script.
 
@@ -519,7 +526,7 @@ The code:
 {% highlight julia %}
 trainset = MNIST(Float32, :train, dir=data_directory);
 norm_data = normalize_neg_one_to_one(reshape(trainset.features, 28, 28, 1, :));
-labels = 2 .+ trainset.targets; # 1->default, 2->0, 3->1, ...
+labels = 2 .+ trainset.targets; # 1->default, 2->0, 3->1, ..., 9->11
 {% endhighlight %}
 
 We need a new method for `split_validation` to split the labels too:
@@ -691,7 +698,7 @@ That is not something can be taken away easily.
 
 [^classifier-guidance]: For an implementation of the classifier guidance equation, see OpenAI's [classifier_sample.py](https://github.com/openai/guided-diffusion/blob/22e0df8183507e13a7813f8d38d51b072ca1e67c/scripts/classifier_sample.py#L54) from the guided-diffusion repository. To be honest, I don't understand this equation or the code. Why is there is a $\log$ in the gradient? Why are they computing the sum of the probabilities?
 
-[^p_losses]: The original code put the `randomly_set_unconditioned` logic in the `p_losses` function. Other than that this was not the best logical place for it to be it created the problem that this logic fell under the `Flux.withgradient` scope and so it needed to be differentiated. However `Zygote` can not differentiate mutating operations like `.=`. So instead of using:
+[^p_losses]: The original code put the `randomly_set_unconditioned` logic in the `p_losses` function. Other than that this was not the best logical place for it to be, it created the problem that this code fell under the `Flux.withgradient` scope and so it needed to be differentiated. However `Zygote` can not differentiate mutating operations like `.=`. So instead of using:
     ```Julia
     is_not_class_cond = rand(batch_size) .< prob_uncond
     labels[is_not_class_cond] .= 1
