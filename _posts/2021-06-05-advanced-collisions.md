@@ -29,7 +29,6 @@ A background in counting methods with combinations and permutations is required.
 2. [Probability of k collisions](#exact-k-collisions)
 3. [Probability of groups of collisions](#groups-collisions)
 4. [Probability of collisions when drawing from a distribution](#drawing-distribution)
-5. [Integer partitions](#integer-partitions)
 
 <h2 id="at-least-1"> Probability of at least 1 collision </h2>
 
@@ -265,6 +264,7 @@ $$
 
 Now repeat these calculations for every possible way of making up 30 friends from the known distribution.
 This can be done with an integer partition algorithm with a maximum on the values that each partition can take.
+For examples of such code, see the [next post][integer_partitions].
 All in all, there will be 16,632 different partitions for this particular set of maximums for 30 people. 
 The sum will be the theoretical value of selecting friends who do not share birthdays.
 Subtract from 1 to get the probability of least 2 sharing a birthday.
@@ -275,59 +275,7 @@ So the Monte Carlo simulations are faster.
 
 If there is an easier way please let me know 🙂.
 
-<h2 id="integer-partitions"> Integer partitions </h2>
-
-For completeness, here is code for the [integer partition problem][wiki_partitions] implemented in Julia.
-
-Define $p(n)$ as the count of integer partitions of $n$. Then $p(n) = k + p(n -k)$. 
-The following recursive algorithm is based off this formula:
-{%highlight julia %}
-function integer_partitions(n::Integer, max_value::Int)
-    if n < 0
-        throw(DomainError(n, "n must be nonnegative"))
-    elseif n == 0
-        return Vector{Int}[[]]
-    end
-
-    partitions = Vector{Int}[]
-    for k in max_value:-1:1
-        for p in integer_partitions(n-k, min(k, n-k))
-            push!(partitions, vcat(k, p))
-        end
-    end        
-    return partitions
-end
-{% endhighlight %}
-
-This function gives all the unique partitions of a number.
-For the above problems we have the additional constraints:
-- There is a maximum value at each partition index.
-- Permutations of partitions are unique e.g. 3+0+0, 0+3+0 and 0+0+3 are all unique. (There is a difference between selecting 3 people who don't share any birthdays to 3 people who share a birthday with one other person.)
-
-The function is therefore modified to keep an index count:
-{%highlight julia %}
-function integer_partitions(n::Integer, max_values::Vector{Int}, idx=1)
-    # non-unique integer partitions up to a maximum for each index
-    if n < 0
-        throw(DomainError(n, "n must be nonnegative"))
-    elseif n == 0 
-        return Vector{Int}[[]]
-    end
-    partitions = Vector{Int}[]
-    max_value = (idx <= length(max_values)) ? min(n, max_values[idx]) : 0
-    min_value = (idx + 1 <= length(max_values)) ? 0 : 1
-    for k in max_value:-1:min_value
-        for p in integer_partitions(n-k, max_values, idx + 1)
-            push!(partitions, vcat(k, p))
-        end
-    end    
-    partitions
-end
-{% endhighlight %}
-
-Caching can be added to improve the performance. 
-
 [wiki_partitions]: https://en.wikipedia.org/wiki/Partition_(number_theory)
-
+[integer_partitions]: {{ "mathematics/2021/06/05/integer-partitions" | relative_url }}
 
 ---
