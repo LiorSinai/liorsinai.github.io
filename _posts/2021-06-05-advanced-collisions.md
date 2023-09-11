@@ -2,6 +2,7 @@
 layout: post
 title:  "The Birthday Problem: Advanced"
 date:   2021-06-05
+last_modified_at: 2023-09-10
 author: Lior Sinai
 categories: coding
 categories: mathematics
@@ -10,7 +11,9 @@ tags: mathematics probability
 
 _Exact probabilities for counting the chance of collisions with distinct objects, using the birthday problem as a working example._ 
 
-# Introduction
+<script src="https://cdn.plot.ly/plotly-2.25.2.min.js" charset="utf-8"></script>
+
+## Introduction
 
 This follows from my previous blog post on [Intuitive explanations for non-intuitive problems: the Birthday Problem][BirthdayProblem]. 
 Please see that post for a heuristic understanding of the problem.
@@ -20,24 +23,67 @@ A background in counting methods with combinations and permutations is required.
 
 [BirthdayProblem]: {{ "mathematics/2021/06/04/birthday-collisions" | relative_url }}
 
-I have divided this section in to the following parts:
-1. [Probability of k collisions](#exact-k-collisions)
-2. [Probability of groups of collisions](#groups-collisions)
-3. [Probability of at least 1 collision](#at-least-1)
+## Table of contents
+
+1. [Probability of at least 1 collision](#at-least-1)
+2. [Probability of k collisions](#exact-k-collisions)
+3. [Probability of groups of collisions](#groups-collisions)
 4. [Probability of collisions when drawing from a distribution](#drawing-distribution)
 5. [Integer partitions](#integer-partitions)
 
-<h2 id="exact-k-collisions"> Probability of $k$ collisions </h2>
+<h2 id="at-least-1"> Probability of at least 1 collision </h2>
 
-What is the chance of $i$ people in a group of $k$ people sharing a birthday? In the previous post I assumed independence between sharing birthdays. 
+In the previous post I assumed independence between sharing birthdays. 
 But sharing is dependent. If person A and person B share a birthday, then sharing a birthday with person B depends on sharing a birthday with person A. Counting methods can account for this dependence.
 
-In a group of 23 people there are ${23 \choose 2}=253$ ways that two people can be chosen. 
-Separately we can imagine filling 22 slots with distinct birthdays (not 23 because one is shared). 
+As in my the previous post, it is easiest to work backwards. 
+First find the probability that no people share a birthday
+and then subtract this from 1. For $n$ people, we can imagine shuffling $k=n$ unique birthdays in $k$ slots yet for each one we have a choice of 365 birthdays:
+
+$$ \begin{align} 
+P(k \geq 1) &= 1 - \frac{365}{365}\frac{364}{365}...\frac{365-k+1}{365}\\
+                &= 1 - \frac{^{365}P_{k}}{365^k}
+\end{align}
+$$ 
+
+For 23 people this gives a probability of 0.5073. 
+
+<style>
+    .plotly{
+        height:15em;
+        width:20em;
+    }
+  @media only screen and (max-width: 600px) {
+        .plotly{
+            width: 15em;
+        }
+    }
+</style>
+<div style="border:1px solid black">
+    <center> 
+    <div id="plot-composition" class="plotly">
+        <script src="/assets/posts/birthday-collisions/composition23.js">
+        </script>
+    </div>
+    <p>
+    Composition of probabilities for shared birthdays between 23 people
+    </p>
+    </center>
+</div>
+
+The next question is, how is this probability composed?
+The next sections will show that of the collisions that happen, 72% will be just two people, and 22% two pairs of two people. (Unselect "none" in the pie chart above to see this.)
+
+<h2 id="exact-k-collisions"> Probability of $k$ collisions </h2>
+
+What is the chance of $k$ out of $n$ people sharing a birthday? Or more concretely, only 2 people sharing in a group of 23.
+
+There are ${23 \choose 2}=253$ ways that two people can be chosen. 
+Separately we can imagine filling 22 slots with distinct birthdays. (Not 23 because one is shared.)
 There are $^{365}P_{22}$ ways of filling these slots. The total probability is then:
 
 $$ \begin{align} 
-P(x=2 | k=23) &= {23 \choose 2} \frac{^{365}P_{22}}{365^{23}} \\
+P(k=2 | n=23) &= {23 \choose 2} \frac{^{365}P_{22}}{365^{23}} \\
               &= 0.3634
 \end{align}
 $$ 
@@ -45,7 +91,7 @@ $$
 Similarly for three people sharing a birthday:
 
 $$ \begin{align} 
-P(x=3 | k=23) &= {23 \choose 3} \frac{^{365}P_{21}}{365^{23}} \\
+P(k=3 | n=23) &= {23 \choose 3} \frac{^{365}P_{21}}{365^{23}} \\
               &= 0.0074
 \end{align}
 $$ 
@@ -72,13 +118,13 @@ The probability is then:
 </figure>
 
 $$ \begin{align} 
-P(x=(2,2) | k=23) &= \frac{\binom{23}{2}\binom{21}{2}}{2!}\frac{^{365}P_{21}}{365^{23} } \\
+P(k=(2,2) | n=23) &= \frac{\binom{23}{2}\binom{21}{2}}{2!}\frac{^{365}P_{21}}{365^{23} } \\
                     &= \frac{23!}{(2!)^2 2!19!} \frac{^{365}P_{21}}{365^{23}} \\
                     &= 0.1109
 \end{align}
 $$ 
 
-Now let's add a set of three:
+Now let's add a set of three to these pairs:
 
 <figure class="post-figure" id="partitions19">
 <img class="img-80" 
@@ -89,7 +135,7 @@ Now let's add a set of three:
 </figure>
 
 $$ \begin{align} 
-P(x=(2,2,3) | k=23) &= \frac{\binom{23}{2}\binom{21}{2}}{2!}\binom{19}{3} \frac{^{365}P_{19}}{365^{23} } \\
+P(k=(2,2,3) | n=23) &= \frac{\binom{23}{2}\binom{21}{2}}{2!}\binom{19}{3} \frac{^{365}P_{19}}{365^{23} } \\
                     &= \frac{23!}{(2!)^2 2!3!16!} \frac{^{365}P_{19}}{365^{23}} \\
                     &= 0.0009
 \end{align}
@@ -97,30 +143,58 @@ $$
 
 This is much more unlikely.
 
-To get the probability of at least 2 people sharing, we need to account for all these scenarios. 
-We can go through all ways of partitioning $k$ people. This is known as the integer partition problem.
+To get the probability of at least 2 people sharing, instead of using the method in the first [section](#at-least-1), we can go through all ways of partitioning $k$ people. This is known as the integer partition problem.
 In practice, I find it is accurate enough to only consider up to 3 or 4 people sharing a birthday, because the other 
-scenarios are so unlikely. However the method in the next section is much simpler.
-
-<h2 id="at-least-1"> Probability of at least 1 collision </h2>
-
-As in my [previous post][BirthdayProblem], it's easiest to work backwards. First find the probability that no people share a birthday
-and then subtract this from 1. For $k$ people, we can imagine shuffling $k$ unique birthdays in $k$ slots:
-
-$$ \begin{align} 
-P(x \geq 1 | k) &= 1 - \frac{^{365}P_{k}}{365^k}
-\end{align}
-$$ 
-
-For 23 people this gives a probability of 0.5073. The previous sections show that of the collisions that happen, 73% will be just two people, and 22% two pairs of two people. 
+scenarios are so unlikely.
+However that other method is much simpler.
 
 <h2 id="drawing-distribution"> Probability of collisions when drawing from a distribution </h2>
 
 A rather subtle but important assumption made in the previous sections is that we are drawing people from a large population.
 This assumption breaks down when drawing from a small sample. For example, Facebook friends. 
 We can only draw as many pairs, triples and sets in general as exist.
-In my group of friends there is a day where seven people share a birthday but none where six do.
-So I cannot include this probability in my calculation, which the calculation in the previous section does.
+
+Here is the distribution of shared birthdays between my Facebook friends:
+
+<table>
+    <thead>
+    </thead>
+<tbody>
+    <tr>
+    <td>Shared between</td>
+    <td>1</td>
+    <td>2</td>
+    <td>3</td>
+    <td>4</td>
+    <td>5</td>
+    <td>6</td>
+    <td>7</td>
+  </tr>
+  <tr>
+    <td>Frequency</td>
+    <td>134</td>
+    <td>72</td>
+    <td>13</td>
+    <td>10</td>
+    <td>2</td>
+    <td>0</td>
+    <td>1</td>
+  </tr>
+</tbody>
+</table>
+
+Plotted as a bar graph:
+<figure class="post-figure" id="shared_birthdays">
+<img class="img-80" 
+    src="/assets/posts/birthday-collisions/shared_birthdays.png"
+	alt="shared birthdays frequency"
+	>
+	<figcaption></figcaption>
+</figure>
+
+
+So in my group of friends there is a day where seven people share a birthday but none where six do.
+So I cannot include this probability in the calculation, which the calculation in the previous section does.
 
 The probability of drawing from a distribution is a tricky problem. 
 One notable application is calculating probabilities of hands in [poker][wiki_poker]. 
@@ -139,33 +213,63 @@ It is simpler and quicker to run Monte Carlo simulations, as I did in my [previo
 
 The Monte Carlo simulations hold up well. The MC 10,000 curve is almost indistinguishable from the theoretical curve.
 
-But how does one calculate the theoretical curve? Let's start with a simpler, very specific problem. 
-What if I want to select 30 friends of which none share birthdays, but 12 share birthdays with one other friend (not in the 30), and 2 share with two other friends each, and 1 is one of the 7 that share a birthday on the same day? (This is the simpler problem.)
-- There are $\binom{374}{30}$ ways in total to choose 30 people. 
-- From the $n_2=73$ pairs, I want to select 10 pairs $\binom{73}{10}$, 1 of 2 from each pair $\binom{2}{1}^{10}$. 
-- From the $n_3=13$ triples, I want to select 2 triples $\binom{13}{2}$, 1 of 3 from each triple $\binom{3}{1}^{2}$.
-- From the $n_7=1$ sevens, I want to select 1 person of 7 $\binom{7}{1}$.
-- The remaining $17$ all come from the set of $n_1=132$ singeltons $\binom{132}{17}$.
+But how does one calculate the theoretical curve? Let's start with simpler, very specific problems. 
 
-Hence the total probability is:
+We start with 30 friends of which none share birthdays and further, they do not share birthdays with people outside of group.
+- There are $\binom{374}{30}$ ways in total to choose 30 people. 
+- All the 30 most come from the set of $n_1=132$ singletons: $\binom{132}{30}$.
+
 $$ \begin{align} 
-P&(x =(1\times 17, 2\times 10, 3\times 2, 7\times 1)|k=30) \\
+P&(k =(1\times 30)|n=30) \\
     &= 
-    \left[ \binom{73}{10} \binom{2}{1}^{10} \right]
-    \left[ \binom{13}{2} \binom{3}{1}^2 \right]
-    \left[ \binom{1}{1} \binom{7}{1} \right] 
-    \binom{132}{17}
+    \binom{132}{30}
     \div \binom{374}{30} \\
-    &= 0.00001981
+    &= 2.5028 \times 10^{-15}
 \end{align}
 $$ 
 
-Now repeat this calculation for every possible way of making up 30 friends from the known distribution.
+Next we have another group of 30 friends of which none share birthdays, but now one shares a birthday with one person outside of the group:
+- There are $\binom{374}{30}$ ways in total to choose 30 people. 
+- From the $n_2=72$ pairs, we need to select one from $\binom{2}{1}$ possible people from $\binom{73}{1}$ possible pairs.
+- The remaining $29$ all come from the set of $n_1=132$ singletons: $\binom{132}{29}$.
+
+$$ \begin{align} 
+P&(k =(1\times 29, 2\times 1)|n=30) \\
+    &= 
+    \binom{132}{29}
+    \left[ \binom{73}{1} \binom{2}{1} \right]
+    \div \binom{374}{30} \\
+    &= 1.0497 \times 10^{-13}
+\end{align}
+$$ 
+
+Let's complicate this more. We are still selecting 30 friends of which none share birthdays, but now 10 share birthdays with one other friend (not in the 30), and 2 share with two other friends each, and 1 is one of the 7 that share a birthday on the same day:
+- There are $\binom{374}{30}$ ways in total to choose 30 people. 
+- From the $n_2=72$ pairs, I want to select 10 pairs $\binom{73}{10}$, 1 of 2 from each pair $\binom{2}{1}^{10}$. 
+- From the $n_3=13$ triples, I want to select 2 triples $\binom{13}{2}$, 1 of 3 from each triple $\binom{3}{1}^{2}$.
+- From the $n_7=1$ sevens, I want to select 1 person of 7 $\binom{7}{1}$.
+- The remaining $17$ all come from the set of $n_1=132$ singletons: $\binom{132}{17}$.
+
+Hence the total probability is:
+$$ \begin{align} 
+P&(k =(1\times 17, 2\times 10, 3\times 2, 7\times 1)|n=30) \\
+    &= 
+    \binom{132}{17}
+    \left[ \binom{72}{10} \binom{2}{1}^{10} \right]
+    \left[ \binom{13}{2} \binom{3}{1}^2 \right]
+    \left[ \binom{1}{1} \binom{7}{1} \right] 
+    \div \binom{374}{30} \\
+    &= 0.00001655
+\end{align}
+$$ 
+
+Now repeat these calculations for every possible way of making up 30 friends from the known distribution.
 This can be done with an integer partition algorithm with a maximum on the values that each partition can take.
-This will give the theoretical value of selecting zero friends who share birthdays.
+All in all, there will be 16,632 different partitions for this particular set of maximums for 30 people. 
+The sum will be the theoretical value of selecting friends who do not share birthdays.
 Subtract from 1 to get the probability of least 2 sharing a birthday.
 
-For Julia code on my laptop, this takes 22.5 seconds.
+For Julia code on my laptop this takes 22.5 seconds for all group sizes from 1 to 60 for a cumulative total of 1,099,174 partitions.
 Monte Carlo simulations with 10,000 trials per each point from 1 to 60 takes 2.2 seconds for all 600,000 trials.
 So the Monte Carlo simulations are faster.
 
@@ -175,7 +279,7 @@ If there is an easier way please let me know 🙂.
 
 For completeness, here is code for the [integer partition problem][wiki_partitions] implemented in Julia.
 
-If $p(n)$ is an integer partition of $n$, then $p(n) = k + p(n -k)$. 
+Define $p(n)$ as the count of integer partitions of $n$. Then $p(n) = k + p(n -k)$. 
 The following recursive algorithm is based off this formula:
 {%highlight julia %}
 function integer_partitions(n::Integer, max_value::Int)
@@ -198,33 +302,27 @@ end
 This function gives all the unique partitions of a number.
 For the above problems we have the additional constraints:
 - There is a maximum value at each partition index.
-- Permutations of partitions are unique e.g. 3+0+0, 0+3+0 and 0+0+3 are all unique.
+- Permutations of partitions are unique e.g. 3+0+0, 0+3+0 and 0+0+3 are all unique. (There is a difference between selecting 3 people who don't share any birthdays to 3 people who share a birthday with one other person.)
 
 The function is therefore modified to keep an index count:
 {%highlight julia %}
 function integer_partitions(n::Integer, max_values::Vector{Int}, idx=1)
+    # non-unique integer partitions up to a maximum for each index
     if n < 0
         throw(DomainError(n, "n must be nonnegative"))
     elseif n == 0 
         return Vector{Int}[[]]
     end
-
     partitions = Vector{Int}[]
     max_value = (idx <= length(max_values)) ? min(n, max_values[idx]) : 0
-    for k in max_value:-1:1
+    min_value = (idx + 1 <= length(max_values)) ? 0 : 1
+    for k in max_value:-1:min_value
         for p in integer_partitions(n-k, max_values, idx + 1)
             push!(partitions, vcat(k, p))
         end
     end    
-    # include 0 case 
-    if (idx + 1 <= length(max_values))
-        for p in integer_partitions(n, max_values, idx + 1)
-            push!(partitions, vcat(0, p))
-        end
-    end
-    return partitions
+    partitions
 end
-
 {% endhighlight %}
 
 Caching can be added to improve the performance. 
