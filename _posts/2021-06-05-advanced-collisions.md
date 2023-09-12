@@ -40,7 +40,7 @@ First find the probability that no people share a birthday
 and then subtract this from 1. For $n$ people, we can imagine shuffling $k=n$ unique birthdays in $k$ slots yet for each one we have a choice of 365 birthdays:
 
 $$ \begin{align} 
-P(k \geq 1) &= 1 - \frac{365}{365}\frac{364}{365}...\frac{365-k+1}{365}\\
+P(x \geq 1 | n=k) &= 1 - \frac{365}{365}\frac{364}{365}...\frac{365-k+1}{365}\\
                 &= 1 - \frac{^{365}P_{k}}{365^k}
 \end{align}
 $$ 
@@ -71,7 +71,7 @@ For 23 people this gives a probability of 0.5073.
 </div>
 
 The next question is, how is this probability composed?
-The next sections will show that of the collisions that happen, 72% will be just two people, and 22% two pairs of two people. (Unselect "none" in the pie chart above to see this.)
+The next sections will show that of the collisions that happen, 72% will be just one pair, and 22% two pairs. (Unselect "none" in the pie chart above to see this.)
 
 <h2 id="exact-k-collisions"> Probability of $k$ collisions </h2>
 
@@ -82,7 +82,7 @@ Separately we can imagine filling 22 slots with distinct birthdays. (Not 23 beca
 There are $^{365}P_{22}$ ways of filling these slots. The total probability is then:
 
 $$ \begin{align} 
-P(k=2 | n=23) &= {23 \choose 2} \frac{^{365}P_{22}}{365^{23}} \\
+P(x=2 | n=23) &= {23 \choose 2} \frac{^{365}P_{22}}{365^{23}} \\
               &= 0.3634
 \end{align}
 $$ 
@@ -90,7 +90,7 @@ $$
 Similarly for three people sharing a birthday:
 
 $$ \begin{align} 
-P(k=3 | n=23) &= {23 \choose 3} \frac{^{365}P_{21}}{365^{23}} \\
+P(x=3 | n=23) &= {23 \choose 3} \frac{^{365}P_{21}}{365^{23}} \\
               &= 0.0074
 \end{align}
 $$ 
@@ -100,9 +100,9 @@ This is much more unlikely.
 
 <h2 id="groups-collisions"> Probability of groups of collisions </h2>
 
-There can also be two pairs of two people sharing birthdays. Or three pairs. Or two pairs and a triplet and a quintuplet.
+There can also be two pairs sharing birthdays. Or three pairs. Or two pairs and a triplet and a quintuplet.
 
-First let's take the case of two pairs of two people amongst 23 people in total.
+First let's take the case of two pairs amongst 23 people in total.
 We first choose 2 to be part of the first pair ($\binom{23}{2}$), then 2 of the remaining 21 to be part of the second pair ($\binom{21}{2}$).
 We can shuffle the birthdays between 21 unique slots ($^{365}P_{21}$).
 The first two slots can be shuffled without changing the arrangement because they both have identical looking pairs ($2!$).
@@ -117,7 +117,7 @@ The probability is then:
 </figure>
 
 $$ \begin{align} 
-P(k=(2,2) | n=23) &= \frac{\binom{23}{2}\binom{21}{2}}{2!}\frac{^{365}P_{21}}{365^{23} } \\
+P(x=(2,2) | n=23) &= \frac{\binom{23}{2}\binom{21}{2}}{2!}\frac{^{365}P_{21}}{365^{23} } \\
                     &= \frac{23!}{(2!)^2 2!19!} \frac{^{365}P_{21}}{365^{23}} \\
                     &= 0.1109
 \end{align}
@@ -134,7 +134,7 @@ Now let's add a set of three to these pairs:
 </figure>
 
 $$ \begin{align} 
-P(k=(2,2,3) | n=23) &= \frac{\binom{23}{2}\binom{21}{2}}{2!}\binom{19}{3} \frac{^{365}P_{19}}{365^{23} } \\
+P(x=(2,2,3) | n=23) &= \frac{\binom{23}{2}\binom{21}{2}}{2!}\binom{19}{3} \frac{^{365}P_{19}}{365^{23} } \\
                     &= \frac{23!}{(2!)^2 2!3!16!} \frac{^{365}P_{19}}{365^{23}} \\
                     &= 0.0009
 \end{align}
@@ -217,9 +217,10 @@ But how does one calculate the theoretical curve? Let's start with simpler, very
 We start with 30 friends of which none share birthdays and further, they do not share birthdays with people outside of group.
 - There are $\binom{374}{30}$ ways in total to choose 30 people. 
 - All the 30 most come from the set of $n_1=132$ singletons: $\binom{132}{30}$.
+- The distribution is characterised by $D$.
 
 $$ \begin{align} 
-P&(k =(1\times 30)|n=30) \\
+P&(x=(1\times 30)|D,n=30) \\
     &= 
     \binom{132}{30}
     \div \binom{374}{30} \\
@@ -229,14 +230,14 @@ $$
 
 Next we have another group of 30 friends of which none share birthdays, but now one shares a birthday with one person outside of the group:
 - There are $\binom{374}{30}$ ways in total to choose 30 people. 
-- From the $n_2=72$ pairs, we need to select one from $\binom{2}{1}$ possible people from $\binom{73}{1}$ possible pairs.
+- From the $n_2=72$ pairs, we need to select one from $\binom{2}{1}=2$ possible people from $\binom{72}{1}=72$ possible pairs.
 - The remaining $29$ all come from the set of $n_1=132$ singletons: $\binom{132}{29}$.
 
 $$ \begin{align} 
-P&(k =(1\times 29, 2\times 1)|n=30) \\
+P&(x=(1\times 29, 2\times 1)|D,n=30) \\
     &= 
     \binom{132}{29}
-    \left[ \binom{73}{1} \binom{2}{1} \right]
+    \left[ \binom{72}{1} \binom{2}{1} \right]
     \div \binom{374}{30} \\
     &= 1.0497 \times 10^{-13}
 \end{align}
@@ -244,14 +245,14 @@ $$
 
 Let's complicate this more. We are still selecting 30 friends of which none share birthdays, but now 10 share birthdays with one other friend (not in the 30), and 2 share with two other friends each, and 1 is one of the 7 that share a birthday on the same day:
 - There are $\binom{374}{30}$ ways in total to choose 30 people. 
-- From the $n_2=72$ pairs, I want to select 10 pairs $\binom{73}{10}$, 1 of 2 from each pair $\binom{2}{1}^{10}$. 
-- From the $n_3=13$ triples, I want to select 2 triples $\binom{13}{2}$, 1 of 3 from each triple $\binom{3}{1}^{2}$.
+- From the $n_2=72$ pairs, I want to select 10 from $\binom{72}{10}$ combinations of pairs, 1 of 2 from each pair $\binom{2}{1}^{10}$. 
+- From the $n_3=13$ triples, I want to select 2 from $\binom{13}{2}$ combinations of triples, 1 of 3 from each triple $\binom{3}{1}^{2}$.
 - From the $n_7=1$ sevens, I want to select 1 person of 7 $\binom{7}{1}$.
 - The remaining $17$ all come from the set of $n_1=132$ singletons: $\binom{132}{17}$.
 
 Hence the total probability is:
 $$ \begin{align} 
-P&(k =(1\times 17, 2\times 10, 3\times 2, 7\times 1)|n=30) \\
+P&(x=(1\times 17, 2\times 10, 3\times 2, 7\times 1)|D,n=30) \\
     &= 
     \binom{132}{17}
     \left[ \binom{72}{10} \binom{2}{1}^{10} \right]
@@ -268,6 +269,17 @@ For examples of such code, see the [next post][integer_partitions].
 All in all, there will be 16,632 different partitions for this particular set of maximums for 30 people. 
 The sum will be the theoretical value of selecting friends who do not share birthdays.
 Subtract from 1 to get the probability of least 2 sharing a birthday.
+
+In two equations:
+
+$$
+\begin{align}
+p(x \geq 1 | D,n) &= 1 - \frac{1}{\binom{n}{N}}\sum_{p \in P(n, D)}\sum_{j=1}^{|p|} \binom{D_j}{p_j} \binom{j}{1}^{p_j} \\
+N &= \sum_{j=1}^{|D|} D_j j
+\end{align}
+$$
+
+where $D$ is the distribution given as the frequency per shared count $j$, $n$ is the group size and $P(n, D)$ are the integer partitions of $n$ bounded by $D$.
 
 For Julia code on my laptop this takes 22.5 seconds for all group sizes from 1 to 60 for a cumulative total of 1,099,174 partitions.
 Monte Carlo simulations with 10,000 trials per each point from 1 to 60 takes 2.2 seconds for all 600,000 trials.

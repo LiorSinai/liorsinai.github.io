@@ -74,7 +74,7 @@ $$
 
 Note that in this problem permutations are distinct from each other, unlike the first problem.
 
-The next few sections will detail algorithms for these in Julia code.
+The rest of this post will detail algorithms for these in Julia code.
 
 ## Recursion
 
@@ -126,7 +126,6 @@ We can modify the counting formula to instead return arrays.
 Then we can return the whole set of arrays.
 {%highlight julia %}
 function integer_partitions(n::Integer, max_value::Int)
-    # unique integer partitions
     if n < 0
         throw(DomainError(n, "n must be nonnegative"))
     elseif n == 0
@@ -151,7 +150,6 @@ See the [Linear integer partitions](#integer-partitions-linear) section.
 For the bounded version we can do a similar modification to its counting function:
 {%highlight julia %}
 function integer_partitions(n::Integer, max_values::Vector{Int}, idx=1)
-    # non-unique integer partitions up to a maximum for each index
     if n < 0
         throw(DomainError(n, "n must be nonnegative"))
     elseif n == 0 
@@ -303,7 +301,6 @@ function Base.iterate(iter::BoundedPartitions, state::Tuple{Vector{Int}, Int})
     while residue != 0
         k = min(iter.max_values[i], residue)
         i += 1
-        if (k > 0)
         ...
     end
     (partitions, (partitions, idx))
