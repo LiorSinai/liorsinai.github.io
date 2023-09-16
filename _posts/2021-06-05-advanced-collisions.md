@@ -75,7 +75,7 @@ The next sections will show that of the collisions that happen, 72% will be just
 
 <h2 id="exact-k-collisions"> Probability of $k$ collisions </h2>
 
-What is the chance of $k$ out of $n$ people sharing a birthday? Or more concretely, only 2 people sharing in a group of 23.
+What is the chance of $k$ out of $n$ people sharing a birthday? Or more concretely, only 2 people sharing in a group of 23?
 
 There are ${23 \choose 2}=253$ ways that two people can be chosen. 
 Separately we can imagine filling 22 slots with distinct birthdays. (Not 23 because one is shared.)

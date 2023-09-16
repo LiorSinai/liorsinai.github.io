@@ -57,9 +57,8 @@ For this post I'll look at slight variation where a maximum value can be set.
 In that case, some of the combinations need to be excluded.
 For example for $n=5$ and a maximum value of $3$, the top two ways are excluded.
 
-The previous blog post [The Birthday Problem: Advanced][advanced_collisions] required something a little more complicated.
-It required integer partitions but bounded by certain values at each index.
-For example, selecting 5 people from 3 teams where there are 2 people in the first team, 1 person in the second team, and 5 or more people in the third team. Here the partitions are:
+The previous blog post [The Birthday Problem: Advanced][advanced_collisions] required something a little more complicated: integer partitions but bounded by certain values at each index.
+For example, select 5 people from 3 teams where there are 2 people in the first team, 1 person in the second team, and 5 or more people in the third team. Here the partitions are:
 
 $$
 \begin{align}
