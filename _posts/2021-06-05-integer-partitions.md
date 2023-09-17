@@ -207,31 +207,35 @@ function Base.iterate(iter::IntegerPartitions)
     if iter.n == 0
         return nothing
     end
-    iterate(iter, (Int[iter.max_value + 1], 1))
+    parts0 = zeros(Int, iter.n) # shared state that is mutated
+    parts0[1] = iter.max_value + 1
+    iterate(iter, (parts0, 1))
 end
 
 function Base.iterate(iter::IntegerPartitions, state::Tuple{Vector{Int}, Int}) 
-    prev, idx = state
-    k = prev[idx] - 1
+    partitions, idx = state
+    k = partitions[idx] - 1
     while (k == 0)
         if (idx == 1)
             return nothing
         else
             idx -= 1
-            k = prev[idx] - 1
+            k = partitions[idx] - 1
         end
     end
-    partitions = vcat(prev[1:(idx - 1)], k)
-    residue = iter.n - sum(partitions)
+    partitions[idx] = k
+    residue = iter.n - sum(partitions[1:idx])
+    i = idx
     while residue != 0
+        i += 1
         k = min(k, residue)
         if (k > 1)
             idx += 1
         end
-        push!(partitions, k)
+        partitions[i] = k
         residue -= k
     end
-    (partitions, (partitions, idx))
+    (partitions[1:i], (partitions, idx)) # copy, shared state
 end
 {% endhighlight %}
 
@@ -281,28 +285,32 @@ function Base.iterate(iter::BoundedPartitions)
     if iter.n == 0
         return nothing
     end
-    iterate(iter, (Int[iter.max_values[1] + 1], 1))
+    parts0 = zeros(Int, iter.n) # shared state that is mutated
+    parts0[1] = iter.max_values[1] + 1 
+    iterate(iter, (parts0, 1))
 end
 
 function Base.iterate(iter::BoundedPartitions, state::Tuple{Vector{Int}, Int}) 
-    prev, idx = state
-    while (prev[idx] - 1 < 0) && (idx < length(iter.max_values))
+    partitions, idx = state
+    while (partitions[idx] - 1 < 0) && (idx < length(iter.max_values))
         idx += 1
     end
-    k = min(prev[idx] - 1, iter.max_values[idx])
+    k = min(partitions[idx] - 1, iter.max_values[idx])
     while k < 0 || 
-        (k + sum(iter.max_values[idx+1:end])) < (iter.n - sum(prev[1:(idx - 1)]))
+        (k + sum(iter.max_values[idx+1:end])) < (iter.n - sum(partitions[1:(idx - 1)]))
         # current value + maximum possible sum < residue
         ...
     end
     ...
-    i = idx + 1
     while residue != 0
-        k = min(iter.max_values[i], residue)
         i += 1
+        k = min(iter.max_values[i], residue)
+        if (k > 0)
+            idx += 1
+        end
         ...
     end
-    (partitions, (partitions, idx))
+    (partitions[1:i], (partitions, idx)) # copy, shared state
 end
 {% endhighlight %}
 
