@@ -5,7 +5,6 @@ date:   2021-06-05
 last_modified_at: 2023-09-10
 author: Lior Sinai
 categories: coding
-categories: mathematics
 tags: mathematics probability
 ---
 

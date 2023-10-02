@@ -288,6 +288,6 @@ So the Monte Carlo simulations are faster.
 If there is an easier way please let me know 🙂.
 
 [wiki_partitions]: https://en.wikipedia.org/wiki/Partition_(number_theory)
-[integer_partitions]: {{ "mathematics/2021/06/05/integer-partitions" | relative_url }}
+[integer_partitions]: {{ "coding/2021/06/05/integer-partitions" | relative_url }}
 
 ---
