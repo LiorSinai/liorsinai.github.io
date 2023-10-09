@@ -20,6 +20,7 @@ makeTableOfContents = () => {
         if (id == "table-of-contents") { continue; }
         var level = parseInt(headings[i].localName.replace("h", ""));
         var title = headings[i].innerHTML;
+        title = title.replace(/^\d+(\.\d+)? /,''); // remove section numbers at the start
         var link = document.createElement('a');
         link.setAttribute("href", "#" + id);
         link.innerHTML = title;

@@ -12,29 +12,8 @@ _Description of the Weiler-Atherton polygon clipping algorithm._
 
 ### Table of Contents
 
-<nav id="toc">
-    <ol>
-        <li><a href="#introduction">Introduction</a></li>
-        <li><a href="#the-algorithm">The algorithm</a></li>
-        <li><a href="#doubly-linked-lists"> Doubly Linked lists</a></li>
-        <li><a href="#find-and-insert-intersections">Find and insert intersections</a>
-            <ol type="i">
-                <li><a href="#finding-intersections">Finding intersections</a></li>
-                <li><a href="#calculating-intersections">Calculating intersections</a></li>
-                <li><a href="#inserting-intersections-in-order">Inserting intersections in order</a></li>
-            </ol>
-        </li>
-        <li><a href="#linking-intersections">Linking intersections</a>
-            <ol type="i"><li><a href="#half-planes">Half-planes</a></li>
-                <li><a href="#edge-intersections">Edge intersections</a></li>
-                <li><a href="#vertix-intersections">Vertix intersections</a></li>
-                <li><a href="#edge-overlap">Edge overlap</a></li>
-            </ol>
-        </li>
-        <li><a href="#walk-linked-lists">Walk linked lists</a></li>
-        <li><a href="#conclusion">Conclusion</a></li>
-    </ol>
-</nav>
+<nav id="toc"></nav>
+<script src="/assets/makeTableOfContents.js"></script>
 
 <h2 id="introduction">1 Introduction</h2>
 
