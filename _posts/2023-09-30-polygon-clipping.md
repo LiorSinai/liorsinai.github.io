@@ -105,7 +105,7 @@ The code for drawing these Hilbert curves can be found [here][hilbert_curve].
 
 The fact that it can handle complex cases is in part due to extensive testing.
 There are over 70 unit tests for the algorithm.
-The figure above shows 24 distinct cases. On top of this, each test case is run twice with swapped inputs to ensure the function is symmetric.
+The figure above shows 24 distinct cases. These are then all run twice with swapped inputs to ensure the function is symmetric.
 There are further slight variations on the ones shown, such as translations of one of the polygons.
 
 The main code is in this file: <a href="https://github.com/LiorSinai/PolygonAlgorithms.jl/blob/main/src/intersect_poly.jl">intersect_poly.jl</a>.
@@ -113,6 +113,9 @@ This post will mostly describe the algorithm in pseudo-code and with images so t
 The various sections correspond with function names in the code.
 
 #### Concepts 
+
+Finding the intersection of polygons is easy for humans because we can consider the polygon as a whole.
+However to make an algorithm is challenging since we have to break it up into smaller pieces for a computer.
 
 <figure class="post-figure">
 <img class="img-95"
@@ -122,7 +125,7 @@ The various sections correspond with function names in the code.
 <figcaption>The information available at each step in the Weiler-Atherton algorithm. </figcaption>
 </figure>
 
-The main concept behind the algorithm is at any stage we only need 12 pieces of information, six per polygon:
+The main concept behind the Weiler-Atherton algorithm is at any stage we only need 12 pieces of information, six per polygon (for special cases we will need more):
 1. The two co-ordinates of each of the two vertices on an edge. 
 2. The direction of the edge.
 3. The fact that the vertices of the polygon as a whole are ordered clockwise.
@@ -130,12 +133,8 @@ The main concept behind the algorithm is at any stage we only need 12 pieces of 
 With points 2 and 3 we can always determine which direction is inside the polygon.
 (Take a moment to convince yourself of this fact with a pen and paper.)
 
-Because of this minimal information, this algorithm struggles with certain situations like self intersecting curves and some degenerate cases.
-
-Finding the intersection of polygons is easy for humans because we can consider the polygon as a whole.
-However to make an algorithm is challenging since we have to break it up into smaller pieces for a computer.
-
-The [Martinez-Rueda Algorithm (2009)][martinez_rueda_paper] is a more recent and more robust algorithm which can handle these cases. It is based on the concept of a vertical line sweep, which gives us more information per step:
+The [Martinez-Rueda Algorithm (2009)][martinez_rueda_paper] is a more recent and more versatile algorithm.
+It is based on the concept of a vertical line sweep, which gives us more information per step:
 
 <figure class="post-figure">
 <img class="img-95"
@@ -165,15 +164,15 @@ I chose to go with the Weiler-Atherton algorithm because it is simpler.
                 >
         </div>
     </div>
-    <figcaption>Self-intersecting polygons. Left: correct answer. Right: incorrectly shades in the middle region and skips all actual regions of intersection.</figcaption>
+    <figcaption>Self-intersecting polygons. Left: correct answer because the self-intersections coincide with the main intersections. Right: incorrectly shades in the middle region and skips all actual regions of intersection.</figcaption>
 </figure>
 
 The implementation described here has the following limitations.
 1. It does not cater for holes in the polygon. (The original version had an extension for this case.)
-2. It can fail completely for self-intersecting polygons.  (Extensions for this cas edo exist.)
+2. It can fail completely for self-intersecting polygons.  (Extensions for this case do exist.)
 
-It can work (no guarantee) if only one of the polygons is self-intersecting.
-But it struggles for two self-intersecting polygons.
+It some special cases it will work if only one polygon is self-intersecting but there is no guarantee.
+It will definitely struggle for two self-intersecting polygons.
 
 <h2 id="the-algorithm">2 The algorithm</h2>
 
@@ -183,8 +182,8 @@ The Weiler-Atherton algorithm is as follows:
   <li>Start with two lists of the vertices of polygon 1 and polygon 2 ordered clockwise.</li>
   <li>Find all the intersections between the edges of polygon 2 with polygon 1.
     <ol type="i">
-        <li>Insert each intersection in both lists maintaining the clockwise order of points. </li>
-        <li>Label each intersection as ENTRY or EXIT points depending on if they enter or exit polygon 1 from/to polygon 2. Label them as VERTIX if neither.</li>
+        <li>Insert each intersection into both lists maintaining the clockwise order of points. </li>
+        <li>Label each intersection as ENTRY or EXIT points depending on if they enter polygon 1 from polygon 2 or exit polygon 1 to polygon 2. Label them as VERTIX if neither.</li>
     </ol>
   </li>
   <li>Walk through all vertices on polygon 2.
@@ -236,7 +235,7 @@ Create links between the intersection points.
 </figure>
 
 <b>Step 2: </b> walk through the vertices on polygon 2.
-Whenever unvisited entry points are found, start walking through a loop following exit/entry points to polygon 1 and back until the start vertix is encountered again. These loops are the regions of intersection.
+Whenever an unvisited entry point is found, start walking through a loop following exit/entry points to polygon 1 and back until the starting point is encountered again. These loops are the regions of intersection.
 
 <figure class="post-figure">
 <img class="img-95"
@@ -249,6 +248,14 @@ Whenever unvisited entry points are found, start walking through a loop followin
 Note that upon entering polygon 1 we walk along the edges on polygon 2 which are inside polygon 1, and upon exiting we walk along the edges of polygon 1 which define the boundary of the region of intersection.
 
 <h2 id="doubly-linked-lists">3 Doubly Linked lists</h2>
+
+<figure class="post-figure">
+<img class="img-95"
+    src="/assets/posts/polygon-clipping/doubly_linked_list.png"
+	alt="doubly linked list"
+	>
+<figcaption>A doubly linked list.</figcaption>
+</figure>
 
 An interesting question is how to create two lists that we can simply insert points in and create links between the two.
 This problem is solved with doubly linked lists.
@@ -359,7 +366,7 @@ links[node1x].data # x
 Note how we didn't have to update the old links.
 The underlying pointers still point to the same data, which is why we went to all this effort.
 
-Lastly can collect the lists to recreate the arrays as before:
+Lastly we can collect the lists to recreate the arrays as before:
 {% highlight julia %}
 collect(list1) # ['a','x','b','c']
 collect(list2) # ['d','x','e','b','f']
@@ -374,8 +381,8 @@ There are ${nm}$ pairs so this is an $\mathcal{O}(nm)$ algorithm.
 
 <blockquote>
 <u><b>Find intersections</b></u> <br>
-<b>for</b> edge$_1$ $\leftarrow$ original(polygon$_1$) <b>do</b>: <br>
-$\quad$ <b>for</b> edge$_2$ $\leftarrow$ original(polygon$_2$) <b>do</b>: <br>
+<b>for</b> edge$_2$ $\leftarrow$ original(polygon$_2$) <b>do</b>: <br>
+$\quad$ <b>for</b> edge$_1$ $\leftarrow$ original(polygon$_1$) <b>do</b>: <br>
 $\quad\quad$ $p \leftarrow$ intersect(edge$_1$,  edge$_2$) <br>
 $\quad\quad$ <b>if</b> $p$ <br>
 $\quad\quad\quad$ node$_1$ $\leftarrow$ insert_in_order(polygon$_1$, $p$) <br>
@@ -452,9 +459,9 @@ This condition is satisfied when $\min(x_1, x_2) \leq x \leq \max(x_1, x_2)$ and
 The intersections have to be inserted maintaining the clockwise order.
 If there is one intersection on the edge the new point can be automatically placed between the tail and the head of the edge.
 Otherwise if there are multiple intersections on the edge (see the [example](#fig-weiler-atherton-example-2)) then we need to determine which intersection is placed first.
-The basic idea is to check that the distance from the current node to the intersection is less than the distance from the current node to the next node.
-If not, advance one node forward (on to an existing intersection point) and try again.
-We also need to check if the intersection was already inserted or equivalently, the same as an original node of the polygon.
+The basic idea is to check that the distance from the current vertix to the intersection is less than the distance from the current vertix to the next vertix.
+If not, advance one vertix forward (on to an existing intersection point) and try again.
+We also need to check if the intersection was already inserted or equivalently, the same as an original vertix of the polygon.
 
 <blockquote>
 <u><b>Insert intersection in order</b></u> <br>
@@ -473,7 +480,7 @@ $s_+\leftarrow $insert($s$, $p$) <br>
 <b>return</b> $s_+$
 </blockquote>
 
-Here $s_+$ refers to the node after $s$.
+Here $s_+$ refers to the vertix after $s$.
 
 <h2 id="linking-intersections">5 Linking intersections</h2>
 
@@ -544,7 +551,7 @@ The derivation uses the double angle formula for $\sin$ and the identity $\sin(\
     The same formula can be derived with the determinant formula for the cross product:
     \[
     \begin{align}
-    \mathbf{p} \times \mathbf{r} &= |p||r|\sin(\theta-\alpha) \\
+    \mathbf{p} \times \mathbf{r} &= |\mathbf{p}||\mathbf{r}|\sin(\theta-\alpha) \\
     &=
     \det
     \begin{bmatrix} 
@@ -592,8 +599,9 @@ There are 6 case of edge intersections:
 3. Polygon 2 only intersects polygon 1 at a single point.
 4. The first three cases but the edges of polygon 2 are inside polygon 1. These cases do not count as entering or exiting.
 
-We have a choice to count the edge intersections as intersections or not.
-I wanted my algorithm to return the edge intersections if there was only an edge intersection or a point if there was only a point intersection.
+We have a choice to count theses cases intersections or not.
+For a graphical application they might not be relevant.
+However I wanted my algorithm to return the edge intersections if there was only an edge intersection or a point if there was only a point intersection.
 Therefore my code counts hitting an edge of polygon 1 as entering polygon 1 if the tail of edge 2 is not in polygon 1.
 The case of exiting is dealt with separately. Here the rule is: polygon 2 is exiting polygon 1 if the head of edge 2 is not in polygon 1.
 
@@ -619,17 +627,18 @@ There are several cases are which correspond to the cases already profiled for "
 2. The polygons have overlapping edges which touch at the common vertix. This is either an ENTRY or EXIT or a shared segment on a longer segment (VERTIX).
 
 There are three consecutive points on each polygon: the previous tail $p_-$, the intersection point/vertix $p$ and the next head $p_+$. 
-The subscript $1$ or $2$ denotes the polygon.
-Note that $p\equiv p_{1} \equiv p_{2}$.
+The letter $p$ or $q$ denotes the polygon.
+Note that $v\equiv p \equiv q$.
 The algorithm is then as follows:
 <blockquote>
 <u><b>Link vertix intersections</b></u> <br>
-inputs: $p$, $p_{1-}$, $p_{1+}$, $p_{2-}$, $p_{2+}$ <br>
-edge$_{1-}$ $\leftarrow (p_{1-}, p)$ <br>
-edge$_{1+}$ $\leftarrow (p, p_{1+})$ <br>
-next2_on_edge1, prev2_on_edge1 $\leftarrow$ has_edge_overlap($p$, $p_{1-}$, $p_{1+}$, $p_{2-}$, $p_{2+}$) <br>
-tail2_in_1 $\leftarrow$ in_plane(($p_{1-}$, $p$, $p_{1+}$), $p_{2-}$) <br>
-head2_in_1 $\leftarrow$ in_plane(($p_{1-}$, $p$, $p_{1+}$), $p_{2+}$) <br>
+inputs: $v$, $p_{-}$, $p_{+}$, $q_{-}$, $q_{+}$ <br>
+edge$_{1-}$ $\leftarrow (p_{-}, v)$ <br>
+edge$_{1+}$ $\leftarrow (v, p_{+})$ <br>
+prev2_on_edge1 $\leftarrow$ has_edge_overlap($v$, $p_{-}$, $p_{+}$, $q_{-}$) <br>
+next2_on_edge1 $\leftarrow$ has_edge_overlap($v$, $p_{-}$, $p_{+}$, $q_{+}$) <br>
+tail2_in_1 $\leftarrow$ in_plane(($p_{-}$, $v$, $p_{+}$), $q_{-}$) <br>
+head2_in_1 $\leftarrow$ in_plane(($p_{-}$, $v$, $p_{+}$), $q_{+}$) <br>
 tail2_in_1 $\leftarrow$ tail2_in_1 $\cup$ prev2_on_edge1 <br>
 head2_in_1 $\leftarrow$ head2_in_1 $\cup$ next2_on_edge1 <br>
 <b>if</b> tail2_in_1 = head2_in_1 <br>
@@ -638,18 +647,18 @@ $\quad$ <b>return</b> VERTIX <br>
 $\quad$ <b>return</b> ENTRY <b>if</b> head2_in_1 <b>else</b> EXIT 
 </blockquote>
 
-This little algorithm was arrived after much pain, trial and error.
+This little algorithm was arrived at after much pain, trial and error.
 
 <figure class="post-figure">
 <img class="img-95"
     src="/assets/posts/polygon-clipping/vertix_intersections.png"
 	alt="Vertix intersections"
 	>
-<figcaption>Left: $p_{2+}$ is in both half-planes of the edges of polygon 1. Middle and right: $p_{2+}$ is in the half-plane of the leading edge of polygon 1.</figcaption>
+<figcaption>Left: $p_{+}$ is in both half-planes of the edges of polygon 1. Middle and right: $p_{+}$ is in the half-plane of the leading edge of polygon 1 only.</figcaption>
 </figure>
 
 The half-plane equation $\ref{eq:half-plane}$ is not enough to tell if a point lies inside the polygon.
-If the the point lies in both half-planes then it is definitely in the polygon and if it lies outside both then it is definitely outside.
+If the point lies in both half-planes then it is definitely in the polygon and if it lies outside both then it is definitely outside.
 However if it lies in one then it can be either inside or outside.
 
 <figure class="post-figure">
@@ -661,7 +670,7 @@ However if it lies in one then it can be either inside or outside.
 </figure>
 
 Instead it is better to analyse the angles for a definitive answer. 
-Keeping in mind that the planes still need to be clockwise of the edges, there are only two cases to account for.
+Keeping in mind that the planes need to be clockwise of the edges, there are only two cases to account for.
 The first is that the tail edge angle $\theta_1$ is less than the leading edge angle $\theta_2$, and the second that it is greater.
 Then a point with angle $\alpha$ will lie inside if:
 
@@ -674,10 +683,10 @@ $$
 \label{eq:in-plane}
 $$
 
-The angle from a point $q$ to the vertix $v$ are calculated as:
+The angle from a point $(x, y)$ to the vertix $v$ is calculated as:
 
 $$
-\theta = \arctan\left(\frac{q_y-v_y}{q_x-v_x}\right)
+\theta = \arctan\left(\frac{y-v_y}{x-v_x}\right)
 $$
 
 The resulting angles should be in the range $[0, 2\pi]$.
@@ -694,10 +703,10 @@ This function with the negative values shifted by $+2\pi$ will have the desired 
 <figcaption>Left: both midpoints lie on the other edge and direction is opposite. Right: only $m_{1+}$ lies on the other edge and direction is same.</figcaption>
 </figure>
 
-The segment midpoint is calculated as:
+The segment midpoint from each point $(x,y)$ to the vertix $v$ is calculated as:
 
 $$
-m =  \left(\frac{p_{+, x} + p_{x}}{2}, \frac{p_{+, y} + p_{y}}{2}\right)
+m =  \left(\frac{x + v_{x}}{2}, \frac{y + v_{y}}{2}\right)
 $$
 
 To check if a specific edge overlaps with one of the other polygon's edges requires checking if (1) this midpoint lies on the other edge and/or (2) if the other edge's midpoint lies on this edge. The one edge might be significantly shorter so both might not be true.
@@ -709,12 +718,12 @@ So 2 checks per 2 directions per 2 edges is 8 checks in total.
 <figure class="post-figure">
 <img class="img-50"
     src="/assets/posts/polygon-clipping/on_segment.png"
-	alt="segment p-q-r"
+	alt="segment a-b-c"
 	>
-<figcaption>Segment p-q-r.</figcaption>
+<figcaption>Segment a-b-c.</figcaption>
 </figure>
 
-Determining if a point $q$ lies on a segment $\mathbf{pr}$ requires that the cross product $(\mathbf{r}-\mathbf{q}) \times (\mathbf{q}-\mathbf{p})$ is $0$ and that $q$ lies within the bounds $\min(p_x, r_x) \leq q_x \leq \max(p_x, r_x)$ and $\min(p_y, r_y) \leq q_y \leq \max(p_y, r_y)$. Equivalently, the lines have the same gradient and $q$ lies within those bounds.
+Determining if a point $b$ lies on a segment $\mathbf{ac}$ requires that the cross product $(\mathbf{c}-\mathbf{b}) \times (\mathbf{b}-\mathbf{a})$ is $0$ and that $b$ lies within the bounds $\min(a_x, c_x) \leq b_x \leq \max(a_x, c_x)$ and $\min(a_y, c_y) \leq b_y \leq \max(a_y, c_y)$. Equivalently, the lines have the same gradient and $b$ lies within those bounds.
 
 <h2 id="walk-linked-lists">6 Walk linked lists</h2>
 
@@ -747,7 +756,7 @@ $s \leftarrow s_{0+}$ <br>
 <b>while</b> $s \neq s_0$  <br>
 $\quad$ loop $\leftarrow$ loop $+ s$ <br>
 $\quad$ <b> if </b> ($s \in$ visited) $\cap$ (type($s$) $\neq$ VERTIX)  <br>
-$\quad\quad$ ERROR "Cycle detected with repeated node" <br>
+$\quad\quad$ ERROR "Cycle detected at node $s$" <br>
 $\quad$ visited $\leftarrow$ visited $+ s$ <br>
 $\quad$ <b> if </b> has_link($s$) $\cap$ (type($s$) $\neq$ VERTIX) <br>
 $\quad\quad$ $s \leftarrow$ link($s$) <br>
@@ -759,7 +768,7 @@ The cycle detection code is important.
 Despite the best effort so far, there are still some cases where this code could result in infinite loops because of repeated nodes.
 
 My code currently raises a warning instead of an error. 
-I recognise that message of "cycle detected at node x" is not very informative if you don't know the underlying algorithm. However at least it gives a clear indication of where the problem lies if you do.    
+I recognise that a message of "cycle detected at node x" is not very informative if you don't know the underlying algorithm. However at least it gives a clear indication of where the problem lies if you do.    
 
 ## Conclusion
 
@@ -772,6 +781,6 @@ That way $s \in \text{visited}$ will not fail if one point is slightly different
 
 There are further extensions for self-intersecting polygons which I may implement in the future.
 
-I am also considering implementing the Martinez-Rueda algorithm because it can readily handles self-intersecting polygons and can also do unions, differences and XOR.
+I am considering implementing the Martinez-Rueda algorithm because it can readily handles self-intersecting polygons and can also do unions, differences and XOR.
 
 ---
