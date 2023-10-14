@@ -174,6 +174,9 @@ The implementation described here has the following limitations.
 It some special cases it will work if only one polygon is self-intersecting but there is no guarantee.
 It will definitely struggle for two self-intersecting polygons.
 
+The original algorithm could not handle degenerate cases.
+This version can because of the edge case handling in the [Linking intersections](#linking-intersections) section.
+
 <h2 id="the-algorithm">2 The algorithm</h2>
 
 The Weiler-Atherton algorithm is as follows:
@@ -183,7 +186,7 @@ The Weiler-Atherton algorithm is as follows:
   <li>Find all the intersections between the edges of polygon 2 with polygon 1.
     <ol type="i">
         <li>Insert each intersection into both lists maintaining the clockwise order of points. </li>
-        <li>Label each intersection as ENTRY or EXIT points depending on if they enter polygon 1 from polygon 2 or exit polygon 1 to polygon 2. Label them as VERTEX if neither.</li>
+        <li>Label each intersection as ENTRY or EXIT points depending on if they enter polygon 1 from polygon 2 or exit polygon 1 to polygon 2. Label them as VERTEX if neither. The original algorithm assumed ENTRYs and EXITs alternated after the first intersection; this version does not so it can account for edge cases.</li>
     </ol>
   </li>
   <li>Walk through all vertices on polygon 2.
@@ -781,6 +784,6 @@ That way $s \in \text{visited}$ will not fail if one point is slightly different
 
 There are further extensions for self-intersecting polygons which I may implement in the future.
 
-I am considering implementing the Martinez-Rueda algorithm because it can readily handles self-intersecting polygons and can also do unions, differences and XOR.
+I am considering implementing the Martinez-Rueda algorithm because it readily handles self-intersecting polygons and can also do unions, differences and XOR.
 
 ---
