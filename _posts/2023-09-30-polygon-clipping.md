@@ -183,14 +183,14 @@ The Weiler-Atherton algorithm is as follows:
   <li>Find all the intersections between the edges of polygon 2 with polygon 1.
     <ol type="i">
         <li>Insert each intersection into both lists maintaining the clockwise order of points. </li>
-        <li>Label each intersection as ENTRY or EXIT points depending on if they enter polygon 1 from polygon 2 or exit polygon 1 to polygon 2. Label them as VERTIX if neither.</li>
+        <li>Label each intersection as ENTRY or EXIT points depending on if they enter polygon 1 from polygon 2 or exit polygon 1 to polygon 2. Label them as VERTEX if neither.</li>
     </ol>
   </li>
   <li>Walk through all vertices on polygon 2.
     <ol type="i">
         <li>Each time an unvisited ENTRY point is encountered, start recording a region of intersection.</li>
-        <li>Follow the vertices until an EXIT vertix is encountered, then move to the corresponding vertix on polygon 1.</li>
-        <li>Continue following the vertices on polygon 1 until an ENTRY vertix is encounted, then move back to the corresponding vertix on polygon 2.</li>
+        <li>Follow the vertices until an EXIT vertex is encountered, then move to the corresponding vertex on polygon 1.</li>
+        <li>Continue following the vertices on polygon 1 until an ENTRY vertex is encounted, then move back to the corresponding vertex on polygon 2.</li>
         <li>Repeat steps ii and iii until the starting point is encountered. All visited points lie on the region of intersection. Continue along polygon 2.</li>
     </ol>
   </li>
@@ -459,9 +459,9 @@ This condition is satisfied when $\min(x_1, x_2) \leq x \leq \max(x_1, x_2)$ and
 The intersections have to be inserted maintaining the clockwise order.
 If there is one intersection on the edge the new point can be automatically placed between the tail and the head of the edge.
 Otherwise if there are multiple intersections on the edge (see the [example](#fig-weiler-atherton-example-2)) then we need to determine which intersection is placed first.
-The basic idea is to check that the distance from the current vertix to the intersection is less than the distance from the current vertix to the next vertix.
-If not, advance one vertix forward (on to an existing intersection point) and try again.
-We also need to check if the intersection was already inserted or equivalently, the same as an original vertix of the polygon.
+The basic idea is to check that the distance from the current vertex to the intersection is less than the distance from the current vertex to the next vertex.
+If not, advance one vertex forward (on to an existing intersection point) and try again.
+We also need to check if the intersection was already inserted or equivalently, the same as an original vertex of the polygon.
 
 <blockquote>
 <u><b>Insert intersection in order</b></u> <br>
@@ -480,7 +480,7 @@ $s_+\leftarrow $insert($s$, $p$) <br>
 <b>return</b> $s_+$
 </blockquote>
 
-Here $s_+$ refers to the vertix after $s$.
+Here $s_+$ refers to the vertex after $s$.
 
 <h2 id="linking-intersections">5 Linking intersections</h2>
 
@@ -570,7 +570,7 @@ The derivation uses the double angle formula for $\sin$ and the identity $\sin(\
   </div>
 </div>
 
-So to determine if an edge is entering or leaving polygon 1, we can take the next vertix of polygon 2 after the intersection - the head - and use equation $\ref{eq:half-plane}$ to determine if it is inside (entering) or outside (exiting) the half-plane of the edge of polygon 1.
+So to determine if an edge is entering or leaving polygon 1, we can take the next vertex of polygon 2 after the intersection - the head - and use equation $\ref{eq:half-plane}$ to determine if it is inside (entering) or outside (exiting) the half-plane of the edge of polygon 1.
 This works well in [most scenarios](#fig-complex-convex).
 
 Complexity comes in that sometimes the head and/or tail of the edge lies on the edge of polygon 1. 
@@ -583,7 +583,7 @@ The next two subsections explore the edge cases.
 
 <h3 id="edge-intersections">5.2 Edge intersections</h3>
 
-An edge intersection happens when a vertix of polygon 2 lies on an edge of polygon 1.
+An edge intersection happens when a vertex of polygon 2 lies on an edge of polygon 1.
 
 <figure class="post-figure" id="fig-edge-intersections">
 <img class="img-95"
@@ -605,33 +605,33 @@ However I wanted my algorithm to return the edge intersections if there was only
 Therefore my code counts hitting an edge of polygon 1 as entering polygon 1 if the tail of edge 2 is not in polygon 1.
 The case of exiting is dealt with separately. Here the rule is: polygon 2 is exiting polygon 1 if the head of edge 2 is not in polygon 1.
 
-In the case of the point intersection it will be an entry followed immediately by an exit. This should then be changed to a vertix intercept.
+In the case of the point intersection it will be an entry followed immediately by an exit. This should then be changed to a vertex intercept.
 
-<h3 id="vertix-intersections">5.3 Vertix intersections</h3>
+<h3 id="vertex-intersections">5.3 Vertex intersections</h3>
 
-A vertix intersection happens when a vertix of polygon 2 lies on a vertix of polygon 1. For example:
+A vertex intersection happens when a vertex of polygon 2 lies on a vertex of polygon 1. For example:
 
 <figure class="post-figure" id="fig-edge-intersections">
 <img class="img-95"
     src="/assets/posts/polygon-clipping/arrow_heads.png"
-	alt="Two arrow heads intersecting on a vertix"
+	alt="Two arrow heads intersecting on a vertex"
 	>
-<figcaption>Polygon 2 entering polygon 1 at a vertix.</figcaption>
+<figcaption>Polygon 2 entering polygon 1 at a vertex.</figcaption>
 </figure>
 
 This can be conceptually thought of as a "bent" edge.
 There are several cases are which correspond to the cases already profiled for "straight" edges:
 
-1. The polygons cross over each other at the common vertix. This is either an ENTRY or EXIT.
-2. One polygon is inside/outside the other polygon and they touch at common vertix (VERTIX).
-2. The polygons have overlapping edges which touch at the common vertix. This is either an ENTRY or EXIT or a shared segment on a longer segment (VERTIX).
+1. The polygons cross over each other at the common vertex. This is either an ENTRY or EXIT.
+2. One polygon is inside/outside the other polygon and they touch at common vertex (VERTEX).
+2. The polygons have overlapping edges which touch at the common vertex. This is either an ENTRY or EXIT or a shared segment on a longer segment (VERTEX).
 
-There are three consecutive points on each polygon: the previous tail $p_-$, the intersection point/vertix $p$ and the next head $p_+$. 
+There are three consecutive points on each polygon: the previous tail $p_-$, the intersection point/vertex $p$ and the next head $p_+$. 
 The letter $p$ or $q$ denotes the polygon.
 Note that $v\equiv p \equiv q$.
 The algorithm is then as follows:
 <blockquote>
-<u><b>Link vertix intersections</b></u> <br>
+<u><b>Link vertex intersections</b></u> <br>
 inputs: $v$, $p_{-}$, $p_{+}$, $q_{-}$, $q_{+}$ <br>
 edge$_{1-}$ $\leftarrow (p_{-}, v)$ <br>
 edge$_{1+}$ $\leftarrow (v, p_{+})$ <br>
@@ -642,7 +642,7 @@ head2_in_1 $\leftarrow$ in_plane(($p_{-}$, $v$, $p_{+}$), $q_{+}$) <br>
 tail2_in_1 $\leftarrow$ tail2_in_1 $\cup$ prev2_on_edge1 <br>
 head2_in_1 $\leftarrow$ head2_in_1 $\cup$ next2_on_edge1 <br>
 <b>if</b> tail2_in_1 = head2_in_1 <br>
-$\quad$ <b>return</b> VERTIX <br>
+$\quad$ <b>return</b> VERTEX <br>
 <b>else</b> <br>
 $\quad$ <b>return</b> ENTRY <b>if</b> head2_in_1 <b>else</b> EXIT 
 </blockquote>
@@ -651,8 +651,8 @@ This little algorithm was arrived at after much pain, trial and error.
 
 <figure class="post-figure">
 <img class="img-95"
-    src="/assets/posts/polygon-clipping/vertix_intersections.png"
-	alt="Vertix intersections"
+    src="/assets/posts/polygon-clipping/vertex_intersections.png"
+	alt="Vertex intersections"
 	>
 <figcaption>Left: $p_{+}$ is in both half-planes of the edges of polygon 1. Middle and right: $p_{+}$ is in the half-plane of the leading edge of polygon 1 only.</figcaption>
 </figure>
@@ -664,7 +664,7 @@ However if it lies in one then it can be either inside or outside.
 <figure class="post-figure">
 <img class="img-95"
     src="/assets/posts/polygon-clipping/in_plane.png"
-	alt="Vertix intersections"
+	alt="in plane of 2 edges"
 	>
 <figcaption></figcaption>
 </figure>
@@ -683,7 +683,7 @@ $$
 \label{eq:in-plane}
 $$
 
-The angle from a point $(x, y)$ to the vertix $v$ is calculated as:
+The angle from a point $(x, y)$ to the vertex $v$ is calculated as:
 
 $$
 \theta = \arctan\left(\frac{y-v_y}{x-v_x}\right)
@@ -703,7 +703,7 @@ This function with the negative values shifted by $+2\pi$ will have the desired 
 <figcaption>Left: both midpoints lie on the other edge and direction is opposite. Right: only $m_{1+}$ lies on the other edge and direction is same.</figcaption>
 </figure>
 
-The segment midpoint from each point $(x,y)$ to the vertix $v$ is calculated as:
+The segment midpoint from each point $(x,y)$ to the vertex $v$ is calculated as:
 
 $$
 m =  \left(\frac{x + v_{x}}{2}, \frac{y + v_{y}}{2}\right)
@@ -755,10 +755,10 @@ visited $\leftarrow  \{ s_0 \}$  <br>
 $s \leftarrow s_{0+}$ <br>
 <b>while</b> $s \neq s_0$  <br>
 $\quad$ loop $\leftarrow$ loop $+ s$ <br>
-$\quad$ <b> if </b> ($s \in$ visited) $\cap$ (type($s$) $\neq$ VERTIX)  <br>
+$\quad$ <b> if </b> ($s \in$ visited) $\cap$ (type($s$) $\neq$ VERTEX)  <br>
 $\quad\quad$ ERROR "Cycle detected at node $s$" <br>
 $\quad$ visited $\leftarrow$ visited $+ s$ <br>
-$\quad$ <b> if </b> has_link($s$) $\cap$ (type($s$) $\neq$ VERTIX) <br>
+$\quad$ <b> if </b> has_link($s$) $\cap$ (type($s$) $\neq$ VERTEX) <br>
 $\quad\quad$ $s \leftarrow$ link($s$) <br>
 $\quad$ $s \leftarrow s_+$ <br>
 <b>return</b> loop, visited
