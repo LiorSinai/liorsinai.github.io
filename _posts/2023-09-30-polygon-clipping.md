@@ -171,7 +171,7 @@ The implementation described here has the following limitations.
 1. It does not cater for holes in the polygon. (The original version had an extension for this case.)
 2. It can fail completely for self-intersecting polygons.  (Extensions for this case do exist.)
 
-It some special cases it will work if only one polygon is self-intersecting but there is no guarantee.
+In some special cases it will work if only one polygon is self-intersecting but there is no guarantee.
 It will definitely struggle for two self-intersecting polygons.
 
 The original algorithm could not handle degenerate cases.
