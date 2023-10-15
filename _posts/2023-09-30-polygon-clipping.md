@@ -657,7 +657,7 @@ This little algorithm was arrived at after much pain, trial and error.
     src="/assets/posts/polygon-clipping/vertex_intersections.png"
 	alt="Vertex intersections"
 	>
-<figcaption>Left: $p_{+}$ is in both half-planes of the edges of polygon 1. Middle and right: $p_{+}$ is in the half-plane of the leading edge of polygon 1 only.</figcaption>
+<figcaption>Left: $q_{+}$ is in both half-planes of the edges of polygon 1. Middle and right: $q_{+}$ is in the half-plane of the leading edge of polygon 1 only.</figcaption>
 </figure>
 
 The half-plane equation $\ref{eq:half-plane}$ is not enough to tell if a point lies inside the polygon.
