@@ -325,7 +325,7 @@ using ProgressMeter
 using Random
 {% endhighlight %}  
 
-You can see my final code at [github.com/LiorSinai/DenoisingDiffusion.jl](https://github.com/LiorSinai/TransformersLite.jl).
+You can see my final code at [github.com/LiorSinai/DenoisingDiffusion.jl](https://github.com/LiorSinai/DenoisingDiffusion.jl).
 
 ### Forward process
 <h4 id="forward-process-theory">Theory</h4> 
@@ -397,19 +397,20 @@ Define $\alpha_t = 1 - \beta_t$:
 
 $$
 \begin{align}
-x_t &= \sqrt{\alpha_t}x_{t-1} + \sqrt{1-\alpha_t}z_{t-1} \\
+x_t &\sim \mathcal{N}\left(\sqrt{\alpha_t}x_{t-1}, (1-\alpha_t) \mathbf{I} \right) \\
+\Rightarrow x_t &= \sqrt{\alpha_t}x_{t-1} + \sqrt{1-\alpha_t}z_{t-1} \\
     &= \sqrt{\alpha_t}\left(\sqrt{\alpha_{t-1}}x_{t-2} + \sqrt{1-\alpha_{t-1}}z_{t-2}\right) + \sqrt{1-\alpha_t}z_{t-1} \\
     &= \sqrt{\alpha_t\alpha_{t-1}}x_{t-2} + \sqrt{\alpha_t(1-\alpha_{t-1})}z_{t-2} + \sqrt{1-\alpha_t}z_{t-1} \\
     &= \sqrt{\alpha_t\alpha_{t-1}}x_{t-2} + \sqrt{1 - \alpha_t\alpha_{t-1}}\bar{z}_{t-2} \\
     &= \dots \\
-    &= \sqrt{\vphantom{1}\bar{\alpha}_t} x_0 + \sqrt{1 - \bar{\alpha}_t} \bar{z}
+    &= \sqrt{\vphantom{1}\bar{\alpha}_t} x_0 + \sqrt{1 - \bar{\alpha}_t} \bar{z} \\
 \end{align}
 \tag{3.5.1}
 \label{eq:shortcut}
 $$
 
-Where $\bar{\alpha}_t = \prod_i^t \alpha_i=\prod_i^t (1-\beta_i)$. 
-Line 4 uses the formula for the addition of two normal distributions:
+where $\bar{\alpha}_t = \prod_i^t \alpha_i=\prod_i^t (1-\beta_i)$. 
+Line 5 uses the formula for the addition of two normal distributions:
 
 $$
 \begin{align}
@@ -423,6 +424,14 @@ $$
 More detail can be found [here][wiki_sum_normal]. 
 
 [wiki_sum_normal]:https://en.wikipedia.org/wiki/Sum_of_normally_distributed_random_variables
+
+We now have a formula for $q(x_t \vert x_0)$:
+
+$$
+\Rightarrow q(x_t \vert x_0) = x_t \sim \mathcal{N}\left(\sqrt{\vphantom{1}\bar{\alpha}_t} x_0, (1 - \bar{\alpha}_t) \mathbf{I} \right)
+\tag{3.5.2}
+\label{eq:shortcut-normal}
+$$
 
 <h4 id="shortcut-code">Code</h4> 
 As an early optimisation we'll pre-calculate all the $\beta$, $\alpha$ and $\bar{\alpha}$ values and store them in a struct.
@@ -559,23 +568,17 @@ Given our start image estimate $\hat{x}_0$, we can calculate the reverse process
 $$
 \begin{align}
 p_\theta(x_{t-1} \vert x_{t}) &= q(x_{t−1}|x_t,\hat{x}_0) \\
-             \Rightarrow     x_{t-1} &= \tilde{\mu}_t(x_t, \hat{x}_0) + \tilde{\beta}_t z
+                              &= \frac{q(x_t \vert x_{t-1}, x_0)q(x_{t-1} \vert x_0)}{q(x_{t} \vert x_0)} 
 \end{align}
-\label{eq:reverse}
+\label{eq:bayes}
 \tag{3.6.1}
 $$
 
-Because the posterior probability $q(x_{t-1} | x_{t}, x_0)$ is normally distributed.
-We can prove this by using [Bayes' theorem][bayes]: 
-
-$$ q(x_{t-1} \vert x_{t}, x_0) = \frac{q(x_t \vert x_{t-1}, x_0)q(x_{t-1} \vert x_0)}{q(x_{t} \vert x_0)} 
-\tag{3.6.2}
-\label{eq:bayes}
-$$
+where the second line expresses [Bayes' Theorem][bayes].
 
 [bayes]: https://en.wikipedia.org/wiki/Bayes%27_theorem
 
-It is now a matter of substituting in equations $\eqref{eq:normal}$, $\eqref{eq:forward}$ and $\eqref{eq:shortcut}$ and simplifying. The algebra however is somewhat lengthy.
+It is now a matter of substituting in equations $\eqref{eq:normal}$, $\eqref{eq:forward}$ and $\eqref{eq:shortcut-normal}$ and simplifying. The algebra however is somewhat lengthy.
 <p>
   <a class="btn" data-toggle="collapse" href="#BayesDerivation" role="button" aria-expanded="false" aria-controls="collapseExample">
     Full derivation &#8681;
@@ -662,12 +665,20 @@ It is now a matter of substituting in equations $\eqref{eq:normal}$, $\eqref{eq:
   </div>
 </div>
 
-From this derivation the mean and standard deviation of the posterior distribution are:
+The result is that $x_{t-1}$ is also a normal distribution $x_{t-1} \sim \mathcal{N}(\tilde{\mu}_t, \tilde{\beta}_t) $:
+
+$$ 
+x_{t-1} = \tilde{\mu}_t(x_t, \hat{x}_0) + \tilde{\beta}_t z
+\label{eq:reverse}
+\tag{3.6.2}
+$$
+
+From the derivation the posterior mean $\tilde{\mu}_t$ and posterior standard deviation $\tilde{\beta}_t$ are:
 
 $$ 
 \begin{align}
 \tilde{\mu}_t(x_t, x_0) &= \frac{(1-\bar{\alpha}_{t-1})\sqrt{\vphantom{1}\alpha_t}}{1-\bar{\alpha}_t} x_t 
-            + \frac{\beta_t \sqrt{\vphantom{1}\bar{\alpha}_{t-1}}}{1-\bar{\alpha}_t} x_0 \\
+            + \frac{\beta_t \sqrt{\vphantom{1}\bar{\alpha}_{t-1}}}{1-\bar{\alpha}_t} \hat{x}_0 \\
  \tilde{\beta}_t &= \beta_t\frac{1-\bar{\alpha}_{t-1}}{1-\bar{\alpha}_t} 
 \end{align}
 \label{eq:posterior}
