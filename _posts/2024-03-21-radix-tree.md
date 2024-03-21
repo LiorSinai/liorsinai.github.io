@@ -101,7 +101,7 @@ The whole tree will be accessed through the first node, which is called the root
 root = RadixTreeNode() # RadixTreeNode{String}("", false, RadixTreeNode{String}[])
 {% endhighlight %}  
 
-If we store children in the root than the default printing will print them too:
+If we store children in the root then the default printing will print them too:
 {%highlight julia %}
 root = RadixTreeNode{String}("", false, [RadixTreeNode("a", true), RadixTreeNode("b", true)])
 #= RadixTreeNode{String}("", false, RadixTreeNode{String}[RadixTreeNode{String}("a", true, RadixTreeNode{String}[]), RadixTreeNode{String}("b", true, RadixTreeNode{String}[])]) =#
@@ -176,7 +176,7 @@ The algorithm on [Wikipedia][wiki_radix_tree] is as follows:
     - Or the node is a leaf (has no children).
     - Or all the letters are matched.
 
-Here is the full agorithm in code:
+Here is the full algorithm in code:
 {%highlight julia %}
 function Base.get(root::RadixTreeNode, key::AbstractString)
     node = root
@@ -213,8 +213,11 @@ end
 This passes both tests.
 
 Some comments:
-- The `get_suffix` function may also be implemented using `chop(s; head=head, tail=0)` which returns a substring instead of a string. Working directly with strings seems to reduce memory allocations.
+- These functions are fully compatible with unicode strings. See this [tutorial][julia_unicode] for more information.
+- The `get_suffix` function may also be implemented using `chop(s; head=head, tail=0)` which returns `SubString` instead of `String`. Working directly with strings seems to reduce memory allocations.
 - The `search_children` function can be made faster with binary search. But in practice the child arrays tend to be small so this is not essential.
+
+[julia_unicode]: https://en.wikibooks.org/wiki/Introducing_Julia/Strings_and_characters#Unicode_strings
 
 A question is, what will `get(root, "tea")` return?
 Technically "tea" is in the tree, split up as "te" and "am".
@@ -343,8 +346,9 @@ end
 
 #### 4 Split with no add
 
-There is one extra scenario we have to account for.
-If we add a word that is fully a prefix of another word, then we shouldn't add a new node after splitting.
+There are two extra scenarios we have to account for.
+The first is if the word is already in the tree, in which case we should ignore it.
+The second is if we add a word that is fully a prefix of another word, then we shouldn't add a new node after splitting.
 
 Our test is:
 {% highlight julia %}
@@ -393,7 +397,7 @@ We can now make fairly complex trees.
 To prove this it will be helpful to print the entire tree.
 
 The tree will be printed by visiting a node and printing its data, then moving on to each of its children and doing the same one by one.
-This is known as a preorder traversal.
+This is known as a pre-order traversal.
 
 Each time we go up a level we will increase the indent for easy reading.
 
@@ -499,10 +503,10 @@ At first I found it challenging to make one for a tree but Henrique Becker's ans
 
 [discourse_iterator]: https://discourse.julialang.org/t/iterating-over-a-tree-recursively-with-base-iterate/62512
 
-Once again, the default is a preorder traversal:
+Once again, the default is a pre-order traversal:
 
 <figure class="post-figure">
-    <img class="img-95" src="/assets/posts/radix-tree/preorder.png" alt="Preorder traversal through a radix tree">
+    <img class="img-95" src="/assets/posts/radix-tree/preorder.png" alt="Pre-order traversal through a radix tree">
 </figure>
 
 According to the documentation on [interfaces](https://docs.julialang.org/en/v1/manual/interfaces/), the following code
@@ -525,7 +529,7 @@ end
 {% endhighlight %}
 
 The iterator will be a `PreOrderTraversal` object which will step through all nodes of the tree.
-We want to only return so we can stop the iteration when we reach a label.
+We want to only return labels so we can stop the iteration when it reaches a label.
 The item will be made up of a tuple: the `data` and a boolean for `is_label`.
 
 {% highlight julia %}
