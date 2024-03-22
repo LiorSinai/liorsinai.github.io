@@ -558,12 +558,12 @@ end
 {% endhighlight %}
 
 The hardest part is, what is the state?
-It is all the information about the nodes parents and its parents and so on, so that we can backtrack when we need to do so.
-For example at step 4 in the figure, we are at "test" which is the first child ("est") of the second child ("t") of the root.
+It is all the information about the node's parents and its parents and so on, so that we can backtrack when we need to do so.
+For example at step 5 in the figure, we are at "test" which is the first child ("est") of the second child ("t") of the root.
 This is nothing more than a list of tuples of `(node, idx, word)`. 
 We can implement this as a stack. 
 If `idx ≤ length(node.children)`, then increment `idx` up by one, otherwise pop from the stack and backtrack.
-In full:
+In full:[^stack]
 
 {% highlight julia %}
 Base.IteratorSize(::PreOrderTraversal) = Base.SizeUnknown() 
@@ -674,3 +674,5 @@ Thank you for following along. I hope you found this useful.
 [DataStructures]: https://juliacollections.github.io/DataStructures.jl/stable/trie/
 
 [^MIT_word_list]: Warning: there are profanities in this list. Also there are at least two mistakes: "trembl" and "documentcreatetextnode".
+
+[^stack]: I've called the variable `stack_` instead of `stack` because a function already exists with that name.
