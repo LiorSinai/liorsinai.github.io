@@ -1364,6 +1364,8 @@ Presented here is a subset of the results from scripts and notebooks at [github.
 
 ### Data exploration
 
+⚠️ WARNING: The dataset used here is no longer publicly available.
+
 Download the data using HuggingFace's Python API:
 
 {% highlight python %}
