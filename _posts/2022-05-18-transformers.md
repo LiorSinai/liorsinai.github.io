@@ -3,7 +3,7 @@ layout: post
 title:  "Transformers from first principles in Julia"
 date:   2022-05-18
 author: Lior Sinai
-last_modified_at: 2023-08-19
+last_modified_at: 2024-03-23
 background: '/assets/posts/transformers/transformer.png'
 sidenav: true
 categories: coding
@@ -13,6 +13,8 @@ tags: mathematics transformers 'machine learning' 'deep learning'
 _Transformers for natural language processing from first principles. This a long post which details a full implementation of transformers and the mathematics behind them. The use case is predicting Amazon review stars based on the review text. The language of choice is Julia utilising the Flux machine learning framework._ 
 
 _Update 19 August 2023: code refactoring and update to Flux 0.13.11 explicit syntax._
+
+_Update 23 March 2024: code refactoring._
 
 <link rel="stylesheet" href="/assets/posts/transformers/style.css">
 
@@ -325,7 +327,6 @@ So "great" actually places less importance on "camera" than "camera" places on i
 This matrix is at the heart of transformer.
 All the other layers work towards it or aim to use weights output by it. 
 
-
 ## Julia implementation
 ### Project setup
 
@@ -337,11 +338,11 @@ TransformerClassifier(
   Embed((32, 7455)),                    # 238_560 parameters
   PositionEncoding(32),
   Dropout(0.1),
-  TransformerEncoderBlock(
-    MultiheadAttention(num_heads=4, head_size=8, 32=>32)(
-      denseQ = Dense(32 => 32),         # 1_056 parameters
-      denseK = Dense(32 => 32),         # 1_056 parameters
-      denseV = Dense(32 => 32),         # 1_056 parameters
+  TransformerBlock(
+    MultiHeadAttention(num_heads=4, head_size=8, 32=>32)(
+      denseQ = Dense(32 => 32; bias=false),  # 1_024 parameters
+      denseK = Dense(32 => 32; bias=false),  # 1_024 parameters
+      denseV = Dense(32 => 32; bias=false),  # 1_024 parameters
       denseO = Dense(32 => 32),         # 1_056 parameters
     ),
     Dropout(0.1),
@@ -354,8 +355,8 @@ TransformerClassifier(
   Dense(32 => 1),                       # 33 parameters
   FlattenLayer(),
   Dense(50 => 5),                       # 255 parameters
-)        # Total: 21 trainable arrays, 251_552 parameters,
-          # plus 1 non-trainable, 32_000 parameters, summarysize 1.083 MiB
+)        # Total: 18 trainable arrays, 251_456 parameters,
+          # plus 1 non-trainable, 32_000 parameters, summarysize 1.083 MiB.
 {% endhighlight %}
 
 The `Dropout`, `LayerNorm` and `Dense` layers are already part of the Flux package.
@@ -499,6 +500,7 @@ Now for the `IndexTokenizer`. Start with the constructor:
 {%highlight julia %}
 struct IndexTokenizer{T}
     vocabulary::Vector{T}
+    lookup::Dict{T, Int}
     unksym::T
     unkidx::Int
     function IndexTokenizer(vocab::Vector{T}, unksym::T) where T
@@ -508,7 +510,8 @@ struct IndexTokenizer{T}
         else
             unkidx = findfirst(isequal(unksym), vocab)
         end
-        new{T}(vocab, unksym, unkidx)
+        lookup = Dict(x => idx for (idx, x) in enumerate(vocab))
+        new{T}(vocab, lookup, unksym, unkidx)
     end
 end
 
@@ -522,11 +525,17 @@ end
 
 This `IndexTokenizer` takes in the vocabulary list and an unknown symbol. 
 The constructor function checks if the unknown symbol is in the list else it adds it to the front.
+It also creates a reverse lookup from words to indices.
+This doubles space requirements but greatly speeds up processing.
 
-For the encoding process we need to replace a token with an index if it is in the vocabulary list and with the unknown symbol index (by default 1) if it is not:
+For the encoding process we replace a token with an index if it is in the vocabulary list otherwise we use the unknown symbol index (by default 1):
 {%highlight julia %}
-encode(tokenizer::IndexTokenizer{T}, x::T) where T = something(
-	findfirst(isequal(x), tokenizer.vocabulary), tokenizer.unkidx)
+function encode(tokenizer::IndexTokenizer{T}, x::T) where T
+    if haskey(tokenizer.lookup, x)
+        return tokenizer.lookup[x]
+    end
+    tokenizer.unkidx
+end
 {% endhighlight %}
 
 This assumes we are giving a single token of type `T`. 
@@ -578,16 +587,16 @@ For the model we will use later it will be 95% of the trainable parameters.
 The embedding layer is a struct that holds a matrix:
 {%highlight julia %}
 struct Embed{W <: AbstractArray}
-    embedding::W
+    weight::W
 end
 
 Flux.@functor Embed # tell Flux that this struct is trainable
 
 Embed(output_dim::Int, vocab_size::Int) = Embed(randn(Float32, output_dim, vocab_size))
 
-Base.size(e::Embed) = size(e.embedding)
+Base.size(e::Embed) = size(e.weight)
 
-Base.show(io::IO, e::Embed) = print(io, "Embed($(size(e.embedding)))")
+Base.show(io::IO, e::Embed) = print(io, "Embed($(size(e.weight)))")
 
 function Base.show(io::IO, m::MIME"text/plain", e::Embed)
     Flux._layer_show(io, e)
@@ -601,7 +610,7 @@ For the forward pass we will use `NNlib.gather`:
 {%highlight julia %}
 using NNlib: gather
 function (e::Embed)(x::AbstractArray{Int})
-    gather(e.embedding, x)
+    gather(e.weight, x)
 end
 {% endhighlight %}
 This is equivalent to `e.embedding[:, x]`. However `gather` is slightly more versatile and comes with the benefit of already having an `rrule` defined for it ([source](https://github.com/FluxML/NNlib.jl/blob/ff3ac6eb807e9b41f46f28f8b3287d19f4b722c7/src/gather.jl#L80)):
@@ -726,7 +735,7 @@ Now let's code the `PositionEncoding` layer.
 Since these values are constant it is easiest to preallocate a matrix:
 {%highlight julia %}
 struct PositionEncoding{W <: AbstractArray}
-    encoding::W
+    weight::W
 end
 
 Flux.@functor PositionEncoding # make this layer discoverable by Flux
@@ -750,7 +759,7 @@ function make_position_encoding(dim_embedding::Int, seq_length::Int, n::Int=1000
 end
 
 function Base.show(io::IO, pe::PositionEncoding)
-    print(io, "PositionEncoding($(size(pe.encoding, 1)))")
+    print(io, "PositionEncoding($(size(pe.weight, 1)))")
 end
 {% endhighlight %}
 
@@ -758,11 +767,11 @@ The forward pass then selects the required columns from the pre-allocated array:
 {%highlight julia %}
 (pe::PositionEncoding)(x::AbstractArray) = (pe::PositionEncoding)(size(x, 2))
 function (pe::PositionEncoding)(seq_length::Int)
-    max_length = size(pe.encoding, 2)
+    max_length = size(pe.weight, 2)
     if seq_length > max_length
         error("sequence length of $seq_length exceeds maximum position encoding length of $max_length")
     end
-    pe.encoding[:, Base.OneTo(seq_length)]
+    pe.weight[:, Base.OneTo(seq_length)]
 end
 {% endhighlight %}
 
@@ -948,12 +957,12 @@ We don't need to write a `rrule` for it because rules already exists for `reshap
 We are finally at the heart of the transformer: multi-head attention.
 At the end of this step we will have a `MultiheadAttention` layer:
 {% highlight julia %}
-MultiheadAttention(num_heads=4, head_size=8, 32=>32)(
-    denseQ = Dense(32 => 32),  # 1_056 parameters
-    denseK = Dense(32 => 32),  # 1_056 parameters
-    denseV = Dense(32 => 32),  # 1_056 parameters
-    denseO = Dense(32 => 32),  # 1_056 parameters
-)
+MultiHeadAttention(num_heads=4, head_size=8, 32=>32)(
+    denseQ = Dense(32 => 32; bias=false),  # 1_024 parameters
+    denseK = Dense(32 => 32; bias=false),  # 1_024 parameters
+    denseV = Dense(32 => 32; bias=false),  # 1_024 parameters
+    denseO = Dense(32 => 32),              # 1_056 parameters
+)                  # Total: 5 arrays, 4_128 parameters, 16.453 KiB
 {% endhighlight %}
 
 The multi-head attention layer splits up the embedding matrix into multiple heads.
@@ -962,7 +971,7 @@ If we have $H$ heads then $d_m=Hd_h$.
 
 First define a struct to hold all the dense layers and a parameter for $H$ called `nhead`:
 {% highlight julia %}
-struct MultiheadAttention{Q<:Dense, K<:Dense, V<:Dense, O<:Dense}
+struct MultiHeadAttention{Q<:Dense, K<:Dense, V<:Dense, O<:Dense}
     nhead::Int
     denseQ::Q
     denseK::K
@@ -970,48 +979,51 @@ struct MultiheadAttention{Q<:Dense, K<:Dense, V<:Dense, O<:Dense}
     denseO::O
 end
 
-Flux.@functor MultiheadAttention (denseQ, denseK, denseV, denseO, ) # tell Flux which parameters are trainable
+Flux.@functor MultiHeadAttention
+Flux.trainable(m::MultiHeadAttention) = (; m.denseQ, m.denseK, m.denseV, m.denseO) # tell Flux which parameters are trainable
 {% endhighlight %}
 
 We would like $d_m$ to be divisible by $H$ but the maths will work if it is not.
 So if the user supplies $d_h$ accept it as valid: 
 {% highlight julia %}
-function MultiheadAttention(nhead::Int, dm::Int, dh::Int, dout::Int)
-    MultiheadAttention(
+function MultiHeadAttention(nhead::Int, dim_model::Int, dim_head::Int, dim_out::Int)
+    MultiHeadAttention(
         nhead,
-        Dense(dm, dh*nhead),
-        Dense(dm, dh*nhead),
-        Dense(dm, dh*nhead),
-        Dense(dh*nhead, dout),
+        Dense(dim_model, dim_head*nhead; bias=false),
+        Dense(dim_model, dim_head*nhead; bias=false),
+        Dense(dim_model, dim_head*nhead; bias=false),
+        Dense(dim_head*nhead, dim_out),
     )
 end
 
-function MultiheadAttention(nhead::Int, dm::Int, dout::Int)
-    if dm % nhead != 0 
-        error("embedding dimension=$dm is not divisible by number of heads=$nhead")
+function MultiHeadAttention(
+    nhead::Int, dim_model::Int, dim_out::Int
+    )
+    if dim_model % nhead != 0 
+        error("embedding dimension=$dim_model is not divisible by number of heads=$nhead")
     end
-    MultiheadAttention(nhead, dm, div(dm, nhead), dout)
+    MultiHeadAttention(nhead, dim_model, div(dim_model, nhead), dim_out)
 end
 {% endhighlight %}
 
 Define printing functions:
 {% highlight julia %}
-function Base.show(io::IO, mha::MultiheadAttention)
+function Base.show(io::IO, mha::MultiHeadAttention)
     dh = div(size(mha.denseQ.weight)[1], mha.nhead)
     dm = size(mha.denseQ.weight)[2]
     dout = size(mha.denseO.weight)[1]
-    print(io, "MultiheadAttention(")
+    print(io, "MultiHeadAttention(")
     print(io, "num_heads=$(mha.nhead), ")
     print(io, "head_size=$(dh), ")
     print(io, "$(dm)=>$(dout)")
     print(io, ")")
 end
 
-function Base.show(io::IO, m::MIME"text/plain", mha::MultiheadAttention)
+function Base.show(io::IO, m::MIME"text/plain", mha::MultiHeadAttention)
     _show_multiheadattention(io, mha)
 end
 
-function _show_multiheadattention(io::IO, mha::MultiheadAttention, indent=0)
+function _show_multiheadattention(io::IO, mha::MultiHeadAttention, indent=0)
     inner_indent = indent + 2
     print(io, " "^indent, mha, "(\n") 
     Flux._layer_show(io, mha.denseQ, inner_indent, "denseQ")
@@ -1042,7 +1054,7 @@ The query, key and value are each calculated using the dense matrices we stored 
 Then we calculate the attention for all the heads at once with `multi_head_scaled_dot_attention`.
 The final result is passed to the dense output layer:
 {% highlight julia %}
-function (mha::MultiheadAttention)(query::A1, key::A2, value::A3) where {
+function (mha::MultiHeadAttention)(query::A1, key::A2, value::A3) where {
     T, A1 <: AbstractArray{T, 3}, A2 <: AbstractArray{T, 3}, A3 <: AbstractArray{T, 3}}
     # batch multiplication version. Input is dm × N × B
     Q = mha.denseQ(query)
@@ -1138,22 +1150,21 @@ end
 We still need to complete the rest of the equations in the [table](#equations_table).
 Thankfully the rest of the layers are provided by Flux. We wrap them in an `TransformerEncoderBlock`:
 {% highlight julia %}
-struct TransformerEncoderBlock{
-    MA<:MultiheadAttention, 
-    L1<:LayerNorm, 
+struct TransformerBlock{
+    MHA<:MultiHeadAttention,
+    N1<:LayerNorm,
     D1<:Dense,
     D2<:Dense,
-    L2<:LayerNorm,
-    DO<:Dropout
-    }
-    multihead_attention::MA
-    layer_norm_attention::L1
+    N2<:LayerNorm,
+    DO<:Dropout}
+    multihead_attention::MHA
+    norm_attention::N1
     dense1::D1
     dense2::D2
-    layer_norm_feedforward::L2
+    norm_feedforward::N2
     dropout::DO
 end
-Flux.@functor TransformerEncoderBlock # make whole TransformerEncoder trainable
+Flux.@functor TransformerBlock # make whole block trainable
 {% endhighlight %}
 
 This layer includes drop out regularization which wasn't in the table but it is part of the original paper.
@@ -1189,9 +1200,9 @@ For backpropagation information please see
 
 Because the inputs and outputs are similar we only need four parameters to define the whole block:
 {% highlight julia %}
-TransformerEncoderBlock(nhead::Int, dm::Int, dhid::Int; pdrop::Float64=0.1) = 
-    TransformerEncoderBlock(
-        MultiheadAttention(nhead, dm, dm),
+TransformerBlock(nhead::Int, dm::Int, dhid::Int; pdrop::Float64=0.1) = 
+    TransformerBlock(
+        MultiHeadAttention(nhead, dm, dm),
         LayerNorm(dm),
         Dense(dm, dhid, relu),
         Dense(dhid, dm),
@@ -1202,31 +1213,32 @@ TransformerEncoderBlock(nhead::Int, dm::Int, dhid::Int; pdrop::Float64=0.1) =
 
 Printing functions:
 {% highlight julia %}
-function Base.show(io::IO, te::TransformerEncoderBlock)
-    print(io, "TransformerEncoderBlock(")
-    print(io, te.multihead_attention)
-    print(io, ", ", te.layer_norm_attention)
-    print(io, ", ", te.dense1)
-    print(io, ", ", te.dense2)
-    print(io, ", ", te.layer_norm_feedforward)
+function Base.show(io::IO, block::TransformerBlock)
+    print(io, "TransformerBlock(")
+    print(io, block.multihead_attention)
+    print(io, ", ", block.norm_attention)
+    print(io, ", ", block.dense1)
+    print(io, ", ", block.dense2)
+    print(io, ", ", block.norm_feedforward)
     print(io, ")")
 end
 
-function Base.show(io::IO, m::MIME"text/plain", te::TransformerEncoderBlock)
+function Base.show(io::IO, m::MIME"text/plain", block::TransformerBlock)
     if get(io, :typeinfo, nothing) === nothing  # e.g. top level in REPL
-        _show_transformer_encoder(io, te)
+        _show_transformer_block(io, block)
     elseif !get(io, :compact, false)  # e.g. printed inside a Vector, but not a Matrix
-      Flux._layer_show(io, te)
+      Flux._layer_show(io, block)
     else
-      show(io, te)
+      show(io, block)
     end
 end
-
-function _show_transformer_encoder(io::IO, t::TransformerEncoderBlock, indent=0)
+function _show_transformer_block(io::IO, t::TransformerBlock, indent=0)
     inner_indent = indent + 2
-    print(io, " "^indent, "TransformerEncoderBlock(\n")
+    print(io, " "^indent, "TransformerBlock(\n")
     _show_multiheadattention(io, t.multihead_attention, inner_indent)
-    for layer in [t.dropout, t.layer_norm_attention, t.dense1, t.dense2, t.dropout, t.layer_norm_feedforward]
+    for layer in [
+        t.dropout, t.norm_attention, t.dense1, t.dense2, t.dropout, t.norm_feedforward
+        ]
         Flux._layer_show(io, layer, inner_indent)
     end
     print(io, " "^indent, ")")
@@ -1240,17 +1252,17 @@ end
 
 Lastly, the forward pass:
 {% highlight julia %}
-function (t::TransformerEncoderBlock)(x::A) where {T, N, A<:AbstractArray{T, N}}
-    a = t.multihead_attention(x, x, x)
-    a = t.dropout(a)
-    res_a = x + a # skip connection
-    res_a = t.layer_norm_attention(res_a)
-    z_ff = t.dense1(res_a)
-    z_ff = t.dense2(z_ff)
-    z_ff = t.dropout(z_ff)
-    res_ff = res_a + z_ff # skip connection
-    res_ff = t.layer_norm_feedforward(res_ff)
-    res_ff
+function (t::TransformerBlock)(x::A) where {A<:AbstractArray}
+    h = t.multihead_attention(x, x, x) # (dm, N, B)
+    h = t.dropout(h) 
+    h = x + h
+    h = t.norm_attention(h)            # (dm, N, B)
+    hff = t.dense1(h)                  # (dh, N, B)
+    hff = t.dense2(hff)                # (dm, N, B)
+    hff = t.dropout(hff)
+    h = h + hff
+    h = t.norm_feedforward(h)          # (dm, N, B)
+    h
 end
 {% endhighlight %}
 
@@ -1295,7 +1307,7 @@ model = Chain(
     Embed(32, 7455), 
     add_position_encoding, # can also make anonymous
     Dropout(0.1),
-    TransformerEncoderBlock(4, 32, 32 * 4; pdrop=0.1),
+    TransformerBlock(4, 32, 32 * 4; pdrop=0.1),
     Dense(32, 1),
     FlattenLayer(),
     Dense(50, 5)
@@ -1308,8 +1320,8 @@ model = TransformersLite.TransformerClassifier(
     Embed(32, 7455), 
     PositionEncoding(32), 
     Dropout(0.1),
-    TransformerEncoderBlock[
-        TransformerEncoderBlock(4, 32, 32 * 4; pdrop=0.1)
+    TransformerBlock[
+        TransformerBlock(4, 32, 32 * 4; pdrop=0.1)
     ],
     Dense(32, 1), 
     FlattenLayer(),
@@ -1457,8 +1469,8 @@ path = "datasets\\amazon_reviews_multi\\en\\1.0.0\\"
 filename = "amazon_reviews_multi-train.arrow"
 to_device = cpu # gpu or cpu
 
-checksum = readdir(path)[1]
-filepath = joinpath(path, checksum, filename)
+fingerprint = readdir(path)[1]
+filepath = joinpath(path, fingerprint, filename)
 
 df = DataFrame(Arrow.Table(filepath))
 display(df)
@@ -1573,61 +1585,57 @@ The `train!` function is based off `Flux.train!` except it returns a history and
 It is meant to be used with `Flux.DataLoader` for working with batched data.
 {% highlight julia %}
 function train!(loss, model, train_data, opt_state, val_data; num_epochs=10)
-    history = Dict(
-        "train_acc" => Float64[], 
-        "train_loss" => Float64[], 
-        "val_acc" => Float64[], 
-        "val_loss" => Float64[],
-        "mean_batch_loss" => Float64[],
-        )
+    history = Dict("mean_batch_loss" => Float64[])
     for epoch in 1:num_epochs
-        print(stderr, "") # flush stderr for the progress meter
-        progress = Progress(length(train_data); desc="epoch $epoch/$n_epochs")
+        print(stderr, "")
+        progress = Progress(length(train_data); desc="epoch $epoch/$num_epochs")
         total_loss = 0.0    
         for (i, Xy) in enumerate(train_data)
             batch_loss, grads = Flux.withgradient(model) do m
                 loss(m(Xy[1]), Xy[2])
             end
-            total_loss += batch_loss
             Flux.update!(opt_state, model, grads[1])
-            ProgressMeter.next!(progress)
+            total_loss += batch_loss
+            ProgressMeter.next!(
+                progress; showvalues = 
+                [(:mean_loss, total_loss / i), (:batch_loss, batch_loss)]
+            )
         end
         mean_batch_loss = total_loss / length(train_data)
         push!(history["mean_batch_loss"], mean_batch_loss)
-        update_history!(history, model, loss, train_data, val_data)
+        update_history!(history, model, train_data, "train_", loss, accuracy)
+        update_history!(history, model, val_data, "val_", loss, accuracy)
     end
     println("")
     history
 end
 
-function update_history!(history::Dict, model, loss, train_data, val_data)
-    train_acc = batched_metric(accuracy, train_data; g=model)
-    train_loss = batched_metric(loss, train_data)
-    val_acc = batched_metric(accuracy, val_data; g=model)
-    val_loss = batched_metric(loss, val_data)
-    
-    push!(history["train_acc"], train_acc)
-    push!(history["train_loss"], train_loss)
-    push!(history["val_acc"], val_acc)
-    push!(history["val_loss"], val_loss)
-
-    @printf "train_acc=%.4f%%; " train_acc * 100
-    @printf "train_loss=%.4f; " train_loss
-    @printf "val_acc=%.4f%%; " val_acc * 100
-    @printf "val_loss=%.4f ;" val_loss
+function update_history!(history::Dict, model, data, prefix::String, funcs...)
+    metrics = batched_metrics(model, data, funcs...)
+    for func in keys(metrics)
+        metric_name = prefix * String(func)
+        if !(haskey(history, metric_name))
+            history[metric_name] = [metrics[func]]
+        else
+            push!(history[metric_name], metrics[func])
+        end
+        @printf "%s=%.4f; " metric_name metrics[func]
+    end
     println("")
 end
 
-function batched_metric(g, f, data)
-    result = 0.0f0
+function batched_metrics(model, data, funcs...)
+    results = zeros(Float32, length(funcs))
     num_observations = 0
-    for (x, y) in data
-        val = f(g(x), y) 
+    @showprogress desc="batch metrics..." for (x, y) in data
+        y_model = model(x)
+        values = map(f->f(y_model, y), funcs)
         batch_size = count_observations(x) 
-        result += val * batch_size
+        results .+= values .* batch_size
         num_observations += batch_size
     end
-    result / num_observations
+    results /= num_observations
+    (; zip(Symbol.(funcs), results)...)
 end
 
 count_observations(data::D) where {D<:DataLoader} = count_observations(data.data)
@@ -1650,11 +1658,10 @@ batch_size = 32
 train_data_loader = DataLoader(train_data |> to_device; batchsize=batch_size, shuffle=true)
 val_data_loader = DataLoader(val_data |> to_device; batchsize=batch_size, shuffle=false)
 
-val_acc = batched_metric(model, accuracy, val_data_loader)
-val_loss = batched_metric(model, loss, val_data_loader)
+metrics = batched_metrics(model, val_data_loader, loss, accuracy)
 
-@printf "val_acc=%.4f ; " val_acc * 100
-@printf "val_loss=%.4f \n" val_loss
+@printf "val_acc=%.4f ; " metrics.accuracy * 100
+@printf "val_loss=%.4f \n" metrics.loss
 
 start_time = time_ns()
 opt_state = Flux.setup(Adam(), model)
