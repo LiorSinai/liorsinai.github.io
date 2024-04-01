@@ -3,7 +3,7 @@ layout: post
 title:  "Transformers from first principles in Julia"
 date:   2022-05-18
 author: Lior Sinai
-last_modified_at: 2024-03-23
+last_modified_at: 2024-04-01
 background: '/assets/posts/transformers/transformer.png'
 sidenav: true
 categories: coding
@@ -15,6 +15,10 @@ _Transformers for natural language processing from first principles. This a long
 _Update 19 August 2023: code refactoring and update to Flux 0.13.11 explicit syntax._
 
 _Update 23 March 2024: code refactoring._
+
+See also: [Generative transformer from first principles in Julia][generator].
+
+[generator]: {{ "coding/2024/03/23/transformers-gpt" | relative_url }}
 
 <link rel="stylesheet" href="/assets/posts/transformers/style.css">
 
@@ -287,25 +291,25 @@ The most important steps in the above table are the steps 3 to 5.
 Combing them into one and working with only 2D matrices, we get the definition for the scaled dot product attention:
 
 $$
-    A = \text{softmax}\left(\frac{1}{\sqrt{d_h}}K^T Q\right)V
+    A = V\text{softmax}\left(\frac{1}{\sqrt{d_h}}K^T Q\right)
 $$
 
 Where $\text{softmax}$ is the function:
 
 $$
-    \text{softmax}(z_i) = \frac{e^{z_i}}{\sum^N_r e^{z_r}}
+    \text{softmax}(z, i) = \frac{e^{z_i}}{\sum^N_r e^{z_r}}
 $$
 
 Attention is essentially a dot product of every column vector of the embedding matrix with some scaling.
 To see this more clearly, substitute the equations for $K$ and $Q$ into $K^TQ$ and ignore the bias:
 
 $$
-    K^T Q = (W_KX)(W_QX)^T = W_K XX^T W_Q^T
+    K^T Q = (W_KX)^T(W_QX) = X^T W_K^T W_Q X
 $$
 
 [CosineSimilarity]: https://www.machinelearningplus.com/nlp/cosine-similarity/
 
-I hope the $XX^T$ is recognisable as a dot product/inner product. 
+I hope the $X^TX$ is recognisable as a dot product/inner product. 
 The Google authors call it a different name, attention, and it is apparently all you need. 
 It is very closely related to an older machine learning technique called [cosine similarity][CosineSimilarity].
 
@@ -794,7 +798,7 @@ Starting in 2D, matrix multiplication for $A\times B$ is defined as the sum of r
 
 $$ C_{ij} = \sum_r A_{ir} B_{rj} $$
 
-This can be written as a set of three loops (ignoring checks):
+This can be written as a set of three loops (ignoring checks):[^matmulComplexity]
 {%highlight julia %}
 function mul2d(A<:AbstractMatrix, B<:AbstractMatrix)
 	n = size(A, 2) # == size(B, 1)
@@ -848,7 +852,7 @@ function mul3d(A::AbstractArray{T, 3}, B::AbstractArray{T, 3}) where T
 end
 {% endhighlight %}
 But this doesn't take advantage of the fact that we are standardising the size of the matrices (all sequences are of the same length).
-It is equivalent to using type `Vector{Matrix}` rather than `Array{T, 3}`.
+It is equivalent to using type `Vector{Matrix{T}}` rather than `Array{T, 3}`.
 NNlib has written a more optimised version called `batched_mul`. 
 Doing a time test:
 {%highlight julia %}
@@ -1054,8 +1058,8 @@ The query, key and value are each calculated using the dense matrices we stored 
 Then we calculate the attention for all the heads at once with `multi_head_scaled_dot_attention`.
 The final result is passed to the dense output layer:
 {% highlight julia %}
-function (mha::MultiHeadAttention)(query::A1, key::A2, value::A3) where {
-    T, A1 <: AbstractArray{T, 3}, A2 <: AbstractArray{T, 3}, A3 <: AbstractArray{T, 3}}
+function (mha::MultiHeadAttention)(query::A3, key::A3, value::A3) where {
+    T, A3 <: AbstractArray{T, 3}}
     # batch multiplication version. Input is dm × N × B
     Q = mha.denseQ(query)
     K = mha.denseK(key)
@@ -1067,8 +1071,8 @@ end
 
 The `multi_head_scaled_dot_attention` begins as follows:
 {% highlight julia %}
-function multi_head_scaled_dot_attention(nhead::Int, Q::A1, K::A2, V::A3) where {
-    T, A1 <: AbstractArray{T, 3}, A2 <: AbstractArray{T, 3}, A3 <: AbstractArray{T, 3}}
+function multi_head_scaled_dot_attention(nhead::Int, Q::A3, K::A3, V::A3) where {
+    T, A3 <: AbstractArray{T, 3}}
     qs = size(Q)
     ks = size(K)
     vs = size(V)
@@ -1797,3 +1801,5 @@ I hope you now have a working transformer and have much better insight into how 
     ```
     It turns the 3D $d_m \times N \times B$ input into a 2D $d_m \times NB$ matrix, does the multiplication, then transforms it back again.
     This solution is valid because the weights for the dense layer are 2D.
+
+[^matmulComplexity]: The three loops show that matrix multiplication has a theoretical complexity of $\mathcal{O}(abn)$ for a matrix $a \times n$ multiplied with a matrix $n \times b$. For $a\approx b \approx n$ the complexity is $\mathcal{O}(n^3)$.
