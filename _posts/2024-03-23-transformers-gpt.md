@@ -1337,12 +1337,18 @@ using TSne
 W = model.embedding.weight # or transpose(model.head.weight)
 reduce_dims, max_iter, perplexit = 0, 1000, 20.0
 Y = tsne(transpose(W), 2, reduce_dims, max_iter, perplexit);
-annotations = [
-    (Y[idx, 1], Y[idx, 2], vocabulary[idx], :black) for idx in 1:size(Y, 1)
-]
-plot(size=(500, 500), aspectratio=:equal)
-annotate!(annotations)
-plot!(lims=extrema(Y) .* 1.1)
+scatter(Y[:,1], Y[:,2], series_annotations=vocabulary, 
+    markeralpha=0.0,
+    label="",
+    aspectratio=:equal
+)
+{%endhighlight%}
+
+where the `vocabulary` is:
+{%highlight julia %}
+vocabulary = string.(indexer.vocabulary)
+vocabulary[1] = string(Int(indexer.vocabulary[1])) #\n => 10
+vocabulary[2] = string(Int(indexer.vocabulary[2])) #' '=> 32
 {%endhighlight%}
 
 The output:
