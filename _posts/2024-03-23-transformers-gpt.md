@@ -611,7 +611,7 @@ This means that past tokens will be given access to future tokens.
 However the training objective is to predict future tokens.
 Therefore only the $n$th token, whose next token is missing, will be trained fairly.
 
-To overcome this the authors of the [Attention (2017)][Attention_2017] paper suggested masking the output before the softmax with $-\infty$, so that the exponent $\exp(-\infty)=0$, effectively removing the influence of these connections.
+To overcome this the authors of the [Attention (2017)][Attention_2017] paper suggested masking the matrix before the softmax with $-\infty$ at each illegal connection, so that $\exp(-\infty)=0$ which effectively removes their influence.
 
 The masked matrix will look like:
 
@@ -1098,8 +1098,6 @@ function generate(
     rng::AbstractRNG, model::TransformerGenerator, context::AbstractMatrix{T}
     ; context_size::Int, max_tokens::Int=100,
     ) where T
-    num_batches = size(context, 2)
-    vocab_size = size(model.head.weight, 1)
     for i in 1:max_tokens
         context_crop = tail(context, context_size)
         n = size(context_crop, 1)
@@ -1273,6 +1271,21 @@ A trained model should achieve a value closer to 1 in 1, because the context and
 
 Like other types of averages, perplexity does not describe the shape of the distribution and outliers can have an outsized effect on it.
 
+We can use many samples, say 1000 steps of 32 sized batches each to estimate it:
+
+{%highlight julia %}
+using ProgressMeter
+batch_size = 32
+num_steps = 1000
+mean_loss = 0.0f0
+@showprogress for step in 1:num_steps
+    X, Y = get_shifted_batch(tokens, context_size, batch_size)
+    mean_loss += full_loss(model(X), Y)
+end
+mean_loss /= num_steps
+perplexity = exp(mean_loss)
+{%endhighlight%}
+
 <h3 id="train-validation-split">4.4 Train/validation split</h3>
 
 It is always good practice to split the data into train, validation and test splits.
@@ -1311,6 +1324,52 @@ Please see my [training.jl](https://github.com/LiorSinai/TransformersLite-Exampl
 - Calculates the total loss and accuracy at the end of each epoch.
 - Returns a history `Dictionary` which saves these values for each epoch for each metric.
 
+<h2 id="Inspection">5 Inspection</h2>
+<h3 id="inspect-embeddings">5.1 Embeddings</h3>
+
+For the most part the model we have created is black box. There are however various techniques to inspect the model. For example, cosine similarities which was showcased in the [Position Encoding](#position-encoding) section.
+
+Another popular technique is to visually examine the embeddings after dimension reduction. For example our model has a dimension of 32, and we can reduce this to 2 dimensions and then create a 2D scatter plot. The popular techniques to do this are PCA (Principal Component Analysis) and t-SNE (t-distributed Stochastic Neighbor Embedding). t-SNE starts with PCA and iterates to give better looking results.
+
+Here is an implementation of t-SNE with Julia:
+{%highlight julia %}
+using TSne
+W = model.embedding.weight # or transpose(model.head.weight)
+reduce_dims, max_iter, perplexit = 0, 1000, 20.0
+Y = tsne(transpose(W), 2, reduce_dims, max_iter, perplexit);
+annotations = [
+    (Y[idx, 1], Y[idx, 2], vocabulary[idx], :black) for idx in 1:size(Y, 1)
+]
+plot(size=(500, 500), aspectratio=:equal)
+annotate!(annotations)
+plot!(lims=extrema(Y) .* 1.1)
+{%endhighlight%}
+
+The output:
+<figure class="post-figure">
+    <div class="row">
+        <div class="col">
+            <img class="img-fluid"
+                src="/assets/posts/transformers/embedding_tsne.png"
+                alt="Embedding t-SNE"
+                >
+        </div>
+        <div class="col">
+            <img class="img-fluid"
+                src="/assets/posts/transformers/head_tsne.png"
+                alt="Head t-SNE"
+                >
+        </div>
+    </div>
+    <figcaption>t-SNE embeddings for the embedding matrix (left) and head matrix (right). New line is 10 and space is 32.</figcaption>
+</figure>
+
+Note that t-SNE is stochastic and each run will give different results.
+
+For the embedding matrix we can see that the model groups all the vowels (a, e, i, o, u) and their capital forms together. It also tends to group the lowercase form and uppercase form together e.g. 'g' and 'G'. The head meanwhile has 3 distinct groups: capital letters, punctuation and lower case letters. It also groups the vowels together. 
+
+Perhaps with further training more meaning would be encoded into these vectors.
+
 ## Conclusion
 
 Thank you for following this tutorial.
@@ -1324,16 +1383,17 @@ I hope you now have a working transformer and have much better insight into how 
     They are not the same.
     To give a simple explanation: one can think of geometric tensors as higher order arrays with severe constraints on their entries and operations because they represent geometric objects. These constraints make it harder - not easier - to code higher order arrays as geometric tensors.
 
-[^cosine]: The cosine similarity is calculated as $\frac{W^TW}{\sqrt{mm^T}}$ where $m=\text{diag}(W^TW)$ and the square root is a broadcast operation.
+[^cosine]: The cosine similarity is calculated as $W^TW/ m^T m $ where $m_{1j}=\sqrt{\sum_i W_{ij}^2}$ for each column $j$ in $W$.
     In code:
 
-    ```
+    ```juliajtt
+    using LinearAlgebra
     function cosine_similarity(W::AbstractMatrix)
         sim = transpose(W) * W
-        magnitudes = diag(sim)
+        magnitudes = sqrt.(diag(sim))
         for i in 1:size(sim, 1)
             for j in 1:size(sim, 2)
-                sim[i, j] /= sqrt(magnitudes[i] * magnitudes[j])
+                sim[i, j] /= magnitudes[i] * magnitudes[j]
             end
         end
         sim
