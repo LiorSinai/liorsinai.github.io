@@ -1376,6 +1376,90 @@ For the embedding matrix we can see that the model groups all the vowels (a, e, 
 
 Perhaps with further training more meaning would be encoded into these vectors.
 
+<h3 id="inspect-attention">5.2 Attention scores</h3>
+
+We can pass an input to the model and visually inspect the attention scores.
+To do this we need to alter the [attention functions](#attention) to return the score as well (including reshaping it as needed).
+At the top level - the forward pass of the model - these scores should be saved in a vector.
+Then we can plot them:
+
+<p>
+  <a class="btn" data-toggle="collapse" href="#code-scores-plot" role="button" aria-expanded="false" aria-controls="collapseExample">
+    Code for scores plot &#8681;
+  </a>
+</p>
+<div class="collapse" id="code-scores-plot">
+  <div class="card card-body ">
+    <code><pre>
+using Plots
+text = """LYSANDER.
+How now, my love? Why is your cheek so pale?
+How chance the roses there do fade so fast?"""
+tokens = reshape(indexer(collect(text)), :, 1);
+X = tokens[1:context_size, :];
+X_text = decode(indexer, X[:, 1]);
+Y, scores = predict_with_scores(model, X, mask=model.mask); # modified forward pass
+s = scores[3][:, :, 3, 1]
+s = ifelse.(model.mask, s, NaN)
+heatmap(s,
+    xticks=(1:context_size, X_text),
+    yticks=(1:context_size, X_text),
+    yrotation=90,
+    aspectratio=:equal,
+    xlims=(0.5, n+0.5),
+    size=(500, 500),
+)
+</pre></code>
+  </div>
+</div>
+
+<figure class="post-figure" id="fig-attention-scores-block3-head3">
+<img class="img-60"
+    src="/assets/posts/transformers/attention_scores_block3_head3.png"
+	alt="Attention scores for block 3, head 3"
+	>
+<figcaption>Attention scores for block 3, head 3.</figcaption>
+</figure>
+
+The attention matrices are very sparse. 
+Most tokens only place emphasis on the four or less tokens directly before them.
+This suggests we could have used a much smaller context length, for example 16 and indeed that does work.
+
+Ideally the model should be learning long range relationships and it is worrying that it is not.
+
+That said, the model does confidently predict that the next letter is an "e" at the end of "chance":
+<p>
+  <a class="btn" data-toggle="collapse" href="#code-probs-plot" role="button" aria-expanded="false" aria-controls="collapseExample">
+    Code for probability plot &#8681;
+  </a>
+</p>
+<div class="collapse" id="code-probs-plot">
+  <div class="card card-body ">
+    <code><pre>
+using Plots
+probs_next = softmax(Y[:, end, 1])
+v = length(indexer.vocabulary)
+bar(probs_next,
+    xticks=(1:v, indexer.vocabulary),
+    xlims=(1, v),
+    label="",
+    ylabel="probabilities",
+    xlabel="tokens"
+)
+</pre></code>
+  </div>
+</div>
+
+<figure class="post-figure" id="fig-prob-next">
+<img class="img-60"
+    src="/assets/posts/transformers/probs_next.png"
+	alt="Probability next"
+	>
+<figcaption>Probabilities for the next token for the last token in the sequence.</figcaption>
+</figure>
+
+Perhaps with more training the model would give better results.
+
 ## Conclusion
 
 Thank you for following this tutorial.
