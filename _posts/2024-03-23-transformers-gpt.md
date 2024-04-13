@@ -3,7 +3,7 @@ layout: post
 title:  "Generative transformer from first principles in Julia"
 date:   2024-03-23
 author: Lior Sinai
-last_modified_at: 2024-04-01
+last_modified_at: 2024-04-13
 background: '/assets/posts/transformers/transformer.png'
 sidenav: true
 categories: coding
@@ -723,7 +723,7 @@ The Flux `Dense` layer does something [similar](https://github.com/FluxML/Flux.j
 Flux.jl now comes with a `Flux.MultiHeadAttention` layer.
 However for continuity with my [first post](/coding/2022/05/18/transformers#multi-head-attention), I will present my own `MultiHeadAttention` layer except now with masking.
 It is very similar to the code in [Flux.jl](https://github.com/FluxML/Flux.jl/blob/master/src/layers/attention.jl) and [NNlib.jl](https://github.com/FluxML/NNlib.jl/blob/master/src/attention.jl).
-The differences are in design choices for the inputs and outputs and their implementations are slightly more generic.
+The differences are in design choices for the inputs and Flux.jl's implementations are slightly more generic.
 
 First define a struct to hold all the dense layers and a parameter for $H$ called `nhead`:
 
@@ -736,7 +736,7 @@ struct MultiHeadAttention{Q<:Dense, K<:Dense, V<:Dense, O<:Dense}
     denseO::O
 end
 
-Flux.@functor MultiHeadAttention
+Flux.@functor MultiHeadAttention # make parameters visible to Flux
 #= tell Flux which parameters are trainable =#
 Flux.trainable(m::MultiHeadAttention) = (; m.denseQ, m.denseK, m.denseV, m.denseO) 
 {% endhighlight %}
@@ -768,7 +768,6 @@ end
 
 Now for the forward pass. 
 In general there are three input matrices with the names of `key`, `query` and `value`.
-(These names are a little archaic - don't worry about them.)
 Later we will pass the same value `x` for all of them.
 From these we can calculate $Q$, $K$ and $V$ and pass them to the `multi_head_scaled_dot_attention` function:
 
@@ -778,10 +777,13 @@ function (mha::MultiHeadAttention)(query::A3, key::A3, value::A3
     Q = mha.denseQ(query)
     K = mha.denseK(key)
     V = mha.denseV(value)
-    A = multi_head_scaled_dot_attention(mha.nhead, Q, K, V; kwargs...)
-    mha.denseO(A)
+    A, scores = multi_head_scaled_dot_attention(mha.nhead, Q, K, V; kwargs...)
+    mha.denseO(A), scores
 end
 {% endhighlight %}
+
+This layer returns the scores as well, like Flux.jl's `MultiHeadAttention` layer.
+These are useful for inspecting the model.
 
 <h4 id="attention-multi-head-attention">3.5.5 Multi-Head Attention</h4>
 
@@ -808,9 +810,10 @@ This is done in two steps:
 
 Then we calculate the scaled dot attention for each head, combine results and return it:
 {% highlight julia %}
-    A = scaled_dot_attention(Q, K, V; kwargs...)
+    A, scores = scaled_dot_attention(Q, K, V; kwargs...)
     A = permutedims(A, [1, 3, 2, 4])
     A = reshape(A, dm, size(A, 3), size(A, 4))
+    A, scores
 end
 {% endhighlight %}
 
@@ -827,8 +830,8 @@ function scaled_dot_attention(
     keyT = permutedims(key, (2, 1, 3)) # (dkv, dh, nhead)
     atten = one(T)/convert(T, sqrt(dh)) .* batched_mul(keyT, query) # (dkv, dh, nhead)*(dh, dq, nhead) => (dkv, dq, nhead)
     atten = apply_mask(atten, mask) # (dkv, dq, nhead)
-    score = softmax(atten; dims=1)  # (dkv, dq, nhead)
-    batched_mul(value, score)       # (dh, dkv, nhead)*(dkv, dq, nhead) => (dh, dq, nhead)
+    scores = softmax(atten; dims=1) # (dkv, dq, nhead)
+    batched_mul(value, scores), scores # (dh, dkv, nhead)*(dkv, dq, nhead) => (dh, dq, nhead)
 end
 {% endhighlight %}
 
@@ -838,9 +841,10 @@ function scaled_dot_attention(query::A4, key::A4, value::A4
     ; kwargs...) where {T, A4 <: AbstractArray{T, 4}}
     batch_size = size(query)[3:end]
     Q, K, V = map(x -> reshape(x, size(x, 1), size(x, 2), :), (query, key, value))
-    A = scaled_dot_attention(Q, K, V; kwargs...)
-    new_A = reshape(A, (size(A, 1), size(A, 2), batch_size...))
-    new_A
+    A, scores = scaled_dot_attention(Q, K, V; kwargs...)
+    A = reshape(A, (size(A, 1), size(A, 2), batch_size...))
+    scores = reshape(scores, (size(scores, 1), size(scores, 2), batch_size...))
+    A, scores
 end
 {% endhighlight %}
 
@@ -864,14 +868,14 @@ Forward pass:
 {% highlight julia %}
 x = randn(Float32, 32, 20, 2) # d×n×B
 mask = make_causal_mask(ones(32, 20))
-y = mha(x, x, x; mask=mask) # 32×20×2
+y, scores = mha(x, x, x; mask=mask) # 32×20×2, 20×20×4×2
 {% endhighlight %}
 
 Backpropagation:
 {% highlight julia %}
 using Flux
 loss = sum # dummy loss function
-grads = Flux.gradient(m -> loss(m(x, x, x; mask=mask)), mha)
+grads = Flux.gradient(m -> loss(m(x, x, x; mask=mask)[1]), mha)
 keys(grads[1]) # (:nhead, :denseQ, :denseK, :denseV, :denseO)
 {% endhighlight %}
 
@@ -887,7 +891,6 @@ We can use the Flux.jl implementations for these.
 	>
 <figcaption>Source: <a href="https://web.archive.org/web/20210126024542/https://cdn.openai.com/research-covers/language-unsupervised/language_understanding_paper.pdf">GPT1 paper (2018)</a></figcaption>
 </figure>
-
 
 This means we can now create a transformer block:
 {% highlight julia %}
@@ -934,11 +937,11 @@ TransformerBlock(
 )
 {% endhighlight %}
 
-There are skip connections in the forward pass:
+There are skip connections in the forward pass:[^block_scores]
 {% highlight julia %}
 function (t::TransformerBlock)(x::A; mask::M=nothing) where {
     A<:AbstractArray, M<:Union{Nothing, AbstractArray{Bool}}}
-    h = t.multihead_attention(x, x, x; mask=mask) # (dm, N, B)
+    h, scores = t.multihead_attention(x, x, x; mask=mask) # (dm, N, B)
     h = t.dropout(h) 
     h = x + h
     h = t.norm_attention(h)            # (dm, N, B)
@@ -964,7 +967,6 @@ TransformerBlock(
 
 Forward pass:
 {% highlight julia %}
-block = TransformerBlock(4, 32, 32*4) 
 x = randn(Float32, 32, 20, 2) # d×n×B
 mask = make_causal_mask(ones(32, 20))
 y = block(x; mask=mask) # 32×20×2
@@ -1489,5 +1491,9 @@ I hope you now have a working transformer and have much better insight into how 
         sim
     end
     ```
+
+[^block_scores]: The design decision is to purposely drop the attention scores in the `TransformerBlock`'s forward pass. This is to simplify the code and to not place a bias on the attention.
+    In a typical block the `MultiHeadAttention` layer will make up 1/3rd of parameters while the dense layers will make up 2/3rds, so the dense layers are potentially more important.
+    To return the scores it is enough to edit the forward pass for the block and model, or to create two new functions entirely.
 
 [^split]: A smarter strategy is to randomly sample passages throughout the text until the desired proportions are reached.
