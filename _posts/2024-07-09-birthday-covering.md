@@ -134,7 +134,7 @@ $$
 \begin{align}
 n &= \sum_{i=1}^N \frac{1}{p_i} \\
   &= \sum_{i=1}^N \frac{1}{(N-i+1)/N} \\
-  &= N\sum_{k=1}^N \frac{N}{k} \quad ; k=N-i+1
+  &= N\sum_{k=1}^N \frac{1}{k} \quad ; k=N-i+1
 \end{align}
 $$
 
