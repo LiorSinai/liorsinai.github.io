@@ -25,8 +25,9 @@ _Counting the number of people of required to cover all birthdays._
 [SeniorMars]: https://seniormars.com/posts/everyday-birthday/?
 [wiki_birthday_problem]: https://en.wikipedia.org/wiki/Birthday_problem
 [wiki_monte_carlo]: https://en.wikipedia.org/wiki/Monte_Carlo_method
+[xckd]: https://xkcd.com/356/
 
-I recently saw a fascinating post on [Hacker News][HackerNews] titled [Every day is an Owl's Birthday!][SeniorMars] by SeniorMars. 
+I recently got [nerd sniped][xckd] by a fascinating post on [Hacker News][HackerNews] titled [Every day is an Owl's Birthday!][SeniorMars] by SeniorMars. 
 It explored the problem of estimating if there was at least one student at a university for every birthday. Put another way, it explored the following question:
 
 > Given $n$ people, what is the probability that all $N$ birthdays are covered? That is, given $n$ people, what is the probability that there is at least 1 person for each birthday? 
@@ -284,10 +285,10 @@ $$
 \end{align}
 $$
 
-This is much smaller then the original value of 0.234. The independence assumption clearly does not hold here.
-(This will be fixed shortly).
+This is much smaller than the original value of 0.234. The independence assumption clearly does not hold here.
+(This will be corrected shortly.)
 
-For the birthdays, there are 365 possible ways we can exclude 1 of 365 birthdays, and then there are each $364^n$ possibilities for the birthdays for $n$ people:
+For the birthdays, there are 365 possible ways we can exclude 1 of 365 birthdays, and then there are $364^n$ possibilities for the birthdays for $n$ people:
 
 $$
 \begin{align}
@@ -310,7 +311,7 @@ To correct these values, we need to account for overlaps in the counting trees.
 For the season problem, we can exclude both winter ❄️ and autumn 🍂 by only choosing spring 🌱 or summer ☀️
 in either the $S\setminus ❄️$ tree or the $S\setminus 🍂$ tree.
 Since in both we have a choice of 2 seasons for each of the 5 people, there are $2^5=32$ overlapping branches.
-In total there are ${4 \choose 2} = 6$ overlapping branches:
+In total there are ${4 \choose 2} = 6$ sets of overlapping branches:
 
 - Between $S\setminus ❄️$ and $S\setminus 🌱$.
 - Between $S\setminus ❄️$ and $S\setminus ☀️$.
@@ -380,7 +381,7 @@ $$
 
 This is now slightly under the simulated value of 0.5739.
 
-For the seasons, we are done. For the birthdays, we can continue this process under the [Inclusion-Exclusion Principle][wiki_inclusion_exclusion]:
+For the seasons, we are done. For the birthdays, we can continue this pattern of over-correcting/under-correcting under the [Inclusion-Exclusion Principle][wiki_inclusion_exclusion]:
 
 <div class="card">
   <div class="card-body">
@@ -389,7 +390,8 @@ For the seasons, we are done. For the birthdays, we can continue this process un
 		$$
         \begin{align}
         P\left( \bigcup\limits_{i=1}^{n} A_i \right) &= \sum_{i=1}^{n} |A_k| - \sum_{1\leq i <j \leq n}^{n} | A_i \cap A_j| \\
-        &\phantom{=} + \sum_{1\leq i <j <k \leq n}^{n} | A_i \cap A_j \cap A_k| - ... \\
+        &\phantom{=} + \sum_{1\leq i <j <k \leq n}^{n} | A_i \cap A_j \cap A_k| \\
+        &\phantom{=} - ... \\
         &\phantom{=} + (-1)^{n+1} | A_i \cap ... \cap A_n| \\
         &= \sum_{J\subset \{1,...,n\}} (-1)^{|J|+1} \left| \bigcap\limits_{j \in {J}} A_j \right|
         \end{align} \\
@@ -398,7 +400,7 @@ For the seasons, we are done. For the birthdays, we can continue this process un
   </div>
 </div>
 
-For the birthday problem, each $A_i$ is the exclusion of one birthday, and each group of unions $\left\vert \bigcap\limits_{j \in {J}} A_j \right\vert$ is calculated as the number of different combinations $365 \choose k $ of shared missing birthdays multiplied by the probability $\left(\frac{365-k}{365}\right)^n$.
+For the birthday problem, each $A_i$ is the exclusion of one birthday (e.g. $A_5$ is January 5th missing), and each group of intersections $\left\vert \bigcap\limits_{j \in {J}} A_j \right\vert$ is calculated as the number of different combinations $365 \choose k $ of shared missing birthdays multiplied by the probability $\left(\frac{365-k}{365}\right)^n$.
 
 The formula is then:
 
@@ -421,5 +423,15 @@ We can now construct a theoretical graph and compare it to the graph from the si
 The graphs match very well.
 
 <h2 id="conclusion">4 Conclusion</h2>
+
+The answer to the question, what is the probability that all birthdays ($N=365$) are present in a group of $n$ people is:
+
+- Very low for less than 1000 people ($<3N$).
+- About 50% for 2000 people ($\approx 6N$).
+- Very high for 3000 people ($8N$) and almost certain for 4000 and above ($>10N$).
+
+More generally, the [Inclusion-Exclusion Principle][wiki_inclusion_exclusion] can be used to calculate exact probabilities for this and similar problems.
+
+This was an interesting problem, but I'm not sure if there is a practical use to it.
 
 ---
