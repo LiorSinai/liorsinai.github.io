@@ -82,9 +82,9 @@ Tests were run from the Anaconda CMD and Julia REPL.
 Scikit-learn (written in Cython) is still the fastest, but that code is more heavily optimised than mine, and also it use parallel processing.
 
 [UniversalBank]: https://www.kaggle.com/sriharipramod/bank-loan-classification/
-[Python_post]: /coding/2020/09/29/random-forests.html
+[Python_post]: /machine-learning/2020/09/29/random-forests.html
 [Python_repo]: https://github.com/LiorSinai/randomForests
-[Julia_post]: /coding/2020/12/14/random-forests-jl.html
+[Julia_post]: /machine-learning/2020/12/14/random-forests-jl.html
 [Julia_repo]: https://github.com/LiorSinai/RandomForest.jl
 
 

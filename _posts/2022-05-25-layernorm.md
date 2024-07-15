@@ -4,8 +4,10 @@ title:  "Backpropagation through a layer norm"
 date:   2022-05-18
 last_modified_at: 2023-07-08
 author: Lior Sinai
-categories: mathematics
+categories: machine-learning
 tags: mathematics transformers 'machine learning' 'deep learning'
+redirect_from:
+    - /coding/2022/05/18/layernom
 ---
 
 _Derivation of the backpropagation equations for layer normalization._

@@ -3,11 +3,13 @@ layout: post
 title:  "Denoising diffusion probabilistic models from first principles"
 date:   2022-12-03
 author: Lior Sinai
-categories: coding
+categories: machine-learning
 background: '/assets/posts/denoising-diffusion/TheatreDoperaSpatial.jpg'
 background-caption: Theatre D'opera Spatial created by Jason M. Allen with Midjourney. It won first place in the digital arts category at the Colorado State Fair Art Show.
 sidenav: true
 tags:  mathematics AI art diffusion 'machine learning' 'deep learning'
+redirect_from:
+    - /coding/2022/12/03/denoising-diffusion-1-spiral
 ---
 
 _Denoising diffusion probabilistic models for AI art generation from first principles in Julia. This is part 1 of a 3 part series on these models._
@@ -18,9 +20,9 @@ This is part of a series. The other articles are:
 - [Part 2: image generation with MNIST][image_diffusion].
 - [Part 3: classifier free guidance][classifier_free_guidance].
 
-[first_principles]: {{ "coding/2022/12/03/denoising-diffusion-1-spiral" | relative_url }}
-[image_diffusion]: {{ "coding/2022/12/29/denoising-diffusion-2-unet" | relative_url }}
-[classifier_free_guidance]: {{ "coding/2023/01/04/denoising-diffusion-3-guidance" | relative_url }}
+[first_principles]: {{ "machine-learning/2022/12/03/denoising-diffusion-1-spiral" | relative_url }}
+[image_diffusion]: {{ "machine-learning/2022/12/29/denoising-diffusion-2-unet" | relative_url }}
+[classifier_free_guidance]: {{ "machine-learning/2023/01/04/denoising-diffusion-3-guidance" | relative_url }}
 
 <a name="numbers_guided_mp4">
     <figure class="post-figure">
@@ -1096,7 +1098,7 @@ ConditionalChain(
 ### Sinusodial embeddings
 
 Using `Flux.Embedding` works sufficiently well. 
-However I find results are better with sinusodial embeddings, an idea that was proposed for transformers in the 2017 paper [Attention is all you need][Attention]. For a full explanation please see an earlier post on [transformers](/coding/2022/05/18/transformers.html#position-encodings).
+However I find results are better with sinusodial embeddings, an idea that was proposed for transformers in the 2017 paper [Attention is all you need][Attention]. For a full explanation please see an earlier post on [transformers](/machine-learning/2022/05/18/transformers.html#position-encodings).
 
 [Attention]: https://arxiv.org/abs/1706.03762
 

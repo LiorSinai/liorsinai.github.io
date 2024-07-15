@@ -6,8 +6,10 @@ author: Lior Sinai
 last_modified_at: 2024-04-01
 background: '/assets/posts/transformers/transformer.png'
 sidenav: true
-categories: coding
+categories: machine-learning
 tags: mathematics transformers 'machine learning' 'deep learning'
+redirect_from:
+    - /coding/2022/05/18/transformers
 ---
 
 _Transformers for natural language processing from first principles. This a long post which details a full implementation of transformers and the mathematics behind them. The use case is predicting Amazon review stars based on the review text. The language of choice is Julia utilising the Flux machine learning framework._ 
@@ -18,7 +20,7 @@ _Update 23 March 2024: code refactoring._
 
 See also: [Generative transformer from first principles in Julia][generator].
 
-[generator]: {{ "coding/2024/03/23/transformers-gpt" | relative_url }}
+[generator]: {{ "machine-learning/2024/03/23/transformers-gpt" | relative_url }}
 
 <link rel="stylesheet" href="/assets/posts/transformers/style.css">
 

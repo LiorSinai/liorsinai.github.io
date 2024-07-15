@@ -3,8 +3,10 @@ layout: post
 title:  "Random forest classifier from scratch in Python"
 date:   2020-09-29
 author: Lior Sinai
-categories: coding
+categories: machine-learning
 tags:	'machine learning'
+redirect_from:
+    - /coding/2020/09/29/random-forests 
 ---
 
 _A random forest classifier in 270 lines of Python code. It is written from (almost) scratch. It is modelled on Scikit-Learn's RandomForestClassifier._ 

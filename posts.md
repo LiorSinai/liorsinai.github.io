@@ -5,6 +5,18 @@ permalink: /posts/
 background:
 ---
 
+Categories:
+<ul>
+{% for category in site.categories %}
+  {% capture cat %}{{ category | first }}{% endcapture %}
+  <li>
+    <a href="#{{cat}}">{{ cat | capitalize }}</a>
+  </li>
+{% endfor %}
+</ul>
+
+---
+
 {% for category in site.categories %}
   {% capture cat %}{{ category | first }}{% endcapture %}
   <h3 id="{{cat}}">{{ cat | capitalize }}</h3>

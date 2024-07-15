@@ -4,9 +4,11 @@ title:  "Guided denoising diffusion"
 date:   2023-01-04
 last_modified_at: 2023-09-05
 author: Lior Sinai
-categories: coding
+categories: machine-learning
 sidenav: true
 tags:  mathematics AI art diffusion 'machine learning' 'deep learning'
+redirect_from:
+    - /coding/2023/01/04/denoising-diffusion-3-guidance
 ---
 
 _Classifier-free guidance for denoising diffusion probabilistic model in Julia._
@@ -17,9 +19,9 @@ This is part of a series. The other articles are:
 - [Part 1: first principles][first_principles].
 - [Part 2: image generation with MNIST][image_diffusion].
 
-[first_principles]: {{ "coding/2022/12/03/denoising-diffusion-1-spiral" | relative_url }}
-[image_diffusion]: {{ "coding/2022/12/29/denoising-diffusion-2-unet" | relative_url }}
-[classifier_free_guidance]: {{ "coding/2023/01/04/denoising-diffusion-3-guidance" | relative_url }}
+[first_principles]: {{ "machine-learning/2022/12/03/denoising-diffusion-1-spiral" | relative_url }}
+[image_diffusion]: {{ "machine-learning/2022/12/29/denoising-diffusion-2-unet" | relative_url }}
+[classifier_free_guidance]: {{ "machine-learning/2023/01/04/denoising-diffusion-3-guidance" | relative_url }}
 
 Full code available at [github.com/LiorSinai/DenoisingDiffusion.jl](https://github.com/LiorSinai/DenoisingDiffusion.jl).
 Examples notebooks at [github.com/LiorSinai/DenoisingDiffusion-examples](https://github.com/LiorSinai/DenoisingDiffusion-examples).
@@ -83,7 +85,7 @@ $$ \mu_t = \tilde{\mu}_t(x_t | y) + s\Sigma_\theta(x_t | y)\nabla_{x_t} \log p_\
 
 Where $ \mu_t $ is the mean sample per time step, $y$ is the target class, $s$ is the guidance scale, $\Sigma_\theta$ is the model variance and $\nabla_{x_t} \log p_\phi$ is the gradient of the log-probability of the output of the classifier.[^classifier-guidance]
 This is an incredibly complicated solution. 
-Creating a classifier model is easy (see [part 2-Frechet LeNet Distance](/coding/2022/12/29/denoising-diffusion-2-unet#frechet-lenet-distance))
+Creating a classifier model is easy (see [part 2-Frechet LeNet Distance](/machine-learning/2022/12/29/denoising-diffusion-2-unet#frechet-lenet-distance))
 but creating a classifier model that can work throughout all the noisy time steps of diffusion is very difficult.
 This requires a second U-Net model that needs to be trained in parallel.
 
@@ -125,7 +127,7 @@ For the full code see [guidance.jl](https://github.com/LiorSinai/DenoisingDiffus
 
 ### Reverse diffusion
 
-This is the guided version of the reverse process from [part 1](/coding/2022/12/03/denoising-diffusion-1-spiral#reverse-process).
+This is the guided version of the reverse process from [part 1](/machine-learning/2022/12/03/denoising-diffusion-1-spiral#reverse-process).
 For text embeddings coming from a language model the new argument to `p_sample` would be a matrix.
 However here the embeddings are calculated in the model too, so `p_sample` will expect a vector of integer labels instead. 
 These will then be passed to an embedding layer.
@@ -200,7 +202,7 @@ All the other functions remain the same as in part 1.
 
 ### Full loop
 
-This is the guided version of the sampling loops from [part 1](/coding/2022/12/03/denoising-diffusion-1-spiral#full-loop).
+This is the guided version of the sampling loops from [part 1](/machine-learning/2022/12/03/denoising-diffusion-1-spiral#full-loop).
 
 Sampling loops with an extra input:
 {% highlight julia %}function p_sample_loop(
@@ -269,7 +271,7 @@ end
 
 ### Training
 
-This is the guided version of the training process from [part 1](/coding/2022/12/03/denoising-diffusion-1-spiral#training).
+This is the guided version of the training process from [part 1](/machine-learning/2022/12/03/denoising-diffusion-1-spiral#training).
 
 As before we'll have two methods for `p_losses`.
 The first takes in the four inputs (`x_start`, `timesteps`, `noise` and the new `labels`) and calculates the losses:
@@ -308,7 +310,7 @@ end
 {% endhighlight %}
 
 The training loop needs to be updated so that it can randomly set labels to that of the empty set $\emptyset$.[^p_losses]
-This `train!` function from [part 1](/coding/2022/12/03/denoising-diffusion-1-spiral#training) is extended as follows:
+This `train!` function from [part 1](/machine-learning/2022/12/03/denoising-diffusion-1-spiral#training) is extended as follows:
 {% highlight julia %}
 using Flux: DataLoader
 using ProgressMeter
@@ -441,7 +443,7 @@ labels = 1 .+ vcat(
 
 ### Model
 
-We can use the same model as [part 1-sinusodial embeddings](/coding/2022/12/03/denoising-diffusion-1-spiral#sinusodial-embeddings) with an additional `Flux.Embedding` layer at each level.
+We can use the same model as [part 1-sinusodial embeddings](/machine-learning/2022/12/03/denoising-diffusion-1-spiral#sinusodial-embeddings) with an additional `Flux.Embedding` layer at each level.
 Otherwise no other changes required.
 
 {% highlight julia %}
@@ -481,7 +483,7 @@ model = ConditionalChain(
 
 ### Results patterns
 
-Training is the same as [part 1-training](/coding/2022/12/03/denoising-diffusion-1-spiral#training). The only difference is that the `loss` function must now take in three arguments:
+Training is the same as [part 1-training](/machine-learning/2022/12/03/denoising-diffusion-1-spiral#training). The only difference is that the `loss` function must now take in three arguments:
 
 {% highlight julia %}
 loss(diffusion, x, y) = p_losses(diffusion, loss_type, x, y; to_device=to_device)
@@ -544,7 +546,7 @@ train_x, val_x = split_validation(MersenneTwister(seed), norm_data, labels);
 
 ### UNetConditioned
 
-We would like to use the same model from [part 2-constructor](/coding/2022/12/29/denoising-diffusion-2-unet#constructor).
+We would like to use the same model from [part 2-constructor](/machine-learning/2022/12/29/denoising-diffusion-2-unet#constructor).
 However we need to add two extra elements to the struct: a new embedding layer and a function to combine embeddings. 
 The `combine_embeddings` can be one of `+` (as used above for the spiral), `*` or `vcat`.
 It should not have parameters.
@@ -630,7 +632,7 @@ The whole model will have 420,497 parameters. This is only an increase of 4.3% o
 
 ### Results MNIST
 
-Training is the same as [part 2-training](/coding/2022/12/29/denoising-diffusion-2-unet#training).
+Training is the same as [part 2-training](/machine-learning/2022/12/29/denoising-diffusion-2-unet#training).
 For the full training script, see [train_images_cond.jl](https://github.com/LiorSinai/DenoisingDiffusion.jl/blob/main/examples/train_images_cond.jl). 
 I also have made a Jupyter Notebook hosted on Google Colab available at [DenoisingDiffusion-MNIST.ipynb](https://colab.research.google.com/drive/1YCSjEOgzzg80NEKvbvySLSXHOFEgjc8A?usp=sharing).[^colab]
 
@@ -663,7 +665,7 @@ Here is an image showing that:
 
 It seems that lower guidance scale values don't affect the output much but higher values interfere too much.
 
-We can also go through the same exercise of calculating the Frechet LeNet Distance (FLD) from [part 2-Fretchet LeNet Distance](/coding/2022/12/29/denoising-diffusion-2-unet#frechet-lenet-distance).
+We can also go through the same exercise of calculating the Frechet LeNet Distance (FLD) from [part 2-Fretchet LeNet Distance](/machine-learning/2022/12/29/denoising-diffusion-2-unet#frechet-lenet-distance).
 Except this time we can ask the model to generated 1000 samples of each label. 
 This gives us very uniform label counts:
 <figure class="post-figure">

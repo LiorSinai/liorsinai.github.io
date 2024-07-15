@@ -3,9 +3,11 @@ layout: post
 title:  "Image generation with MNIST"
 date:   2022-12-29
 author: Lior Sinai
-categories: coding
+categories: machine-learning
 sidenav: true
 tags:  mathematics AI art diffusion 'machine learning' 'deep learning'
+redirect_from:
+  - /coding/2022/12/29/denoising-diffusion-2-unet
 ---
 
 _A denoising diffusion probabilistic model for generating numbers based on the MNIST dataset. The underlying machine learning model is a U-Net model, which is a convolutional autoencoder with skip connections. A large part of this post is dedicated to implementing this model architecture in Julia._
@@ -16,9 +18,9 @@ This is part of a series. The other articles are:
 - [Part 1: first principles][first_principles].
 - [Part 3: classifier free guidance][classifier_free_guidance].
 
-[first_principles]: {{ "coding/2022/12/03/denoising-diffusion-1-spiral" | relative_url }}
-[image_diffusion]: {{ "coding/2022/12/29/denoising-diffusion-2-unet" | relative_url }}
-[classifier_free_guidance]: {{ "coding/2023/01/04/denoising-diffusion-3-guidance" | relative_url }}
+[first_principles]: {{ "machine-learning/2022/12/03/denoising-diffusion-1-spiral" | relative_url }}
+[image_diffusion]: {{ "machine-learning/2022/12/29/denoising-diffusion-2-unet" | relative_url }}
+[classifier_free_guidance]: {{ "machine-learning/2023/01/04/denoising-diffusion-3-guidance" | relative_url }}
 
 Full code available at [github.com/LiorSinai/DenoisingDiffusion.jl](https://github.com/LiorSinai/DenoisingDiffusion.jl).
 Examples notebooks at [github.com/LiorSinai/DenoisingDiffusion-examples](https://github.com/LiorSinai/DenoisingDiffusion-examples).
@@ -54,7 +56,7 @@ This total noise is then used in analytical equations to calculate the amount of
 The purpose of multiple iterations is to refine the predicted noise and hence refine the final sample.
 Please review [part 1-reverse process][first_principles-reverse] for a full explanation.
 
-[first_principles-reverse]: /coding/2022/12/03/denoising-diffusion-1-spiral#reverse-process
+[first_principles-reverse]: /machine-learning/2022/12/03/denoising-diffusion-1-spiral#reverse-process
 
 ## U-Net
 ### Background
@@ -271,7 +273,7 @@ As in part 1 we need to pass two inputs to the model and so we'll need to reuse 
 [part 1][first_principles-model]. 
 We'll need a custom `ConditionalSkipConnection` layer which can handle multiple inputs too.
 
-[first_principles-model]: /coding/2022/12/03/denoising-diffusion-1-spiral#model
+[first_principles-model]: /machine-learning/2022/12/03/denoising-diffusion-1-spiral#model
 [flux-skip]: https://github.com/FluxML/Flux.jl/blob/c850df5409ca545be433dec835034cffa8486aa4/src/layers/basic.jl#L339
 
 The [source code][flux-skip] for `Flux.SkipConnection` can easily be adapted for this:
@@ -330,7 +332,7 @@ function UNet(
     in_out = collect(zip(channels[1:end-1], channels[2:end]))
 {% endhighlight %}
 
-[first_principles-embedding]: /coding/2022/12/03/denoising-diffusion-1-spiral#sinusodial-embeddings
+[first_principles-embedding]: /machine-learning/2022/12/03/denoising-diffusion-1-spiral#sinusodial-embeddings
 
 There are many different variations of the time embedding layer.
 This is one used by [LuicidRains](https://github.com/lucidrains/denoising-diffusion-pytorch/blob/a772416afa6940f5e306a8cc2ebbb7c9e2a8dd43/denoising_diffusion_pytorch/denoising_diffusion_pytorch.py#L311). 
@@ -848,7 +850,7 @@ This block is based on the transformer self-attention layer that was first intro
 [Attention-all-you-need]: https://arxiv.org/abs/1706.03762
 [Ho-2020]: https://arxiv.org/abs/2006.11239
 
-For a full discussion of self-attention please see my earlier post on [transformers](/coding/2022/05/18/transformers#multi-head-attention). 
+For a full discussion of self-attention please see my earlier post on [transformers](/machine-learning/2022/05/18/transformers#multi-head-attention). 
 
 Unfortunately we can't reuse all the code exactly.
 The biggest difference is that the attention is applied across channels (groups of 2D images) whereas for transformers they are applied across the embedding dimension (words).
@@ -1184,7 +1186,7 @@ plot(canvases..., layout=(nrows, 10), ticks=nothing)
 	>
 </figure>
 
-Normalise the dataset (function defined in [part 1](/coding/2022/12/03/denoising-diffusion-1-spiral#spiral-dataset)):
+Normalise the dataset (function defined in [part 1](/machine-learning/2022/12/03/denoising-diffusion-1-spiral#spiral-dataset)):
 {% highlight julia %}
 norm_data = normalize_neg_one_to_one(reshape(trainset.features, 28, 28, 1, :))
 {% endhighlight %}
@@ -1297,7 +1299,7 @@ history = train!(
 )
 {% endhighlight %}  
 
-[first_principles_train]: /coding/2022/12/03/denoising-diffusion-1-spiral#training
+[first_principles_train]: /machine-learning/2022/12/03/denoising-diffusion-1-spiral#training
 
 The training history:
 <figure class="post-figure">
@@ -1478,7 +1480,7 @@ classifier_path = "models\\LeNet5\\model.bson"
 classifier = BSON.load(classifier_path)[:model]
 {% endhighlight %}
 
-To use the generated outputs we'll have to normalise them between 0 and 1 (function defined in [part 1-spiral dataset](/coding/2022/12/03/denoising-diffusion-1-spiral#spiral-dataset)):
+To use the generated outputs we'll have to normalise them between 0 and 1 (function defined in [part 1-spiral dataset](/machine-learning/2022/12/03/denoising-diffusion-1-spiral#spiral-dataset)):
 {% highlight julia %}
 for i in 1:n_samples
     global X_generated
@@ -1572,7 +1574,7 @@ Please review this if you are interested.
     end
     ```
 
-[^custom_rrule]: For an example of this, see the "backpropagation for mul4d" card in an earlier post on [transformers](/coding/2022/05/18/transformers#multiplication-with-higher-order-arrays).
+[^custom_rrule]: For an example of this, see the "backpropagation for mul4d" card in an earlier post on [transformers](/machine-learning/2022/05/18/transformers#multiplication-with-higher-order-arrays).
 
 [^colab]: Google Colab does not natively support Julia so you'll have to install it every time you run the notebook. Plots.jl does not work on Google Colab. 
 

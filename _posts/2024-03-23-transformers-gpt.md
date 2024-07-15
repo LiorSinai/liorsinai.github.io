@@ -6,16 +6,18 @@ author: Lior Sinai
 last_modified_at: 2024-04-13
 background: '/assets/posts/transformers/transformer.png'
 sidenav: true
-categories: coding
+categories: machine-learning
 tags: mathematics transformers 'machine learning' 'deep learning'
+redirect_from:
+    - /coding/2024/03/23/transformers-gpt
 ---
 
 _A transformer for generating text in Julia, trained on Shakespeare's plays. This model can be used as a Generative Pre-trained Transformer (GPT) with further work. This post was inspired by Andrej Karpathy's Zero to Hero course._ 
 
 See also a previous post: [Transformers from first principles in Julia][firstPrinciples].
 
-[firstPrinciples]: {{ "coding/2022/05/18/transformers" | relative_url }}
-[generator]: {{ "coding/2024/03/23/transformers-part2-gpt" | relative_url }}
+[firstPrinciples]: {{ "machine-learning/2022/05/18/transformers" | relative_url }}
+[generator]: {{ "machine-learning/2024/03/23/transformers-part2-gpt" | relative_url }}
 
 ### Table of Contents
 
@@ -151,7 +153,7 @@ That post was lacking however in that it did not create a decoder transformer.
 This post is dedicated to that task.
 I've written this as a stand-alone from the original even though much of the code is the same.
 I refer back to the original post for some explanations.
-Please see the [Design Considerations](/coding/2022/05/18/transformers#design-considerations) section which is not repeated here.
+Please see the [Design Considerations](/machine-learning/2022/05/18/transformers#design-considerations) section which is not repeated here.
 
 This post was inspired by Andrej Karpathy's [Zero to Hero][ZeroToHero] course.
 I highly recommend it.
@@ -304,7 +306,7 @@ characters = sort(collect(Set(text)))
 {% endhighlight %}
 
 Karpathy uses two dictionaries to convert between characters and indices: `char_to_int` and `int_to_char`.
-I'm going to wrap these in a slightly more complex `IndexTokenizer` struct introduced in my [first post](/coding/2022/05/18/transformers#tokenizers).
+I'm going to wrap these in a slightly more complex `IndexTokenizer` struct introduced in my [first post](/machine-learning/2022/05/18/transformers#tokenizers).
 It holds a vector of the vocabulary (equivalent to `int_to_char`) and a `lookup` for reversing this (equivalent to `char_to_int`).
 Additionally, it has an unknown symbol if any of the characters are not in the vocabulary.
 
@@ -478,7 +480,7 @@ embedding(indices) # 32 × 10
     Transformers are an active area of research and many position encodings have been proposed.
     <ul>
         <li> Sinusodial Position Encodings: The original paper gave equations to calculate a fixed embedding matrix.
-        For an explanation and implementation see my <a href="/coding/2022/05/18/transformers#position-encodings">first post</a>.
+        For an explanation and implementation see my <a href="/machine-learning/2022/05/18/transformers#position-encodings">first post</a>.
         </li>
         <li> <a href="https://arxiv.org/abs/1803.02155">Relative Position Embeddings (RPE) (2018)</a>: add embeddings in the attention step where each entry relates $r=j_k-i_q$.
         The <a href="https://arxiv.org/pdf/1809.04281">Music Transformer (2018)</a> paper greatly improved computation of this matrix.
@@ -684,7 +686,7 @@ Furthermore, working with batches adds an extra dimension:  $d_h \times n \times
 
 We could work with these arrays as `Vector{<:Matrix{T}}` and `Vector{<:Vector{<:Matrix{T}}}` respectively, but it is more efficient to work with them as `Array{T, 3}` and `Array{T, 4}` because  then we can work with optimised array functions.
 
-My [first post](/coding/2022/05/18/transformers#multiplication-with-higher-order-arrays) goes into more detail about multiplication with higher order arrays.[^tensors]
+My [first post](/machine-learning/2022/05/18/transformers#multiplication-with-higher-order-arrays) goes into more detail about multiplication with higher order arrays.[^tensors]
 It compares vanilla versions with optimised versions.
 Here I will present the optimised version only.
 
@@ -721,7 +723,7 @@ The Flux `Dense` layer does something [similar](https://github.com/FluxML/Flux.j
 <h4 id="attention-multiheadattention-layer">3.5.4 MultiHeadAttention layer</h4>
 
 Flux.jl now comes with a `Flux.MultiHeadAttention` layer.
-However for continuity with my [first post](/coding/2022/05/18/transformers#multi-head-attention), I will present my own `MultiHeadAttention` layer except now with masking.
+However for continuity with my [first post](/machine-learning/2022/05/18/transformers#multi-head-attention), I will present my own `MultiHeadAttention` layer except now with masking.
 It is very similar to the code in [Flux.jl](https://github.com/FluxML/Flux.jl/blob/master/src/layers/attention.jl) and [NNlib.jl](https://github.com/FluxML/NNlib.jl/blob/master/src/attention.jl).
 The differences are in design choices for the inputs and Flux.jl's implementations are slightly more generic.
 
