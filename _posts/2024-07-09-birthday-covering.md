@@ -11,7 +11,7 @@ categories: mathematics
 tags: mathematics probability
 ---
 
-_Counting the number of people of required to cover all birthdays._ 
+_Quantifying how likely each birthday is present (covered) in some large group of people._
 
 ### Table of Contents
 
@@ -261,11 +261,11 @@ Thankfully, there is a simpler way.
 #### Counting missing birthdays
 
 All probabilities sum to 1.
-From this, the probability that at least person has each birthday is 1 minus the scenarios where birthdays are missing.
+From this, the probability that at least one person has each birthday is 1 minus the scenarios where birthdays are missing.
 
 As a start, assume independence between missing birthdays.
 That is, there is no overlap between missing a birthday.
-This is clearly false: a group of people can be missing multiple birthdays.
+This is clearly false: a group of people can be missing multiple birthdays.[^independence]
 However, it makes the calculations simple.
 
 <figure class="post-figure">
@@ -297,7 +297,8 @@ $$
 \end{align}
 $$
 
-This is only 77% of the simulated value of 0.5739, but it is a good sign that is within the same magnitude.
+This is much closer to the target value (77% of the simulated value).
+This is because with 2364 people it is somewhat likely that only 1 of the 365 birthdays is missing.
 
 <figure class="post-figure">
 <img class="img-80"
@@ -435,3 +436,9 @@ More generally, the [Inclusion-Exclusion Principle][wiki_inclusion_exclusion] ca
 This was an interesting problem, but I'm not sure if there is a practical use to it.
 
 ---
+
+[^independence]: For the independence assumption to truly hold, each missing "coupon" should come from a different distribution e.g. a birthday that is not June 1st, or a card that is not the Ace of Spades or not the 4 on a die. Then the probability of one of them missing is:
+
+    $$
+    P(B\cup C \cup D) = \frac{364}{365}+\frac{51}{52}+\frac{5}{6}
+    $$
