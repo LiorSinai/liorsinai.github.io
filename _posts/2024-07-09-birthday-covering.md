@@ -234,7 +234,10 @@ One way to estimate the probability is to count all the different configurations
 For the season problem, this is straight forward: ${5 \choose 2} = 10$ pairs can share a season, then there are 4 seasons that can be assigned to the pair, then 3 remaining seasons to the next person, then 2 to the next person, and finally the last person must take the last remaining season. This is out of $4^5$ possible configurations:
 
 $$
-    p = \frac{ {5 \choose 2} 4!}{4^5} = 0.234375
+\begin{align}
+    P(🌱\cup ☀️\cup 🍂 \cup ❄️ | n=5) &= \frac{ {5 \choose 2} 4!}{4^5} \\
+        &= 0.234375
+\end{align}
 $$
 
 This is just under 1/4th.
@@ -245,7 +248,7 @@ For example, one such configuration between $n=2364$ people is 180 birthdays eac
 
 $$
 \begin{align}
-    p &= \left[{2364 \choose 1080}{1284 \choose 1260}{24 \choose 20}{4 \choose 4} \right] \cdot \\
+    P\left(X | n=2364\right) &= \left[{2364 \choose 1080}{1284 \choose 1260}{24 \choose 20}{4 \choose 4} \right] \cdot \\
       &\phantom{=} \quad \left[ {365 \choose 180 } {185 \choose 180 } {5 \choose 4 } {1 \choose 1 }\right] / 365^{2364} \\
       &= \frac{2364!}{1080! 1260! 20! 4!} \frac{365!}{ (180!)^2 4! 1!} / 365^{2364} \\
       &= 8.4\times 10^{-5179}
@@ -280,7 +283,8 @@ For the season problem, there are 4 possible ways we can exclude 1 of 4 seasons,
 
 $$
 \begin{align}
-    p &= 1 - \frac{4 \cdot 3^5}{4^5} \\
+    P(🌱\cup ☀️\cup 🍂 \cup ❄️ | n=5)&= 1 - P(\bar{🌱}\cup \bar{☀️}\cup \bar{🍂} \cup \bar{❄️} | n=5)\\
+      &= 1 - \frac{4 \cdot 3^5}{4^5} \\
       &= 0.0508
 \end{align}
 $$
@@ -292,7 +296,8 @@ For the birthdays, there are 365 possible ways we can exclude 1 of 365 birthdays
 
 $$
 \begin{align}
-    p &= 1 - \frac{365 \cdot 364^{2364} }{365^{2364} } \\
+    P\left(\bigcup\limits_{i=1}^{365} B_i | n\right) &= 1 - P\left(\bigcup\limits_{i=1}^{365} \bar{B}_i | n\right) \\
+      &= 1 - \frac{365 \cdot 364^{2364} }{365^{2364} } \\
       &= 0.4432
 \end{align}
 $$
@@ -325,7 +330,8 @@ Each branch has been counted twice, so we need to minus one version to correct i
 
 $$
 \begin{align}
-    p &= 1 - \left[ \frac{4 \cdot 3^5}{4^5} - \frac{ {4 \choose 2} \cdot 2^5}{4^5}\right] \\
+P(🌱\cup ☀️\cup 🍂 \cup ❄️ | n=5)&= 1 - P(\bar{🌱}\cup \bar{☀️}\cup \bar{🍂} \cup \bar{❄️} | n=5)\\
+      &= 1 - \left[ \frac{4 \cdot 3^5}{4^5} - \frac{ {4 \choose 2} \cdot 2^5}{4^5}\right] \\
       &= 0.23828125
 \end{align}
 $$
@@ -336,7 +342,8 @@ Similarly, for the birthdays:
 
 $$
 \begin{align}
-    p &= 1 - \left[ \frac{365 \cdot 364^{2364} }{365^{2364} } - \frac{ {365 \choose 2} \cdot 363^{2364} }{365^{2364} }\right]\\
+    P\left(\bigcup\limits_{i=1}^{365} B_i | n\right) &= 1 - P\left(\bigcup\limits_{i=1}^{365} \bar{B}_i | n\right) \\
+      &= 1 - \left[ \frac{365 \cdot 364^{2364} }{365^{2364} } - \frac{ {365 \choose 2} \cdot 363^{2364} }{365^{2364} }\right]\\
       &= 0.5955
 \end{align}
 $$
@@ -363,7 +370,8 @@ There are $ {4 \choose 3 } = 4 $ overlaps we need to add back:
 
 $$
 \begin{align}
-    p &= 1 - \left[ \frac{4 \cdot 3^5}{4^5} - \frac{ {4 \choose 2} \cdot 2^5}{4^5} + \frac{ {4 \choose 3} \cdot 1^5}{4^5}\right] \\
+   P(🌱\cup ☀️\cup 🍂 \cup ❄️ | n=5)&= 1 - P(\bar{🌱}\cup \bar{☀️}\cup \bar{🍂} \cup \bar{❄️} | n=5)\\
+      &= 1 - \left[ \frac{4 \cdot 3^5}{4^5} - \frac{ {4 \choose 2} \cdot 2^5}{4^5} + \frac{ {4 \choose 3} \cdot 1^5}{4^5}\right] \\
       &= 0.234375
 \end{align}
 $$
@@ -374,7 +382,8 @@ For the birthdays:
 
 $$
 \begin{align}
-    p &= 1 - \left[ \frac{365 \cdot 364^{2364} }{365^{2364} } - \frac{ {365 \choose 2} \cdot 363^{2364} }{365^{2364}} \right. \\
+    P\left(\bigcup\limits_{i=1}^{365} B_i | n\right) &= 1 - P\left(\bigcup\limits_{i=1}^{365} \bar{B}_i | n\right) \\
+      &= 1 - \left[ \frac{365 \cdot 364^{2364} }{365^{2364} } - \frac{ {365 \choose 2} \cdot 363^{2364} }{365^{2364}} \right. \\
       &\phantom{=} \left. + \frac{ {365 \choose 3} \cdot 362^{2364} }{365^{2364}}  \right] \\
       &= 0.5681
 \end{align}
@@ -406,7 +415,10 @@ For the birthday problem, each $A_i$ is the exclusion of one birthday (e.g. $A_5
 The formula is then:
 
 $$
-p = 1 - \frac{1}{365^n}\sum_{k=1}^{365} (-1)^{(k+1)} { 365 \choose k} (365 - k)^n
+\begin{align}
+P\left(\bigcup\limits_{i=1}^{365} B_i | n\right) &= 1 - P\left(\bigcup\limits_{i=1}^{365} \bar{B}_i | n\right) \\
+&= 1 - \frac{1}{365^n}\sum_{k=1}^{365} (-1)^{(k+1)} { 365 \choose k} (365 - k)^n
+\end{align}
 $$
 
 For $n=2364$, we get an answer of 0.5712. The simulated value of 0.5739 was close.
