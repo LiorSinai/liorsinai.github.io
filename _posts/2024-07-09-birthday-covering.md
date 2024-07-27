@@ -266,9 +266,9 @@ Thankfully, there is a simpler way.
 All probabilities sum to 1.
 From this, the probability that at least one person has each birthday is 1 minus the scenarios where birthdays are missing.
 
-As a start, assume independence between missing birthdays.
+As a start, assume mutual exclusivity between missing birthdays.
 That is, there is no overlap between missing a birthday.
-This is clearly false: a group of people can be missing multiple birthdays.[^independence]
+This is clearly false: a group of people can have multiple missing birthdays.
 However, it makes the calculations simple.
 
 <figure class="post-figure">
@@ -289,7 +289,7 @@ $$
 \end{align}
 $$
 
-This is much smaller than the original value of 0.234. The independence assumption clearly does not hold here.
+This is much smaller than the original value of 0.234. The mutual exclusivity assumption clearly does not hold here.
 (This will be corrected shortly.)
 
 For the birthdays, there are 365 possible ways we can exclude 1 of 365 birthdays, and then there are $364^n$ possibilities for the birthdays for $n$ people:
@@ -403,14 +403,15 @@ For the seasons, we are done. For the birthdays, we can continue this pattern of
         &\phantom{=} + \sum_{1\leq i <j <k \leq n}^{n} | A_i \cap A_j \cap A_k| \\
         &\phantom{=} - ... \\
         &\phantom{=} + (-1)^{n+1} | A_i \cap ... \cap A_n| \\
-        &= \sum_{J\subset \{1,...,n\}} (-1)^{|J|+1} \left| \bigcap\limits_{j \in {J}} A_j \right|
+        &= \sum_{k=1}^n (-1)^{k+1} \left(\sum_{1\leq i_1 < ... <i_k \leq n}^{n} | A_{i_1} \cap ... \cap A_{i_k}|  \right) \\
+        &= \sum_{J\subseteq \{1,...,n\}} (-1)^{|J|+1} \left| \bigcap\limits_{j \in {J}} A_j \right|
         \end{align} \\
         $$
 	</p>
   </div>
 </div>
 
-For the birthday problem, each $A_i$ is the exclusion of one birthday (e.g. $A_5$ is January 5th missing), and each group of intersections $\left\vert \bigcap\limits_{j \in {J}} A_j \right\vert$ is calculated as the number of different combinations $365 \choose k $ of shared missing birthdays multiplied by the probability $\left(\frac{365-k}{365}\right)^n$.
+For the birthday problem, each $A_i$ is the exclusion of one birthday (e.g. $A_5$ is January 5th missing), and groups of intersections $\sum \vert A_{i_1} \cap ... \cap A_{i_k} \vert$ are calculated as the number of different combinations $365 \choose k $ of shared missing birthdays multiplied by the probability $\left(\frac{365-k}{365}\right)^n$.
 
 The formula is then:
 
@@ -446,11 +447,3 @@ The answer to the question, what is the probability that all birthdays ($N=365$)
 More generally, the [Inclusion-Exclusion Principle][wiki_inclusion_exclusion] can be used to calculate exact probabilities for this and similar problems.
 
 This was an interesting problem, but I'm not sure if there is a practical use to it.
-
----
-
-[^independence]: For the independence assumption to truly hold, each missing "coupon" should come from a different distribution e.g. a birthday that is not June 1st, or a card that is not the Ace of Spades or not the 4 on a die. Then the probability of one of them missing is:
-
-    $$
-    P(B\cup C \cup D) = \frac{364}{365}+\frac{51}{52}+\frac{5}{6}
-    $$
