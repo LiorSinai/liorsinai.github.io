@@ -623,7 +623,7 @@ A vertex intersection happens when a vertex of polygon 2 lies on a vertex of pol
 </figure>
 
 This can be conceptually thought of as a "bent" edge.
-There are several cases are which correspond to the cases already profiled for "straight" edges:
+There are several cases which correspond to the cases already profiled for "straight" edges:
 
 1. The polygons cross over each other at the common vertex. This is either an ENTRY or EXIT.
 2. One polygon is inside/outside the other polygon and they touch at common vertex (VERTEX).
