@@ -9,21 +9,22 @@ categories: machine-learning
 tags: mathematics transformers 'machine learning' 'deep learning'
 ---
 
-_A series on automatic differentiation in Julia. Part 2 uses metaprogramming to automate._ 
+_A series on automatic differentiation in Julia. Part 2 uses metaprogramming to generate a modified (primal) forward pass and to reverse differentiate it into a backward pass. This post uses an expression based approach which can be brittle. Part 3 develops a more robust approach for the same code using IRTools.jl._ 
 
 This is part of a series. The other articles are:
 - [Part 1: ChainRules][micrograd_chainrules].
 - [Part 3: Automation with IR][micrograd_ir].
-- [Part 4: Model demo][micrograd_demo].
+- [Part 4: Extensions][micrograd_ext].
 
 
 [micrograd_chainrules]: {{ "machine-learning/2024/07/27/micrograd-1-chainrules" | relative_url }}
 [micrograd_expr]: {{ "machine-learning/2024/08/03/micrograd-2-expr" | relative_url }}
 [micrograd_ir]: {{ "machine-learning/2024/08/10/micrograd-3-ir" | relative_url }}
-[micrograd_demo]: {{ "machine-learning/2024/07/27/micrograd-4" | relative_url }}
+[micrograd_ext]: {{ "machine-learning/2024/08/17/micrograd-4-ext" | relative_url }}
 [MicroGrad.jl]: https://github.com/LiorSinai/MicroGrad.jl
 
 All source code can be found at [MicroGrad.jl][MicroGrad.jl].
+The code here is inspired by the example at [IRTools.jl](https://github.com/FluxML/IRTools.jl/blob/master/examples/reverse.jl).
 
 ### Table of Contents
 
@@ -41,14 +42,14 @@ The challenge now is to automate it.
 This will be done through metaprogramming and generated functions.
 
 <div class="message-container warning-message">
-	<div class="message-icon fa fa-fw fa-2x fa-exclamation-triangle">
-	</div>
-	<div class="content-container">
-		<div class="message-body">
-		Metaprogramming is a powerful tool, but it introduces complexity that can make code more difficult to understand. It can easily introduces critical bugs that can crash a program.
+    <div class="message-icon fa fa-fw fa-2x fa-exclamation-triangle">
+    </div>
+    <div class="content-container">
+        <div class="message-body">
+        Metaprogramming is a powerful tool, but it introduces complexity that can make code more difficult to understand. It can easily introduces critical bugs that can crash a program.
         Care should be taken when using it.
-		</div>
-	</div>
+        </div>
+    </div>
 </div>
 
 For example, from part 1 there are `rrule`s for `+`, `*` and `/`.
@@ -191,16 +192,15 @@ $$
 The goal is to generate code which automatically implements the equations of section 2.
 
 <div class="message-container info-message">
-	<div class="message-icon fa fa-fw fa-2x fa-exclamation-circle">
-	</div>
-	<div class="content-container">
-		<div class="message-body">
-    The <code>pullback</code> function that is implemented here is equivalent to the internal <code>Zygote._pullback</code> function, which returns all partial gradients including for $\frac{\partial l}{\partial \text{self}}$. <code>Zygote.pullback</code> is a thin wrapper around <code>Zygote._pullback</code> which discards that first gradient and returns only the gradients for the input variables.
-		</div>
-	</div>
+  <div class="message-icon fa fa-fw fa-2x fa-exclamation-circle"></div>
+    <div class="content-container">
+      <div class="message-body">
+        The <code>pullback</code> function that is implemented here is equivalent to the internal <code>Zygote._pullback</code> function, which returns all partial gradients including for $\frac{\partial l}{\partial \text{self}}$. <code>Zygote.pullback</code> is a thin wrapper around <code>Zygote._pullback</code> which discards that first gradient and returns only the gradients for the input variables.
+      </div>
+    </div>
 </div>
 
-To start, define a `pullback` function ([ZygoteRules.jl](https://github.com/FluxML/ZygoteRules.jl/blob/f9bf0e367fa259c5aa68f0e14ccbf2125d734bd6/src/adjoint.jl#L33)):
+To start, define a `pullback` function ([source](https://github.com/FluxML/ZygoteRules.jl/blob/f9bf0e367fa259c5aa68f0e14ccbf2125d734bd6/src/adjoint.jl#L33)):
 
 {% highlight julia %}
 function pullback end
@@ -220,13 +220,13 @@ Because of this, the definition of `pullback` is different based on the version,
 [Julia_world_age]: https://docs.julialang.org/en/v1/manual/methods/
 
 <div class="message-container info-message">
-	<div class="message-icon fa fa-fw fa-2x fa-exclamation-circle">
-	</div>
-	<div class="content-container">
-		<div class="message-body">
+    <div class="message-icon fa fa-fw fa-2x fa-exclamation-circle">
+    </div>
+    <div class="content-container">
+        <div class="message-body">
     Generated functions should only be defined after all other functions. That is, at the bottom of the file or after all functions have been defined in the REPL. Otherwise they will not be able to access those functions or only old versions of those functions. These functions are defined here at the top only for explanatory purposes.
-		</div>
-	</div>
+        </div>
+    </div>
 </div>
 
 <div class="accordion" id="accordianJuliaVersions">
@@ -287,7 +287,7 @@ function _generate_pullback(world, f, args...)
     if (has_chain_rrule(T, world))
         return :(rrule(f, args...))
     end
-    throw("no rrule found for $T")
+    :(error("No rrule found for ", repr($T)))
 end
 {% endhighlight %}
 
@@ -307,7 +307,7 @@ end
 {% endhighlight %}
 
 The `meta` function uses the internal reflection function `Base._methods_by_ftype` to get all the methods for a specific type. (This same function is used by `methods`.)
-The most specific method is assumed to be the last one ([IRTools](https://github.com/FluxML/IRTools.jl/blob/master/src/reflection/reflection.jl#L71)):
+The most specific method is assumed to be the last one ([source](https://github.com/FluxML/IRTools.jl/blob/master/src/reflection/reflection.jl#L71)):
 
 {% highlight julia %}
 function meta(T; world=Base.get_world_counter())
@@ -348,8 +348,8 @@ T = Tuple{typeof(f), Float64, Float64}
 Tr = Tuple{typeof(rrule), T.parameters...}
 meta(Tr; world=world) # Core.MethodMatch(...), svec(), rrule(::Any, ...)
 has_chain_rrule(T, world) # false
-_generate_pullback(world, typeof(f), Float64, Float64) # ERROR
-pullback(f, 1.0, 2.0) # ERROR
+_generate_pullback(world, typeof(f), Float64, Float64) # :(error(...))
+pullback(f, 1.0, 2.0) # ERROR: No rrule found ...
 {% endhighlight %}
 
 The more interesting task is to inspect `f` and apply the equations of section 2 to fully differentiate with respect to all input parameters.
@@ -401,7 +401,7 @@ The returned object is a [CodeInfo][julia_codeinfo] struct and it corresponds ex
 [julia_nodes]: https://docs.julialang.org/en/v1/devdocs/ast/#Lowered-form
 
 Using this knowledge, we can now create a new function `_generate_pullback_via_decomposition` which will be called if no `rrule` exists.
-It will get the `CodeInfo` block and use it to create the primal (equation $\ref{eq:primal}$) ([Zygote.jl](https://github.com/FluxML/Zygote.jl/blob/3c3325d9987931f15bd478c932332be19c316de4/src/compiler/emit.jl#L98)).
+It uses the `CodeInfo` block to create the primal (equation $\ref{eq:primal}$) ([source](https://github.com/FluxML/Zygote.jl/blob/3c3325d9987931f15bd478c932332be19c316de4/src/compiler/emit.jl#L98)).
 
 {% highlight julia %}
 function _generate_pullback_via_decomposition(T, world)
@@ -427,10 +427,10 @@ quote
 end
 {% endhighlight %}
 
-Note that this expression cannot be executed because it still has slot numbers which correspond to input arguments (e.g. `_2`), and SSA values which correspond to intermediate values (e.g. `%1`).
-This will be fixed in [Sanitise](#sanitise) section.
+Note that this expression cannot be executed because it still has slot numbers which correspond to input arguments (`_X`), and SSA values which correspond to intermediate values (e.g. `%X`).
+This will be fixed in the [Sanitise](#sanitise) section.
 
-The first step for the primal function is to define three arrays to store information ([Zygote.jl](https://github.com/FluxML/Zygote.jl/blob/3c3325d9987931f15bd478c932332be19c316de4/src/compiler/reverse.jl#L201)):
+The first step for the primal function is to define three arrays to store information ([source](https://github.com/FluxML/Zygote.jl/blob/3c3325d9987931f15bd478c932332be19c316de4/src/compiler/reverse.jl#L201)):
 
 {% highlight julia %}
 function primal(ci::Core.CodeInfo, T=Any)
@@ -440,10 +440,9 @@ function primal(ci::Core.CodeInfo, T=Any)
 {% endhighlight %}
 
 The `tape` array stores the new expressions which will be part of the final expression.
-The `calls` array stores stores the original expressions and their outputs.
-This will be needed to connect the input and output variables to their pullbacks in the next section, and is what enables the `pullback` function to  differentiate towards different variables based on how they are passed.
-(See the examples in [part 1](/machine-learning/2024/07/27/micrograd-1-chainrules.html#julia-ad-ecosystem).)
-Lastly, `pullbacks` stores the pullbacks for the `data` field in the `Pullback` struct (to be defined shortly).
+The `calls` array stores the subset of expressions that require a pullback.
+This will be used to generate the reverse code (equation $\ref{eq:reverse}$) in the next section.
+Lastly, `pullbacks` stores all the pullbacks.
 
 Next, iterate over each line in the `CodeInfo` instance.
 Each output variable will be called `y$i`.
@@ -476,20 +475,19 @@ Otherwise, leave as is.
 </div>
 
 {% highlight julia %}
-    elseif (ex isa Expr) && (ex.head == :call)  && !ignored(ex)
-            vb = Symbol("back$i")
-            new_ex = :(($vy, $vb) = pullback($(ex.args...)))
-            push!(tape, new_ex)
-            push!(calls, (;var=vy, expr=ex))
-            push!(pullbacks, vb)
-    else # keep as is
-            push!(tape, :($vy = $ex))
+      elseif (ex isa Expr) && (ex.head == :call)  && !ignored(ex)
+              vb = Symbol("back$i")
+              new_ex = :(($vy, $vb) = pullback($(ex.args...)))
+              push!(tape, new_ex)
+              push!(calls, (;SSA_value=vy, expr=ex))
+              push!(pullbacks, vb)
+      else # keep as is
+              push!(tape, :($vy = $ex))
+      end
     end
-  end
 {% endhighlight %}
 
-A final expression is added after working through all the lines.
-It returns a tuple with the final output of the function and a `Pullback` struct which stores all the pullbacks.
+After working through all the lines, a final expression is added which returns a tuple with the final output of the function and a `Pullback` struct which stores all the pullbacks.
 Everything is then grouped into a single `:block` expression:
 
 {% highlight julia %}
@@ -502,7 +500,7 @@ end
 
 This code requires definitions for the `Pullback` struct as well as the following functions: `ignored`, `xcall` and `returnvalue`.
 
-Firstly, the `Pullback` struct.There are no closures in lowered Julia code, so instead [Zygote.jl](https://fluxml.ai/Zygote.jl/stable/internals/#Closure-Conversion-1) stores the pullbacks in a generic struct:
+TThere are no closures in lowered Julia code, so instead [Zygote.jl](https://fluxml.ai/Zygote.jl/stable/internals/#Closure-Conversion-1) stores the pullbacks in a generic struct:
 
 {% highlight julia %}
 struct Pullback{S,T}
@@ -514,7 +512,7 @@ Pullback{S}(data) where S = Pullback{S,typeof(data)}(data)
 In the next section this struct will be turned into a callable struct.
 That is, for `back=Pullback{S}(data)`, we will create a generated function that dispatches on itself: `(j::Pullback)(Δ)` so that we can call `back(Δ)`. This `back` has all the information to generate the reverse pass independently of the forward pass: the method can be retrieved using `meta(S)` and the relevant data and input parameters from  `back.data`.
 
-The ignored functions list is from [Zygote.jl](https://github.com/FluxML/Zygote.jl/blob/3c3325d9987931f15bd478c932332be19c316de4/src/compiler/reverse.jl#L171):
+Here is the ignored functions list ([source](https://github.com/FluxML/Zygote.jl/blob/3c3325d9987931f15bd478c932332be19c316de4/src/compiler/reverse.jl#L171)):
 
 {% highlight julia %}
 function ignored(ex::Expr)
@@ -535,7 +533,7 @@ ignored_f(f) = f in (
 )
 {% endhighlight %}
 
-`xcall` and `returnvalue` are convenience functions from [IRTools](https://github.com/FluxML/IRTools.jl/blob/dd1f2c212258001ea565df696841929ad0fcb614/src/ir/utils.jl#L12):
+`xcall` and `returnvalue` are convenience functions from [source](https://github.com/FluxML/IRTools.jl/blob/dd1f2c212258001ea565df696841929ad0fcb614/src/ir/utils.jl#L12):
 {% highlight julia %}
 xcall(mod::Module, f::Symbol, args...) = Expr(:call, GlobalRef(mod, f), args...)
 xcall(f::Symbol, args...) = xcall(Base, f, args...)
@@ -654,13 +652,12 @@ With `typeof(back)` and `back.data` we have all the information to do this indep
 The result will be:
 
 <div class="message-container info-message">
-	<div class="message-icon fa fa-fw fa-2x fa-exclamation-circle">
-	</div>
-	<div class="content-container">
-		<div class="message-body">
-    There are unused variables here which can be removed e.g. <code>x̄3_1</code> (s̄elf). The code here does not do such optimisations to keep things simple.
-		</div>
-	</div>
+	<div class="message-icon fa fa-fw fa-2x fa-exclamation-circle"></div>
+  <div class="content-container">
+    <div class="message-body">
+      There are unused variables here which can be removed e.g. <code>x̄3_1</code> (s̄elf). The code here does not do such optimisations to keep things simple.
+    </div>
+  </div>
 </div>
 
 {% highlight julia %}
@@ -699,18 +696,18 @@ function _generate_callable_pullback(j::Type{<:Pullback{S, T}}, world, Δ) where
 end
 {% endhighlight %}
 
-The `reverse_differentiate` function is a simplified version of [Zygote's adjoint](https://github.com/FluxML/Zygote.jl/blob/3c3325d9987931f15bd478c932332be19c316de4/src/compiler/reverse.jl#L293).
+The `reverse_differentiate` function is a simplified version of [Zygote.adjoint](https://github.com/FluxML/Zygote.jl/blob/3c3325d9987931f15bd478c932332be19c316de4/src/compiler/reverse.jl#L293).
 
 To start, a dictionary is created to store the gradients.
 It maps variable names (symbols) to an array of gradients.
 It is not accessed directly (e.g. `grads[x]`) but rather through the closure functions `grad` and `grad!` which automatically handle the arrays.
 The first gradient stored is `Δ` associated with the final return value of the forward pass.
-(The `_var_name` and `_sum`  will be defined shortly.)
+(`_var_name` and `xaccum`  will be defined shortly.)
 {% highlight julia %}
 function reverse_differentiate(forw::Core.CodeInfo, self, Δ)
     grads = Dict()
     grad!(x, x̄) = push!(get!(grads, x, []), x̄)
-    grad(x) = _sum(get(grads, x, [])...)
+    grad(x) = xaccum(get(grads, x, [])...)
     grad!(_var_name(returnvalue(forw)), Δ) # _var_name maps to variable names in calls
     tape = Expr[]
     push!(tape, :(data=$(xcall(:getfield, self, QuoteNode(:data)))))
@@ -725,6 +722,7 @@ The `tape` for the expression block is started by retrieving the `data` field in
 Next the code retrieves all the calls with pullbacks from the primal and loops over them, calling the pullbacks one by one.
 For each call it also loops over the input arguments and unpacks them one by one.
 Each variable's gradient is added to `grads` and may be used later in the loop.
+The `_var_name` function ensures that the keys of `grads` can be connected back to the original functions.
 {% highlight julia %}
     pr, calls = primal(forw)
     i = length(calls)
@@ -751,21 +749,21 @@ Finally, the last call retrieves all the necessary gradients for the input argum
 end
 {% endhighlight %}
 
-This code has required the following functions: `_var_name`, `_sum` and `arguments`. They are as follows:
+This code required the following functions: `xaccum`, `_var_name` and `arguments`. They are as follows:
 
 {% highlight julia %}
-_sum() = nothing
-_sum(x) = x
-_sum(xs...) = xcall(Main, :accum, xs...)
-arguments(forw::Core.CodeInfo) = [Symbol("#self"), [Symbol("args$i") for i in 2:length(forw.slotnames)]...]
+xaccum() = nothing
+xaccum(x) = x
+xaccum(xs...) = xcall(Main, :accum, xs...)
 _var_name(x::Core.SlotNumber) = x.id == 1 ? Symbol("#self") : Symbol("args$(x.id)")
 _var_name(x::Core.SSAValue)  = Symbol("y$(x.id)")
 _var_name(x) = x
+arguments(forw::Core.CodeInfo) = [Symbol("#self"), [Symbol("args$i") for i in 2:length(forw.slotnames)]...]
 {% endhighlight %}
 
-The `_sum` function calls an internal accumulate function if it acts on multiple inputs. 
+The `xaccum` function calls an internal accumulate function if it acts on multiple inputs. 
 At its simplest, `accum` is the same as `sum`. 
-However it also handles `nothing` inputs, `Tuples`s and `NameTuple`s ([Zygote.jl](https://github.com/FluxML/Zygote.jl/blob/3c3325d9987931f15bd478c932332be19c316de4/src/lib/lib.jl#L14)).
+However it also handles `nothing` inputs, `Tuples`s and `NameTuple`s ([source](https://github.com/FluxML/Zygote.jl/blob/3c3325d9987931f15bd478c932332be19c316de4/src/lib/lib.jl#L14)).
 
 {% highlight julia %}
 accum(x, y) = x === nothing ? y : y === nothing ? x : x + y
@@ -849,6 +847,7 @@ Testing:
 {% highlight julia %}
 f(a,b)=a/(a+b*b)
 z, back = pullback(f, 2.0, 3.0) # (0.1818, Pullback{...})
+_generate_callable_pullback(typeof(back), nothing, Float64) # expression at start
 back(1.0) # (nothing, 0.0744, -0.0991)
 {% endhighlight %}
 
@@ -876,28 +875,21 @@ struct Polynomial{V<:AbstractVector}
     weights::V
 end
 (m::Polynomial)(x) = evalpoly(x, m.weights)
-(m::Polynomial)(x::AbstractVector) = map(x -> evalpoly(x, m.weights), x)
+(m::Polynomial)(x::AbstractVector) = map(m, x)
 model = Polynomial([3.0, 2.0, -3.0, 1.0])
 x = [1.0, 2.0, 3.0, 4.0]
-pullback(model, x) # ERROR: Core.SlotNumber is not supported
+pullback(model, x) # ERROR: syntax: invalid syntax (static_parameter 1)
 {% endhighlight %}
 
-The error is raised because of the call to `%new` in line 4:
+The error is raised three levels down:
 
-{% highlight plaintext %}
-CodeInfo(
-    @ REPL[201]:1 within `Polynomial`
-1 ─ %1 = Main.:(var"#33#34")
-│   %2 = Core.typeof(m)
-│   %3 = Core.apply_type(%1, %2)
-│        #33 = %new(%3, m)
-│   %5 = #33
-│   %6 = Main.map(%5, x)
-└──      return %6
-)
+{% highlight julia %}
+pr1 = _generate_pullback(world, Polynomial, Vector{Float64})
+pr2 = _generate_pullback(world, typeof(map), Polynomial, Vector{Float64})
+pr3 = _generate_pullback(world, typeof(Base.Generator), Polynomial, Vector{Float64})
 {% endhighlight %}
 
-This can be fixed by making a special case for `new`.
+This can be fixed by explicitly writing a pullback for `map`.
 
 However rather than fixing it here, I first want to rewrite the code using IRTools.
 The code written here is brittle and difficult to debug.

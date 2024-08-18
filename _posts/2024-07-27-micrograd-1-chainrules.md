@@ -14,12 +14,12 @@ _A series on automatic differentiation in Julia. Part 1 provides an overview and
 This is part of a series. The other articles are:
 - [Part 2: Automation with expressions][micrograd_expr].
 - [Part 3: Automation with IR][micrograd_ir].
-- [Part 4: Model demo][micrograd_demo].
+- [Part 4: Extensions][micrograd_ext].
 
 [micrograd_chainrules]: {{ "machine-learning/2024/07/27/micrograd-1-chainrules" | relative_url }}
 [micrograd_expr]: {{ "machine-learning/2024/08/03/micrograd-2-expr" | relative_url }}
 [micrograd_ir]: {{ "machine-learning/2024/08/10/micrograd-3-ir" | relative_url }}
-[micrograd_demo]: {{ "machine-learning/2024/07/27/micrograd-4" | relative_url }}
+[micrograd_ext]: {{ "machine-learning/2024/08/17/micrograd-4-ext" | relative_url }}
 [MicroGrad.jl]: https://github.com/LiorSinai/MicroGrad.jl
 
 All source code can be found at [MicroGrad.jl][MicroGrad.jl].
@@ -65,12 +65,16 @@ The aim of this series is to create a minimal automatic differentiation package 
 It is based on [Zygote.jl](https://fluxml.ai/Zygote.jl/stable/) and works very differently to the Python AD packages.
 The latter are based on objects which implement custom implementations of mathematical operations.
 These custom implementations calculate both the forward pass and a derivative for the backward pass.
-All operations are only done with these objects.
-For example, Micrograd defines a `Value` class that has a custom definition for `__add__`.
-The same is true of the `Tensor` objects in PyTorch.
+All operations are only done with these objects.[^micrograd]
 Zygote.jl is instead based on the principle that Julia is a functional programming language. 
 It utilises Julia's multiple dispatch feature and its comprehensive metaprogramming abilities to generate new code for the backward pass.
 Barring some limitations, it can be used to differentiate all existing functions as well as any custom code.
+
+[Zygote_error]: https://discourse.julialang.org/t/state-of-machine-learning-in-julia/74385/4#post_4
+
+Zygote's approach is complex and pushes the boundaries of Julia's metaprogramming. It can sometimes be [buggy][Zygote_error].
+However its promise is true automatic differentiation of any forward pass code without further work on the coder's part.
+There are almost no comprehensive tutorials on this approach and so this series aims to cover that gap.
 
 For the final code, see my [MicroGrad.jl][MicroGrad.jl] repository.
 
@@ -87,17 +91,18 @@ This is a series on backpropagation so naturally a good understanding of Calculu
 [Functors.jl]: https://fluxml.ai/Functors.jl/stable/
 
 The Julia automatic differentiation ecosystem is centered around three packages: Flux.jl, ChainRules.jl and Zygote.jl.
-- [Flux.jl][Flux.jl] is the high level machine learning framework. It uses either ChainRules.jl or Zygote.jl to differentiate code.
+- [Flux.jl][Flux.jl] is a machine learning framework. It uses either ChainRules.jl or Zygote.jl to differentiate code.
 - [Zygote.jl][Zygote.jl] implements automatic differentiation through metaprogramming.
-  - The main functions it exposes are `gradient`, `withgradient` and `pullback`. The `pullback` function is a light wrapper around `_pullback`, which does most of the heavy lifting.
-  - The goal of `_pullback` is to dispatch a function, its arguments and its keyword arguments to a `ChainRule.rrule`. If it cannot, it will inspect the code, decompose it into smaller steps, and follow the rules of differentiation to dispatch  each of those to `_pullback` to recursively find an `rrule`. If this recursive process does not find a valid rule it will raise an error.
-  - It also exposes a function called `adjoint`, which calculates the "adjoint of the Jacobian". It is not related to the built-in `adjoint` function in Julia, which calculates the "conjugate transpose". (But there is some type piracy!) The `adjoint` function is the same as ChainRules.jl's `rrule` function except it takes higher precedence in Zygote.jl. If a new differentiation rule needs to be added, the recommendation is to extend `rrule` and not `adjoint`.
   - The core functionality is defined in the minimal [ZygoteRules.jl][ZygoteRules.jl] package.
-- [ChainRules.jl][ChainRules.jl] defines forward rules and reverse rules that functions can be dispatched to.
-  - The main functions it exposes are `frule` and `rrule`. This series deals only with backpropagation, so it will only concentrate on `rrule`.
+  - The main functions it exposes are `gradient`, `withgradient` and `pullback`. The `pullback` function is a light wrapper around `_pullback` which does most of the heavy lifting.
+  - The goal of `_pullback` is to dispatch a function, its arguments and its keyword arguments to a `ChainRule.rrule`. If it cannot, it will inspect the code, decompose it into smaller steps, and follow the rules of differentiation to dispatch  each of those to `_pullback` to recursively find an `rrule`. If this recursive process does not find a valid rule it will raise an error.
+  - It also exposes a function called `adjoint`, which calculates the adjoint of the Jacobian. (It is not related to the built-in `adjoint` function in Julia, which calculates the conjugate transpose. But there is some type piracy!) The `adjoint` function is the same as ChainRules.jl's `rrule` function except it takes higher precedence in Zygote.jl. If a new differentiation rule needs to be added, the recommendation is to extend `rrule` and not `adjoint`.
+- [ChainRules.jl][ChainRules.jl] defines forward rules and reverse rules.
   - The core functionality is defined in the minimal [ChainRulesCore.jl][ChainRulesCore.jl] package.
+  - The main functions it exposes are `frule` and `rrule`. This series deals only with backpropagation, so it will only concentrate on `rrule`.
 
 Also important is [IRTools.jl][IRTools.jl], an extended metaprogramming package for working with an intermediate representation (IR) between raw Julia code and lowered code.
+MicroGrad.jl in particular is based on the example code at [IRTools.jl](https://github.com/FluxML/IRTools.jl/blob/master/examples/reverse.jl) with alignment with Zyogte.jl functions and names.
 
 As an example, consider the function $f(x) = \sin(\cos(x))$. Using the chain rule of Calculus, it is differentiated as:
 
@@ -110,7 +115,7 @@ $$
 \end{align}
 $$
 
-We can use `Zygote.withgradient`, exposed as `Flux.withgradient`, to calculate this:
+`Zygote.withgradient`, exposed as `Flux.withgradient`, can be used to calculate this:
 
 {% highlight julia %}
 using Flux
@@ -141,27 +146,27 @@ Finally, part 4 will extend part 3's solution and showcase simple machine learni
 <h2 id="chainrules">3 ChainRules</h2>
 <h3 id="chainrules-definition">3.1 Definition</h3>
 
-ChainRules.jl's `rrule` returns the output of the forward pass $f(x)$ and a function $\mathcal{B}$ which calculates the backward pass.
-$\mathcal{B}$ takes as input $\Delta = \frac{\partial a}{\partial f}$, the gradient of some function $a$ with regards to the function $f$, and returns a tuple of $\left(\frac{\partial a}{\partial \text{self}}, \frac{\partial a}{\partial x_1}, ..., \frac{\partial a}{\partial x_n}\right)$, the gradient of $a$ with regards to itself and each of the input variables $x_i$.
-(The extra gradient $\frac{\partial a}{\partial \text{self}}$ is needed for internal fields and closures.
+ChainRules.jl's `rrule` returns the output of the forward pass $y(x)$ and a function $\mathcal{B}$ which calculates the backward pass.
+$\mathcal{B}$ takes as input $\Delta = \frac{\partial l}{\partial y}$, the gradient of some scalar $l$ with regards to the output variable $y$, and returns a tuple of $\left(\frac{\partial l}{\partial \text{self}}, \frac{\partial l}{\partial x_1}, ..., \frac{\partial l}{\partial x_n}\right)$, the gradient of $l$ with regards to each of the input variables $x_i$.
+(The extra gradient $\frac{\partial l}{\partial \text{self}}$ is needed for internal fields and closures.
 See the `Dense` layer example above.)
 According to the chain rule of Calculus, each gradient is calculated as:
 
 $$
-\mathcal{B_i}\left(\frac{\partial a}{\partial f}\right) = \frac{\partial a}{\partial x_i} = \frac{\partial a}{\partial f} \frac{\partial f}{\partial x_i}
+\mathcal{B_i}\left(\frac{\partial l}{\partial y}\right) = \frac{\partial l}{\partial x_i} = \frac{\partial l}{\partial y} \frac{\partial y}{\partial x_i}
 $$
 
-As a starting point $\frac{\partial a}{\partial f}=1$ is used to evaluate only $\frac{\partial f}{\partial x}$.
+As a starting point $\frac{\partial l}{\partial y}=1$ is used to evaluate only $\frac{\partial y}{\partial x}$.
 
 [Jacobian]: https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant
 
-If $x$ and $y=f(x)$ are vectors, then the gradient $J=\frac{\partial f}{\partial x}$ is a [Jacobian][Jacobian]:
+If $x$ and $y$ are vectors, then the gradient $J=\frac{\partial y}{\partial x}$ is a [Jacobian][Jacobian]:
 
 $$
 J = \begin{bmatrix}
-\frac{\partial f_1}{\partial x_1} & \dots & \frac{\partial f_1}{\partial x_n}  \\
+\frac{\partial y_1}{\partial x_1} & \dots & \frac{\partial y_1}{\partial x_n}  \\
 \vdots & \ddots & \vdots \\
-\frac{\partial f_m}{\partial x_1} & \dots & \frac{\partial f_m}{\partial x_n} 
+\frac{\partial y_m}{\partial x_1} & \dots & \frac{\partial y_m}{\partial x_n} 
 \end{bmatrix}
 $$
 
@@ -174,7 +179,7 @@ $$
 Note the Jacobian does not need to be explicitly need to be explicitly calculated; only the product needs to be. 
 This is can be useful when coding the `rrule` for matrix functions.[^softmax]
 
-To start, define a default fallback for `rrule` that returns `nothing` for any function with any number of arguments ([ChainRulesCore](https://github.com/JuliaDiff/ChainRulesCore.jl/blob/a95c181c662ead23aaf9904b8a560bebeb9022a3/src/rules.jl#L131)):
+To start, define a default fallback for `rrule` that returns `nothing` for any function with any number of arguments ([source](https://github.com/JuliaDiff/ChainRulesCore.jl/blob/a95c181c662ead23aaf9904b8a560bebeb9022a3/src/rules.jl#L131)):
 
 {% highlight julia %}
 rrule(::Any, ::Vararg{Any}) = nothing
@@ -183,7 +188,7 @@ rrule(::Any, ::Vararg{Any}) = nothing
 An `rrule` can now be defined for any function.
 For it to be really useful however, `rrule` must cover a large set of functions.
 Thankfully ChainRules.jl provides us with that.
-In this post I'll only work through a limited set of examples: basic arithmetic, trigonometry and polynomials.
+In this post I'll only work through a limited set of examples.
 
 <h3 id="chainrules-arithmetic">3.2 Arithmetic</h3>
 
@@ -195,9 +200,8 @@ $$
 \frac{\partial}{\partial x}(x+y) = 1 + 0; \frac{\partial}{\partial y}(x+y) = 0 + 1
 $$
 
-So the incoming gradient $Δ$ is passed through to the next layer.
-There are no internal fields so $\frac{\partial a}{\partial \text{self}}$ is `nothing`.
-We can return $\mathcal{B}$ as an anonymous function, but giving it the name `add_back`  helps with debugging ([ChainRules.jl](https://github.com/JuliaDiff/ChainRules.jl/blob/dba6cb57d73ba837c5ab6fd1f968f3a5d301ca9c/src/rulesets/Base/fastmath_able.jl#L167)).
+There are no internal fields so $\frac{\partial l}{\partial \text{self}}$ is `nothing`.
+$\mathcal{B}$ can be returned as an anonymous function, but giving it the name `add_back`  helps with debugging ([source](https://github.com/JuliaDiff/ChainRules.jl/blob/dba6cb57d73ba837c5ab6fd1f968f3a5d301ca9c/src/rulesets/Base/fastmath_able.jl#L167)).
 
 {% highlight julia %}
 function rrule(::typeof(+), x::Number, y::Number)
@@ -226,7 +230,7 @@ $$
 \frac{\partial}{\partial x}(xy) = y; \frac{\partial}{\partial y}(xy) = x
 $$
 
-In code ([ChainRules.jl](https://github.com/JuliaDiff/ChainRules.jl/blob/dba6cb57d73ba837c5ab6fd1f968f3a5d301ca9c/src/rulesets/Base/fastmath_able.jl#L254)):
+In code ([source](https://github.com/JuliaDiff/ChainRules.jl/blob/dba6cb57d73ba837c5ab6fd1f968f3a5d301ca9c/src/rulesets/Base/fastmath_able.jl#L254)):
 
 {% highlight julia %}
 function rrule(::typeof(*), x::Number, y::Number)
@@ -248,7 +252,7 @@ back.y # 3
 back(1.2) # (nothing, 3.6, 2.4)
 {% endhighlight %}
 
-Every call to `rrule` with `*` will return a different `back` function based on the input arguments.
+Every call to `rrule` with `*` will return a different `back` instance based on the input arguments.
 
 Division is slightly different in that the derivatives look different for $x$ and $y$:
 
@@ -256,7 +260,7 @@ $$
 \frac{\partial}{\partial x}\frac{x}{y} = \frac{1}{y}; \frac{\partial}{\partial y}\frac{x}{y}= -\frac{x}{y^2}
 $$
 
-Here we can calculate an internal variable `Ω` to close over, and use it for the $\frac{\partial}{\partial y}$ derivative ([ChainRules.jl](https://github.com/JuliaDiff/ChainRules.jl/blob/dba6cb57d73ba837c5ab6fd1f968f3a5d301ca9c/src/rulesets/Base/fastmath_able.jl#L169)):
+Here we can calculate an internal variable `Ω` to close over, and use it for the $\frac{\partial}{\partial y}$ derivative ([source](https://github.com/JuliaDiff/ChainRules.jl/blob/dba6cb57d73ba837c5ab6fd1f968f3a5d301ca9c/src/rulesets/Base/fastmath_able.jl#L169)):
 {% highlight julia %}
 function rrule(::typeof(/), x::Number, y::Number)
     Ω = x / y
@@ -286,7 +290,7 @@ $$
 \end{align}
 $$
 
-Because both use $\sin$ and $\cos$, we can use `sincos` to calculate both simultaneously and more efficiently than calculating each on its own. This shows the advantage of calculating the forward pass and backward pass at the same time ([ChainRules.jl](https://github.com/JuliaDiff/ChainRules.jl/blob/dba6cb57d73ba837c5ab6fd1f968f3a5d301ca9c/src/rulesets/Base/fastmath_able.jl#L12)):
+Because both use $\sin$ and $\cos$, we can use `sincos` to calculate both simultaneously and more efficiently than calculating each on its own. This shows the advantage of calculating the forward pass and backward pass at the same time ([source](https://github.com/JuliaDiff/ChainRules.jl/blob/dba6cb57d73ba837c5ab6fd1f968f3a5d301ca9c/src/rulesets/Base/fastmath_able.jl#L12)):
 {% highlight julia %}
 function rrule(::typeof(sin), x::Number)
     s, c = sincos(x)
@@ -325,16 +329,16 @@ $$
 In code:
 {% highlight julia %}
 x = 0.9
-y1, back1 = rrule(cos, x) # 0.6216, cos_back
-y2, back2 = rrule(sin, y1) # 0.5823, sin_back
-grad_sin, grad_y1 = back2(1.0) # nothing,0 .8129
+y1, back1 = rrule(cos, x) # (0.6216, cos_back)
+y2, back2 = rrule(sin, y1) # (0.5823, sin_back)
+grad_sin, grad_y1 = back2(1.0) # (nothing, 0 .8129)
 grad_cos, grad_x = back1(grad_y1) # (nothing, -0.6368)
 grad_x == -cos(cos(x))*sin(x) # true
 {% endhighlight %}
 
 <h3 id="chainrules-polynomial">3.4 Polynomials</h3>
 
-The next section will use the `rrule` for polynomial curve fitting.
+The next section will showcase an example of polynomial curve fitting.
 This requires an `rrule` for the `evalpoly` function.
 
 For a general polynomial:
@@ -353,7 +357,7 @@ $$
 $$
 
 For the most efficiency implementation, the powers of $x$ can be calculated for both the forward and backwards pass at the same time.
-For simplicity, I'm not going to do that ([ChainRules.jl](https://github.com/JuliaDiff/ChainRules.jl/blob/dba6cb57d73ba837c5ab6fd1f968f3a5d301ca9c/src/rulesets/Base/evalpoly.jl)):
+For simplicity, I'm not going to do that ([source](https://github.com/JuliaDiff/ChainRules.jl/blob/dba6cb57d73ba837c5ab6fd1f968f3a5d301ca9c/src/rulesets/Base/evalpoly.jl)):
 
 {% highlight julia %}
 function rrule(::typeof(evalpoly), x, coeffs::AbstractVector)
@@ -428,7 +432,7 @@ function rrule(::typeof(mse), ŷ::Number, y::Number, n::Int)
     Ω = mse(ŷ, y, n)
     function mse_back(Δ)
         c = 2 * (ŷ - y) / n * Δ
-        return nothing, c, -c # ∂self, ∂ŷ, ∂y
+        return nothing, c, -c, -Ω/n # ∂self, ∂ŷ, ∂y, ∂n
     end
     Ω, mse_back
 end
@@ -539,7 +543,7 @@ $\quad$ $\theta_{j+1}$ $\leftarrow \theta_j - \alpha \Delta$
 
 where $m_\theta$ is the model with parameters $\theta$ and $L$ is the loss function.
 
-This is Julia implementation for specifically applying the algorithm to polynomials.
+This is a Julia implementation for specifically applying the algorithm to polynomials.
 The stopping condition is a maximum number of iterations, so the `while` loop has been replaced with a `for` loop.
 The code also saves the loss so that the training progress can be analysed.
 
@@ -562,7 +566,7 @@ function gradient_descent_poly!(
             ŷ, back_poly = rrule(evalpoly, x, coeffs)
             loss_x, back_loss = rrule(mse, ŷ, y, n)
             # reverse
-            Δloss, Δŷ, Δy = back_loss(1.0)    
+            Δloss, Δŷ, Δy, Δn = back_loss(1.0)    
             Δevalpoly, Δx, Δcoeffs_x = back_poly(Δŷ)
             # accumulate
             loss_iter += loss_x
@@ -632,7 +636,7 @@ And finally, comparing the curves:
 
 <h3 id="gradient-descent-map">4.2 Revisited with map</h3>
 
-Its possible to replace the inner loop over the training data with `map`.
+It is possible to replace the inner loop over the training data with `map`.
 
 {% highlight julia %}
 function gradient_descent_poly!(
@@ -683,10 +687,10 @@ model = Polynomial(coeffs)
 zs, back = pullback(m -> m(xs), model)
 {% endhighlight %}
 
-In the next sections we will write code that can inspect the model function call, recognise that it calls `map`, and calls a `pullback` for map.
+In the next sections we will write code that will inspect the model function call, recognise that it calls `map`, and call a `pullback` for map.
 
-Note it will not be calling an `rrule` for map. This is design choice. Both `rrule` and `pullback` have the same outputs. However `rrule` is intended for small, stand alone gradients, whereas `pullback` will potentially involve recursive calls to itself. 
-With `map`, the next recursive call will be `pullback(evalpoly, xs)` which will directly pass through the arguments to our existing `rrule`. However in cases where an `rrule` is not defined it will have to do further code inspection.
+Note it will not be calling an `rrule` for map. This is a design choice. Both `rrule` and `pullback` have the same outputs. However `rrule` is intended for stand alone gradients, whereas `pullback` will potentially involve recursive calls to itself. 
+With `map`, the next recursive call will be `pullback(evalpoly, xs)` which will directly pass through the arguments to the existing `rrule`.
 
 <h2 id="conclusion">5 Conclusion</h2>
 
@@ -699,5 +703,7 @@ This code really pushes Julia's metaprogramming to its limits.
 It is possible to jump straight to [part 3][micrograd_ir] if desired.
 
 ---
+
+[^micrograd]: For example, Micrograd defines a `Value` class that has a custom definition for `__add__`. The same is true of the `Tensor` objects in PyTorch.
 
 [^softmax]: As an example, see how NNLib.jl calculates the derivative of the [softmax](https://github.com/FluxML/NNlib.jl/blob/381a41f2b912eb924f1a6c256a9bf49a593e4b67/src/softmax.jl#L72). Instead of calculating the Jacobian and then $J^{\dagger}\Delta$, they calculate the product in a single step using a `broadcast` and `sum`.
