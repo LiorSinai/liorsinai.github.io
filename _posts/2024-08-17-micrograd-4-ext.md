@@ -11,7 +11,7 @@ categories: machine-learning
 tags: mathematics transformers 'machine learning' 'deep learning'
 ---
 
-_A series on automatic differentiation in Julia. Part 4 extends part 3 to handle maps, getfield and anonymous functions. It creates a generic gradient descent and uses this to fit a polynomial and train a multi-layer perceptron._ 
+_A series on automatic differentiation in Julia. Part 4 extends part 3 to handle maps, getfield and anonymous functions. It creates a generic gradient descent and uses this to fit a polynomial._ 
 
 This is part of a series. The other articles are:
 - [Part 1: ChainRules][micrograd_chainrules].
