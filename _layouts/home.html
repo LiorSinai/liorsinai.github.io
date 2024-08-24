@@ -45,7 +45,9 @@ layout: default
             {% endif %}
           </a>
           <p class="post-meta">
-            {{ post.date | date: '%d %B, %Y' }}  &middot; {{ post.content | strip_html | number_of_words }} words 
+            {{ post.date | date: '%d %B, %Y' }}  
+            &middot; {% include read_time.html content=post.content %} 
+            &middot; {{ post.content | strip_html | number_of_words }} words 
           </p>
         </article> 
         {% endfor %}
