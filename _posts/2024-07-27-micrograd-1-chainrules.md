@@ -3,6 +3,7 @@ layout: post
 title:  "MicroGrad.jl: Part 1 ChainRules"
 date:   2024-07-27
 author: Lior Sinai
+background: '/assets/posts/micrograd/gradient_descent_3d.png'
 last_modified_at: 2024-08-03
 sidenav: true
 categories: machine-learning
@@ -15,11 +16,13 @@ This is part of a series. The other articles are:
 - [Part 2: Automation with expressions][micrograd_expr].
 - [Part 3: Automation with IR][micrograd_ir].
 - [Part 4: Extensions][micrograd_ext].
+- [Part 5: MLP][micrograd_mlp].
 
 [micrograd_chainrules]: {{ "machine-learning/2024/07/27/micrograd-1-chainrules" | relative_url }}
 [micrograd_expr]: {{ "machine-learning/2024/08/03/micrograd-2-expr" | relative_url }}
 [micrograd_ir]: {{ "machine-learning/2024/08/10/micrograd-3-ir" | relative_url }}
 [micrograd_ext]: {{ "machine-learning/2024/08/17/micrograd-4-ext" | relative_url }}
+[micrograd_mlp]: {{ "machine-learning/2024/08/19/micrograd-5-mlp" | relative_url }}
 [MicroGrad.jl]: https://github.com/LiorSinai/MicroGrad.jl
 
 All source code can be found at [MicroGrad.jl][MicroGrad.jl].
@@ -51,7 +54,6 @@ With modern machine learning frameworks, such as [PyTorch][PyTorch] or [Flux.jl]
 <figcaption>The decision boundary of a multi-layer perceptron trained on the moon's dataset with MicroGrad.jl.</figcaption>
 </figure>
 
-
 [micograd]: https://github.com/karpathy/micrograd
 [micograd_video]: https://www.youtube.com/watch?v=VMj-3S1tku0
 [zero_to_hero]: https://karpathy.ai/zero-to-hero.html
@@ -74,11 +76,12 @@ Barring some limitations, it can be used to differentiate all existing functions
 
 Zygote's approach is complex and pushes the boundaries of Julia's metaprogramming. It can sometimes be [buggy][Zygote_error].
 However its promise is true automatic differentiation of any forward pass code without further work on the coder's part.
-There are almost no comprehensive tutorials on this approach and so this series aims to cover that gap.
 
 For the final code, see my [MicroGrad.jl][MicroGrad.jl] repository.
+It is very versatile but has several limitations, including less code coverage than Zygote.jl and it is unable to handle control flow or keyword arguments.
 
-This is a series on backpropagation so naturally a good understanding of Calculus, in particular the rules of differentiation and partial differentiation, is required.
+There are almost no comprehensive tutorials on AD in Julia and so this series aims to cover that gap.
+A good understanding of Julia and of Calculus is required.
 
 <h2 id="julia-ad-ecosystem">2 Julia AD Ecosystem</h2>
 
@@ -139,9 +142,8 @@ y, grad = Flux.withgradient(m->sum(m(x)), model) # 1.5056f0, ((weight=[4.9142 6.
 The aim of the rest of the series is to recreate this functionality.
 This first part will focus solely on ChainRules.jl and recreating the `rrule` function.
 Part 2 will focus on recreating the `Zygote._pullback` function. 
-Part 3 will improve on part 2's solution by using the IRTools.jl package.
-Finally, part 4 will extend part 3's solution and showcase simple machine learning examples.
-
+Part 4 extends part 3's solution to handle maps, anonymous functions and structs.
+Finally part 5 shows how this AD code can be used by a machine learning framework.
 
 <h2 id="chainrules">3 ChainRules</h2>
 <h3 id="chainrules-definition">3.1 Definition</h3>
@@ -177,7 +179,8 @@ $$
 $$
 
 Note the Jacobian does not need to be explicitly need to be explicitly calculated; only the product needs to be. 
-This is can be useful when coding the `rrule` for matrix functions.[^softmax]
+This is can be useful when coding the `rrule` for matrix functions.
+See the section on the chain rule for [matrix multiplication](#chainrules-matrix-multiplication) later.
 
 To start, define a default fallback for `rrule` that returns `nothing` for any function with any number of arguments ([source](https://github.com/JuliaDiff/ChainRulesCore.jl/blob/a95c181c662ead23aaf9904b8a560bebeb9022a3/src/rules.jl#L131)):
 
@@ -186,13 +189,11 @@ rrule(::Any, ::Vararg{Any}) = nothing
 {% endhighlight %}
 
 An `rrule` can now be defined for any function.
-For it to be really useful however, `rrule` must cover a large set of functions.
+For it to be really useful `rrule` must cover a large set of functions.
 Thankfully ChainRules.jl provides us with that.
-In this post I'll only work through a limited set of examples.
+However in this post I'll only work through a limited set of examples.
 
 <h3 id="chainrules-arithmetic">3.2 Arithmetic</h3>
-
-The simplest functions are the basic arithmetic functions: addition, subtraction, multiplication and division.
 
 The derivatives of adding two variables is:
 
@@ -206,13 +207,13 @@ $\mathcal{B}$ can be returned as an anonymous function, but giving it the name `
 {% highlight julia %}
 function rrule(::typeof(+), x::Number, y::Number)
     add_back(Δ) = (nothing, true * Δ, true * Δ) # ∂self, ∂x, ∂y
-    x + y, add_back
+    x + y, add_back # also (Δ) -> (nothing, true * Δ, true * Δ)
 end
 {% endhighlight %}
 
 Usage:
 {% highlight julia %}
-z, back = rrule(+, 1, 2) # (3, var"#add_back#3"())
+z, back = rrule(+, 1, 2) # (3, var"#add_back#"())
 back(1.2) # (nothing, 1.2, 1.2)
 {% endhighlight %}
 
@@ -259,6 +260,28 @@ Division is slightly different in that the derivatives look different for $x$ an
 $$
 \frac{\partial}{\partial x}\frac{x}{y} = \frac{1}{y}; \frac{\partial}{\partial y}\frac{x}{y}= -\frac{x}{y^2}
 $$
+
+<p>
+  <a class="btn" data-toggle="collapse" href="#proof-derivative-division" role="button" aria-expanded="false" aria-controls="collapse-derivative-division">
+    Proof &#8681;
+  </a>
+</p>
+<div class="collapse" id="proof-derivative-division">
+  <div class="card card-body ">
+		<p> As a quick refresher, here is a proof for these partial derivatives:
+    $$
+    \begin{align}
+    \Delta f_x &= \frac{x+\Delta x}{y} - \frac{x}{y} \\
+    \therefore \lim_{x \to 0}\frac{\Delta f_x}{\Delta x} &=\frac{\partial f}{\partial x}= \frac{1}{y} \\
+    \Delta f_y &= \frac{x}{y+\Delta y} - \frac{x}{y} \\
+             &= \frac{xy}{y(y+\Delta y)} - \frac{x(y+\Delta y)}{y(y+\Delta y)} \\
+             &= -\frac{x \Delta y}{y(y+\Delta y)} \\
+   \therefore \lim_{y \to 0}\frac{\Delta f_y}{\Delta y} &=\frac{\partial f}{\partial y} = -\frac{x}{y^2}         
+    \end{align}
+    $$
+    </p>
+  </div>
+</div>
 
 Here we can calculate an internal variable `Ω` to close over, and use it for the $\frac{\partial}{\partial y}$ derivative ([source](https://github.com/JuliaDiff/ChainRules.jl/blob/dba6cb57d73ba837c5ab6fd1f968f3a5d301ca9c/src/rulesets/Base/fastmath_able.jl#L169)):
 {% highlight julia %}
@@ -383,9 +406,60 @@ y, back = rrule(evalpoly, 1.2, [2.0, 0.0, 3.0, 4.0]) # 13.232, evalpoly_back
 back(1.0) # (nothing, 24.48, [1.0, 1.2, 1.44, 1.728]) 
 {% endhighlight %}
 
-<h3 id="chainrules-mse">3.5 MSE</h3>
+<h3 id="chainrules-matrix-multiplication">3.5 Matrix multiplication</h3>
 
-The mean square error (MSE) will also be used for polynomial curve fitting.
+For some scaler loss function $l$, we can calculate a derivative $\Delta=\frac{\partial l}{\partial Y}$
+against some matrix $Y$. Then for $Y=AB$, the partial derivatives are:
+
+$$
+\begin{align}
+\frac{\partial l}{\partial A} &= \frac{\partial Y}{\partial A} \frac{\partial L}{\partial Y} \\
+                              &= \Delta B^T \\
+\frac{\partial l}{\partial B} &= \frac{\partial Y}{\partial B} \frac{\partial L}{\partial Y} \\
+                              &= A^T \Delta
+\end{align}
+$$
+
+Note that the Jacobians $\frac{\partial Y}{\partial A}$ and $\frac{\partial Y}{\partial B}$ are not explicitly calculated here; only the product is. (These Jacobians would have many zeros because each output element depends only a small subset of the input elements.)
+
+<div class="message-container info-message">
+	<div class="message-icon fa fa-fw fa-2x fa-exclamation-circle"></div>
+  <div class="content-container">
+    <div class="message-body">
+      The most common use case in machine learning is $Y=WX$, where $W$ is a set of weights and $X$ is the data.
+      Most machine learning algorithms only alter the weights, not the data. Hence only $\frac{\partial l}{\partial W}$ is required.
+      This means computation is wasted on $\frac{\partial l}{\partial X}$.
+      For large matrices, this can be significant.
+      To avoid this ChainRules.jl uses the <code>ChainRulesCore.@thunk</code> macro to wrap code in a <code>ChainRulesCore.Thunk</code> struct. This struct defers computation until it is used. 
+      If it is not used, the computation is not run.
+    </div>
+  </div>
+</div>
+
+In code ([source](https://github.com/JuliaDiff/ChainRules.jl/blob/dba6cb57d73ba837c5ab6fd1f968f3a5d301ca9c/src/rulesets/Base/arraymath.jl#L27)):
+
+{% highlight julia %}
+function rrule(::typeof(*), A::AbstractVecOrMat{<:Real}, B::AbstractVecOrMat{<:Real})
+    function times_back(Δ)
+        dA = Δ * B'
+        dB = A' * Δ
+        return (nothing, dA, dB)
+    end
+    A * B, times_back
+end
+{% endhighlight %}
+
+Test:
+{% highlight julia %}
+A, B = rand(2, 4), rand(4, 3)
+C, back = rrule(*, A, B) # (2×3 Matrix{Float64}, times_back)
+back(ones(2, 3)) # (nothing, 2×4 Matrix, 4×3 Matrix)
+{% endhighlight %}
+
+<h3 id="chainrules-mse">3.6 MSE</h3>
+
+The mean square error (MSE) is a common loss function in machine learning.
+It will be used shortly for polynomial curve fitting.
 It is:
 
 $$
@@ -409,8 +483,8 @@ using StatsBase
 mse(ŷ::AbstractVecOrMat, y::AbstractVecOrMat) = mean(abs2.(ŷ - y))
 {% endhighlight %}
 
-Flux.jl does not define an `rrule` for its `mse` because it can be broken down into functions which already have an `rrule` (`-`, `broadcast`, `abs2` and `mean`). 
-However since we don't have `rrule`s for these parts and have not yet automated decomposing it, it is simplest to create an `rrule` for the entire function: 
+Flux.jl does not define an `rrule` for its `mse` because it can be decomposed into functions which already have an `rrule` (`-`, `broadcast`, `abs2` and `mean`). 
+However since we don't have `rrule`s for these parts and have not yet automated decomposition, it is simplest to create an `rrule` for the entire function: 
 
 {% highlight julia %}
 function rrule(::typeof(mse), ŷ::AbstractVecOrMat, y::AbstractVecOrMat)
@@ -437,7 +511,6 @@ function rrule(::typeof(mse), ŷ::Number, y::Number, n::Int)
     Ω, mse_back
 end
 {% endhighlight %}
-
 
 <h2 id="gradient-descent">4 Gradient Descent</h2>
 <h3 id="polynomial-curve-fitting">4.1 Polynomial curve fitting</h3>
@@ -597,7 +670,12 @@ Plotting the history:
 <figcaption></figcaption>
 </figure>
 
-Comparing losses:
+Comparing losses on the train set:
+
+{% highlight julia %}
+ys_est =  map(x -> evalpoly(x, coeffs), xs)
+mse(ys_est, ys)
+{% endhighlight %}
 
 <table><thead>
   <tr>
@@ -625,6 +703,11 @@ Comparing losses:
 </table>
 
 And finally, comparing the curves:
+
+{% highlight julia %}
+x_model = -5:0.01:5
+ys_model =  map(x -> evalpoly(x, coeffs), x_model)
+{% endhighlight %}
 
 <figure class="post-figure">
 <img class="img-80"
@@ -677,7 +760,7 @@ struct Polynomial{V<:AbstractVector}
     weights::V
 end
 (m::Polynomial)(x) = evalpoly(x, m.weights)
-(m::Polynomial)(x::AbstractVector) = map(x -> evalpoly(x, m.weights), x)
+(m::Polynomial)(x::AbstractVector) = map(m, x)
 {% endhighlight %}
 
 The goal then is to get gradients for the model's weights directly:
@@ -705,5 +788,3 @@ It is possible to jump straight to [part 3][micrograd_ir] if desired.
 ---
 
 [^micrograd]: For example, Micrograd defines a `Value` class that has a custom definition for `__add__`. The same is true of the `Tensor` objects in PyTorch.
-
-[^softmax]: As an example, see how NNLib.jl calculates the derivative of the [softmax](https://github.com/FluxML/NNlib.jl/blob/381a41f2b912eb924f1a6c256a9bf49a593e4b67/src/softmax.jl#L72). Instead of calculating the Jacobian and then $J^{\dagger}\Delta$, they calculate the product in a single step using a `broadcast` and `sum`.

@@ -3,6 +3,8 @@ layout: post
 title:  "MicroGrad.jl: Part 2 Automation with expressions"
 date:   2024-08-03
 author: Lior Sinai
+background: '/assets/posts/micrograd/matrix_blue.jpg'
+background-caption: 'https://www.flickr.com/photos/brandonj74/128300783'
 last_modified_at: 2024-08-10
 sidenav: true
 categories: machine-learning
@@ -15,12 +17,13 @@ This is part of a series. The other articles are:
 - [Part 1: ChainRules][micrograd_chainrules].
 - [Part 3: Automation with IR][micrograd_ir].
 - [Part 4: Extensions][micrograd_ext].
-
+- [Part 5: MLP][micrograd_mlp].
 
 [micrograd_chainrules]: {{ "machine-learning/2024/07/27/micrograd-1-chainrules" | relative_url }}
 [micrograd_expr]: {{ "machine-learning/2024/08/03/micrograd-2-expr" | relative_url }}
 [micrograd_ir]: {{ "machine-learning/2024/08/10/micrograd-3-ir" | relative_url }}
 [micrograd_ext]: {{ "machine-learning/2024/08/17/micrograd-4-ext" | relative_url }}
+[micrograd_mlp]: {{ "machine-learning/2024/08/19/micrograd-5-mlp" | relative_url }}
 [MicroGrad.jl]: https://github.com/LiorSinai/MicroGrad.jl
 
 All source code can be found at [MicroGrad.jl][MicroGrad.jl].
@@ -91,7 +94,7 @@ The paper works with Wengert lists, also known as tapes, and a generalisation of
 The aim here is to develop a minimal AD package, so this series only focuses on the sections on Wengert lists.
 A consequence is that the code will not be to handle any non-linear logic in Julia, for example any control flow like `if`, `while` or `for` blocks.
 
-The [paper][Zygote_paper] uses the same example as the introduction:
+The paper uses the same example as the introduction:
 
 $$
 f(a, b) = \frac{a}{a + b^2}
@@ -195,7 +198,7 @@ The goal is to generate code which automatically implements the equations of sec
   <div class="message-icon fa fa-fw fa-2x fa-exclamation-circle"></div>
     <div class="content-container">
       <div class="message-body">
-        The <code>pullback</code> function that is implemented here is equivalent to the internal <code>Zygote._pullback</code> function, which returns all partial gradients including for $\frac{\partial l}{\partial \text{self}}$. <code>Zygote.pullback</code> is a thin wrapper around <code>Zygote._pullback</code> which discards that first gradient and returns only the gradients for the input variables.
+        The <code>pullback</code> function that is implemented here is equivalent to the internal <code>Zygote._pullback</code> function, which returns all partial gradients including for $\frac{\partial l}{\partial \text{self}}$. <code>Zygote.pullback</code> is a thin wrapper around <code>Zygote._pullback</code> which discards that first gradient.
       </div>
     </div>
 </div>
@@ -696,7 +699,7 @@ function _generate_callable_pullback(j::Type{<:Pullback{S, T}}, world, Δ) where
 end
 {% endhighlight %}
 
-The `reverse_differentiate` function is a simplified version of [Zygote.adjoint](https://github.com/FluxML/Zygote.jl/blob/3c3325d9987931f15bd478c932332be19c316de4/src/compiler/reverse.jl#L293).
+The `reverse_differentiate` function is a simplified version of [Zygote.adjoint](https://github.com/FluxML/Zygote.jl/blob/3c3325d9987931f15bd478c932332be19c316de4/src/compiler/reverse.jl#L293) and [Zygote.reverse_stacks!](https://github.com/FluxML/Zygote.jl/blob/3c3325d9987931f15bd478c932332be19c316de4/src/compiler/emit.jl#L65).
 
 To start, a dictionary is created to store the gradients.
 It maps variable names (symbols) to an array of gradients.
@@ -865,8 +868,8 @@ It also works for the trigonometry example from [part 1](/machine-learning/2024/
 
 {% highlight julia %}
 f(x) = sin(cos(x))
-z, back = pullback(f, 0.5) # (0.7691, Pullback{...})
-back(1.0) # (nothing, -0.3063) 
+z, back = pullback(f, 0.9) # (0.5823, Pullback{...})
+back(1.0) # (nothing, -0.6368) 
 {% endhighlight %}
 
 However it will fail for the polynomial model:
