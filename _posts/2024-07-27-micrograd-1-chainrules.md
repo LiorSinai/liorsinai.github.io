@@ -51,7 +51,7 @@ With modern machine learning frameworks, such as [PyTorch][PyTorch] or [Flux.jl]
     src="/assets/posts/micrograd/moons_decision_boundary.png"
 	alt="Decision boundary"
 	>
-<figcaption>The decision boundary of a multi-layer perceptron trained on the moon's dataset with MicroGrad.jl.</figcaption>
+<figcaption>The probability boundaries of a multi-layer perceptron trained on the moon's dataset with MicroGrad.jl.</figcaption>
 </figure>
 
 [micograd]: https://github.com/karpathy/micrograd
@@ -99,7 +99,6 @@ The Julia automatic differentiation ecosystem is centered around three packages:
   - The core functionality is defined in the minimal [ZygoteRules.jl][ZygoteRules.jl] package.
   - The main functions it exposes are `gradient`, `withgradient` and `pullback`. The `pullback` function is a light wrapper around `_pullback` which does most of the heavy lifting.
   - The goal of `_pullback` is to dispatch a function, its arguments and its keyword arguments to a `ChainRule.rrule`. If it cannot, it will inspect the code, decompose it into smaller steps, and follow the rules of differentiation to dispatch  each of those to `_pullback` to recursively find an `rrule`. If this recursive process does not find a valid rule it will raise an error.
-  - It also exposes a function called `adjoint`, which calculates the adjoint of the Jacobian. (It is not related to the built-in `adjoint` function in Julia, which calculates the conjugate transpose. But there is some type piracy!) The `adjoint` function is the same as ChainRules.jl's `rrule` function except it takes higher precedence in Zygote.jl. If a new differentiation rule needs to be added, the recommendation is to extend `rrule` and not `adjoint`.
 - [ChainRules.jl][ChainRules.jl] defines forward rules and reverse rules.
   - The core functionality is defined in the minimal [ChainRulesCore.jl][ChainRulesCore.jl] package.
   - The main functions it exposes are `frule` and `rrule`. This series deals only with backpropagation, so it will only concentrate on `rrule`.
@@ -178,7 +177,7 @@ $$
 \mathcal{B_i}(\Delta) = J_i^{\dagger} \Delta
 $$
 
-Note the Jacobian does not need to be explicitly need to be explicitly calculated; only the product needs to be. 
+Note the Jacobian does not need to be explicitly calculated; only the product needs to be. 
 This is can be useful when coding the `rrule` for matrix functions.
 See the section on the chain rule for [matrix multiplication](#chainrules-matrix-multiplication) later.
 
@@ -753,7 +752,7 @@ This is code is slightly more complex than the previous version.
 The behaviour and performance is practically identical.
 However, it is one step closer to being more generic.
 
-In machine learning model usually execute on batch data.
+In machine learning models usually execute on multiple inputs at once.
 We could make a polynomial model that does that:
 {% highlight julia %}
 struct Polynomial{V<:AbstractVector}
@@ -770,10 +769,7 @@ model = Polynomial(coeffs)
 zs, back = pullback(m -> m(xs), model)
 {% endhighlight %}
 
-In the next sections we will write code that will inspect the model function call, recognise that it calls `map`, and call a `pullback` for map.
-
-Note it will not be calling an `rrule` for map. This is a design choice. Both `rrule` and `pullback` have the same outputs. However `rrule` is intended for stand alone gradients, whereas `pullback` will potentially involve recursive calls to itself. 
-With `map`, the next recursive call will be `pullback(evalpoly, xs)` which will directly pass through the arguments to the existing `rrule`.
+In the next sections we will write code that will inspect the model function call, recognise that it calls `map`, and call a `pullback` for map.[^pullback_vs_rrule]
 
 <h2 id="conclusion">5 Conclusion</h2>
 
@@ -788,3 +784,5 @@ It is possible to jump straight to [part 3][micrograd_ir] if desired.
 ---
 
 [^micrograd]: For example, Micrograd defines a `Value` class that has a custom definition for `__add__`. The same is true of the `Tensor` objects in PyTorch.
+
+[^pullback_vs_rrule]: It is a design choice to use `pullback` and nit `rrule` for map. Both `rrule` and `pullback` have the same outputs. However `rrule` is intended for stand alone gradients, whereas `pullback` will potentially involve recursive calls to itself.

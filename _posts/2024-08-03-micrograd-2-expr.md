@@ -128,20 +128,29 @@ y_3, \mathcal{B}_3 &\leftarrow \mathcal{J}(/, a, y_2)
 \label{eq:primal}
 $$
 
-The pullback function $\mathcal{B}$ differentiates a scalar $l$ (typically a loss function) with regards to a variable $x$.
+The pullback function $\mathcal{B}$ takes as input the gradient of a scalar $l$ (typically a loss function) to a function $y(x)$ and returns the gradient with regards to the variable $x$.
 This partial gradient $\frac{\partial l}{\partial x}$ is written as $\bar{x}$.
 
 $$
 \begin{align}
-\bar{x} &= \frac{\partial l}{\partial x} = \frac{\partial l}{\partial y_i} \frac{\partial y_i}{\partial x} \\
-\bar{x} &\leftarrow \mathcal{B_{i,x}}(\Delta) = \Delta \frac{\partial y_i}{\partial x}\\
-\text{or} \quad \bar{x} &\leftarrow  \mathcal{B_{i,x}}(\Delta) = J_i^{\dagger}\Delta 
+\bar{x} &= \frac{\partial l}{\partial x} = \frac{\partial l}{\partial y} \frac{\partial y}{\partial x}
 \end{align}
 \tag{2.4}
+\label{eq:bar_x}
+$$
+
+so we can write in this mathematical notation as:
+
+$$
+\begin{align}
+\bar{x} &\leftarrow \mathcal{B}(\bar{y}) = \bar{y} \frac{\partial y}{\partial x}\\
+\text{or} \quad \bar{x} &\leftarrow  \mathcal{B}(\bar{y}) = J^{\dagger}\bar{y}
+\end{align}
+\tag{2.5}
 \label{eq:pullback}
 $$
 
-where $\Delta=\frac{\partial l}{\partial y_i}=\bar{y}_i$ and $J_i=\frac{\partial y_i}{\partial x}$ is the Jacobian (gradient) for arrays.
+where $\bar{y}=\frac{\partial l}{\partial y}$ and $J=\frac{\partial y}{\partial x}$ is the Jacobian (gradient) for arrays.
 
 The various partial gradients are calculated by reversing the list.
 Each pullback function $\mathcal{B}_i$ takes as input the previous gradient $\bar{y}_i$.
@@ -153,7 +162,7 @@ $$
 \text{s̄elf}_2, \bar{a}_{2,1}, \bar{y}_1 &\leftarrow \mathcal{B}_2(\bar{y}_2) \\
 \text{s̄elf}_1, \bar{b}_{1,1}, \bar{b}_{1,2} &\leftarrow \mathcal{B}_1(\bar{y}_1)
 \end{align}
-\tag{2.5}
+\tag{2.6}
 \label{eq:reverse}
 $$
 
@@ -164,7 +173,7 @@ $$
 \bar{a} &\leftarrow \bar{a}_{3,1} + \bar{a}_{2,1} \\
 \bar{b} &\leftarrow \bar{b}_{1,1} + \bar{b}_{1,2} \\
 \end{align}
-\tag{2.6}
+\tag{2.7}
 \label{eq:accumulate}
 $$
 
@@ -294,8 +303,7 @@ function _generate_pullback(world, f, args...)
 end
 {% endhighlight %}
 
-In [part 1](http://localhost:4000/machine-learning/2024/07/27/micrograd-1-chainrules#chainrules-definition) the most generic method of `rrule` was defined for an `Any` first argument, so if the compiler dispatches to this method it means no specific `rrule` was found.
-Note that Zygote.jl has more [complex rules](https://github.com/FluxML/Zygote.jl/blob/master/src/compiler/chainrules.jl) which also consider other fallbacks, key word arguments and a possible opt out through a `no_rrule`.
+In [part 1](http://localhost:4000/machine-learning/2024/07/27/micrograd-1-chainrules#chainrules-definition) the most generic method of `rrule` was defined for an `Any` first argument, so if the compiler dispatches to this method it means no specific `rrule` was found.[^has_chain_rule]
 
 {% highlight julia %}
 function has_chain_rrule(T, world)
@@ -367,9 +375,9 @@ The more interesting task is to inspect `f` and apply the equations of section 2
 <figcaption>Source: <a href="https://docs.julialang.org/en/v1/devdocs/eval/">Julia Docs eval</a></figcaption>
 </figure>
 
-The first step is create a Wengert list for `f`.
-This step is trivial because Julia already does this as part of the compilation process.
-As a first step the compiler will take input source code and turn it into an Abstract Syntax Tree (AST) with discrete steps.
+The first step is to create a Wengert list for `f`.
+This is trivial because Julia already does this as part of the compilation process.
+As the first step of lowering code, the compiler will create an Abstract Syntax Tree (AST) which in the absence of control flow is the same as a Wengert list.
 
 <div class="message-container info-message">
 	<div class="message-icon fa fa-fw fa-2x fa-exclamation-circle">
@@ -503,7 +511,7 @@ end
 
 This code requires definitions for the `Pullback` struct as well as the following functions: `ignored`, `xcall` and `returnvalue`.
 
-TThere are no closures in lowered Julia code, so instead [Zygote.jl](https://fluxml.ai/Zygote.jl/stable/internals/#Closure-Conversion-1) stores the pullbacks in a generic struct:
+There are no closures in lowered Julia code, so instead [Zygote.jl](https://fluxml.ai/Zygote.jl/stable/internals/#Closure-Conversion-1) stores the pullbacks in a generic struct:
 
 {% highlight julia %}
 struct Pullback{S,T}
@@ -536,7 +544,7 @@ ignored_f(f) = f in (
 )
 {% endhighlight %}
 
-`xcall` and `returnvalue` are convenience functions from [source](https://github.com/FluxML/IRTools.jl/blob/dd1f2c212258001ea565df696841929ad0fcb614/src/ir/utils.jl#L12):
+`xcall` and `returnvalue` are convenience functions from [IRTools](https://github.com/FluxML/IRTools.jl/blob/dd1f2c212258001ea565df696841929ad0fcb614/src/ir/utils.jl#L12):
 {% highlight julia %}
 xcall(mod::Module, f::Symbol, args...) = Expr(:call, GlobalRef(mod, f), args...)
 xcall(f::Symbol, args...) = xcall(Base, f, args...)
@@ -903,3 +911,5 @@ This is will be the goal of [part 3][micrograd_ir].
 ---
 
 [^generated_reflection]: Presumably the reason the Julia team tried to prevent reflection in generated functions is that it interferes with the compliers ability to properly predict, trigger and/or optimise compilations.
+
+[^has_chain_rule]: Zygote.jl has more [complex rules](https://github.com/FluxML/Zygote.jl/blob/master/src/compiler/chainrules.jl) which also consider other fallbacks, key word arguments and a possible opt out through a `no_rrule`.

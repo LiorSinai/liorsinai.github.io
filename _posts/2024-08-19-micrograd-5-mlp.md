@@ -11,7 +11,7 @@ categories: machine-learning
 tags: mathematics transformers 'machine learning' 'deep learning'
 ---
 
-_A series on automatic differentiation in Julia. Part 5 shows how the MicroGrad.jl code can be used for a machine learning framework like Flux. The working example is a multi-layer perceptron trained on the moons dataset._ 
+_A series on automatic differentiation in Julia. Part 5 shows how the MicroGrad.jl code can be used for a machine learning framework like Flux.jl. The working example is a multi-layer perceptron trained on the moons dataset._ 
 
 This is part of a series. The other articles are:
 - [Part 1: ChainRules][micrograd_chainrules].
@@ -40,7 +40,7 @@ All source code can be found at [MicroGrad.jl][MicroGrad.jl].
     src="/assets/posts/micrograd/mlp.png"
 	alt="multi-layer perceptron"
 	>
-<figcaption>A simple 2×6×2 multi-layer perceptron</figcaption>
+<figcaption>A 2×6×2 multi-layer perceptron</figcaption>
 </figure>
 
 The previous four sections have developed a minimal automatic differentiation package.
@@ -113,7 +113,7 @@ x, & \text{if $x> 0$}  \\
 \end{cases}
 $$
 
-This is simply a broadcast of the `max` function:
+This can be realised as a broadcast of the `max` function:
 
 {% highlight julia %}
 relu(x::AbstractArray) = max.(0, x)
@@ -393,7 +393,7 @@ function logit_cross_entropy(x::AbstractVecOrMat, y::AbstractVecOrMat)
 end
 {% endhighlight %}
 
-According to the multivariable chain rule, the derivative with respect to one logit $x_{ki}$ in the vector for sample $k$ is (gradients come from the main case $k=i$ case as well as the sum in the softmax for $k\neq i$):
+According to the multivariable chain rule, the derivative with respect to one logit $x_{ij}$ in the vector for sample $j$ is (gradients come from the main case $k=i$ case as well as the sum in the softmax for $k\neq i$):
 
 $$
 \begin{align}
@@ -455,7 +455,7 @@ back(1.0) # (nothing, 2×4 Matrix, 2×4 Matrix)
 <h2 id="train-and-evaluate">5 Train and Evaluate</h2>
 <h3 id="train">5.1 Train </h3>
 
-Creating the moons and labels:
+Create the moons data and labels:
 {% highlight julia %}
 n = 100
 X = make_moons(2n; noise=0.1) # 2×200 Matrix 
@@ -532,8 +532,8 @@ x_grid = xrange' .* ones(length(yrange))
 y_grid = ones(length(xrange))' .* yrange
 Z = similar(x_grid)
 for idx in eachindex(x_grid)
-    score = model([x_grid[idx], y_grid[idx]])
-    Z[idx] = argmax(vec(score))
+    logits = model([x_grid[idx], y_grid[idx]])
+    Z[idx] = softmax(logits)[1]
 end
 canvas = heatmap(xrange, yrange, Z, size=(800, 500))
 {% endhighlight %}
@@ -550,15 +550,16 @@ scatter!(
 The result:
 <figure class="post-figure">
 <img class="img-80"
-    src="/assets/posts/micrograd/moons_decision_boundary_2.png"
+    src="/assets/posts/micrograd/moons_decision_boundary.png"
 	alt="Decision boundary"
 	>
-<figcaption>The decision boundary of a multi-layer perceptron trained on the moon's dataset.</figcaption>
+<figcaption>The probability boundaries of a multi-layer perceptron trained on the moon's dataset.</figcaption>
 </figure>
 
 <h2 id="conclusion">6 Conclusion</h2>
 
-That was a long and difficult journey. I hope you understand how automatic differentiation with Zygote.jl works now! 
+That was a long and difficult journey.
+I hope you understand how automatic differentiation with Zygote.jl works now! 
 
 ---
 

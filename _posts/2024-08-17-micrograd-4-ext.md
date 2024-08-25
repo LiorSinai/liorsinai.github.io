@@ -35,7 +35,9 @@ All source code can be found at [MicroGrad.jl][MicroGrad.jl].
 
 <h2 id="introduction">1 Introduction</h2>
 
-At the end of part 3 it was established that the code developed so far fails for the polynomial model:
+By end of part 3 we had code that could automatically differentiate many functions as long as we had `rrule`s and there was no control flow.
+
+However, the code failed for the polynomial model:
 {% highlight julia %}
 struct Polynomial{V<:AbstractVector}
     weights::V
@@ -114,13 +116,13 @@ ys = map(first, ys_and_backs) # (0.099, 0.198, 0.479)
 ∂f_and_∂x_zipped = map(((_, pb), δ) -> pb(δ), ys_and_backs, Δ) # ((nothing, 0.995), (nothing, 0.980), (nothing, 0.877))
 {% endhighlight %}
 
-The gradients lists of $n$ entries
+The gradients list of $n$ entries
 
 $$
-(\text{s̄elf}_1, \bar{x}_{11}, ..., \bar{x}_{k1}), ...,(\text{s̄elf}_n, \bar{x}_{1n}, ..., \bar{x}_{kn})
+((\text{s̄elf}_1, \bar{x}_{11}, ..., \bar{x}_{k1}), ...,(\text{s̄elf}_n, \bar{x}_{1n}, ..., \bar{x}_{kn}))
 $$ 
 
-needs to be further unzipped into $k+1$ lists entries for $\text{s̄elf}$ and $k$ arguments: 
+needs to be further unzipped into $k+1$ lists for $\text{s̄elf}$ and $k$ arguments: 
 
 $$
 (\text{s̄elf}_1,...,\text{s̄elf}_{n}), (\bar{x}_{11},...,\bar{x}_{1n}), ... (\bar{x}_{k1},...,\bar{x}_{kn})
@@ -322,7 +324,7 @@ z, back = pullback(model, x)
 back(ones(4)) # (nothing, [-1.0, 2.0, 11.0, 26.0])
 {% endhighlight %}
 
-If we inspect the `primal(ir)`, we will see that its because no pullbacks and hence no gradients are recorded against variable `%1` (`self`):
+If we inspect the `primal(ir)`, we see that it's because no pullbacks and hence no gradients are recorded against variable `%1` (`self`):
 {% highlight plaintext %}
 1: (%1, %2)
   %3 = Main.:(var"#74#75")
@@ -387,8 +389,7 @@ back(ones(4)) # ((weights = [4.0, 10.0, 30.0, 100.0],), [-1.0, 2.0, 11.0, 26.0])
 <h2 id="gradient-descent-revisited">3 Gradient Descent revisited</h2>
 <h3 id="generic-gradient-descent">3.1 Generic Gradient Descent</h3>
 
-Now that we have an automatic differentiation engine, it is possible to create a much more generic gradient descent function than in [part 1](/machine-learning/2024/07/27/micrograd-1-chainrules.html#gradient-descent).
-This is what it looks like:
+Now that we have an automatic differentiation engine, it is possible to create a much more generic gradient descent function than in [part 1](/machine-learning/2024/07/27/micrograd-1-chainrules.html#gradient-descent):
 
 {% highlight julia %}
 function gradient_descent!(
@@ -452,7 +453,7 @@ scale_factor = mean(abs.(ys))
 ys .+= randn(length(ys)) * scale_factor * noise_factor
 {% endhighlight %}
 
-The `Polynomial` model is defined in the introduction. All we need is a customer method for  `parameters`:
+The `Polynomial` model is defined in the introduction. We also need a custom method for `parameters`:
 {% highlight julia %}
 parameters(m::Polynomial) = (;weights=m.weights)
 {% endhighlight %}
@@ -485,8 +486,8 @@ This works just as well as before.
 
 We now have a fully working AD package.
 It has some limitations, such as it cannot handle control flow or keyword arguments.
-However it can already work a wide variety of code.
-All that might be needed is some explicit `rrule` definitions.
+However it can already work on a wide variety of code.
+All that might be needed is new `rrule` definitions.
 The next and final [part][micrograd_mlp] of this series is a demonstration of exactly that.
 
 ---

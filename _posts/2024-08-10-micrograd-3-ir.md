@@ -133,20 +133,29 @@ y_3, \mathcal{B}_3 &\leftarrow \mathcal{J}(/, a, y_2)
 \label{eq:primal}
 $$
 
-The pullback function $\mathcal{B}$ differentiates a scalar $l$ (typically a loss function) with regards to a variable $x$.
+The pullback function $\mathcal{B}$ takes as input the gradient of a scalar $l$ (typically a loss function) to a function $y(x)$ and returns the gradient with regards to the variable $x$.
 This partial gradient $\frac{\partial l}{\partial x}$ is written as $\bar{x}$.
 
 $$
 \begin{align}
-\bar{x} &= \frac{\partial l}{\partial x} = \frac{\partial l}{\partial y_i} \frac{\partial y_i}{\partial x} \\
-\bar{x} &\leftarrow \mathcal{B_{i,x}}(\Delta) = \Delta \frac{\partial y_i}{\partial x}\\
-\text{or} \quad \bar{x} &\leftarrow  \mathcal{B_{i,x}}(\Delta) = J_i^{\dagger}\Delta 
+\bar{x} &= \frac{\partial l}{\partial x} = \frac{\partial l}{\partial y} \frac{\partial y}{\partial x}
 \end{align}
 \tag{2.4}
+\label{eq:bar_x}
+$$
+
+so we can write in this mathematical notation as:
+
+$$
+\begin{align}
+\bar{x} &\leftarrow \mathcal{B}(\bar{y}) = \bar{y} \frac{\partial y}{\partial x}\\
+\text{or} \quad \bar{x} &\leftarrow  \mathcal{B}(\bar{y}) = J^{\dagger}\bar{y}
+\end{align}
+\tag{2.5}
 \label{eq:pullback}
 $$
 
-where $\Delta=\frac{\partial l}{\partial y_i}=\bar{y}_i$ and $J_i=\frac{\partial y_i}{\partial x}$ is the Jacobian (gradient) for arrays.
+where $\bar{y}=\frac{\partial l}{\partial y}$ and $J=\frac{\partial y}{\partial x}$ is the Jacobian (gradient) for arrays.
 
 The various partial gradients are calculated by reversing the list.
 Each pullback function $\mathcal{B}_i$ takes as input the previous gradient $\bar{y}_i$.
@@ -158,7 +167,7 @@ $$
 \text{s̄elf}_2, \bar{a}_{2,1}, \bar{y}_1 &\leftarrow \mathcal{B}_2(\bar{y}_2) \\
 \text{s̄elf}_1, \bar{b}_{1,1}, \bar{b}_{1,2} &\leftarrow \mathcal{B}_1(\bar{y}_1)
 \end{align}
-\tag{2.5}
+\tag{2.6}
 \label{eq:reverse}
 $$
 
@@ -169,7 +178,7 @@ $$
 \bar{a} &\leftarrow \bar{a}_{3,1} + \bar{a}_{2,1} \\
 \bar{b} &\leftarrow \bar{b}_{1,1} + \bar{b}_{1,2} \\
 \end{align}
-\tag{2.6}
+\tag{2.7}
 \label{eq:accumulate}
 $$
 
@@ -299,8 +308,7 @@ function _generate_pullback(world, f, args...)
 end
 {% endhighlight %}
 
-In [part 1](http://localhost:4000/machine-learning/2024/07/27/micrograd-1-chainrules#chainrules-definition) the most generic method of `rrule` was defined for an `Any` first argument, so if the compiler dispatches to this method it means no specific `rrule` was found.
-Note that Zygote.jl has more [complex rules](https://github.com/FluxML/Zygote.jl/blob/master/src/compiler/chainrules.jl) which also consider other fallbacks, key word arguments and a possible opt out through a `no_rrule`.
+In [part 1](http://localhost:4000/machine-learning/2024/07/27/micrograd-1-chainrules#chainrules-definition) the most generic method of `rrule` was defined for an `Any` first argument, so if the compiler dispatches to this method it means no specific `rrule` was found.[^has_chain_rule]
 
 {% highlight julia %}
 using IRTools: meta
@@ -349,12 +357,11 @@ The more interesting task is to inspect `f` and apply the equations of section 2
 <figcaption>Source: <a href="https://docs.julialang.org/en/v1/devdocs/eval/">Julia Docs eval</a></figcaption>
 </figure>
 
-The first step is create a Wengert list for `f`.
+The first step is to create a Wengert list for `f` in Intermediate Representation (IR) form.
 Julia already does this as part of the compilation process.
-As a first step the compiler will take input source code and turn it into an Abstract Syntax Tree (AST) with discrete steps.
-It will then process it into an Intermediate Representation (IR) form before fully lowering it to LLVM code.
+IRTools.jl mimics this internal IR form with its own custom IR struct.
+This can be generated for code as follows:
 
-The Zygote.jl code works with an IR form that mimics Julia's internal IR. It can be generated as follows:
 {% highlight julia %}
 using IRTools: IR, meta
 T = Tuple{typeof(f), Float64, Float64}
@@ -424,10 +431,9 @@ function primal(ir::IR, T=Any)
 The `calls` array stores the subset of variables that require a pullback.
 Because the IR is a dictionary - `ir[Variable(i)]` returns statement `i` - this creates a direct link to the statement called.
 These will be used to generate the reverse code (equation $\ref{eq:reverse}$) in the next section.
-Lastly, `pullbacks` stores all the pullbacks.
 
 Next, iterate over each statement in the IR.
-For each statement if it is a `:call` and not part of a special ignored list, (1) insert a call to `pullback` in the line before, (2) modify the current statement to a `getindex`, and (3) push a call to `getindex` afterwards.
+For each statement if it is an expression `:call` and not part of a special ignored list, replace it with three calls: the first is to `pullback` and then two calls to `getindex` to get the output variable `v` and back function `J` from the tuple `t`:
 
 {% highlight julia %}
     for (v, st) in pr
@@ -496,7 +502,7 @@ pr, calls =_generate_pullback_via_decomposition(T, world)
 
 gives the IR at the start.
 
-<h3 id="convert"> 3.5 Convert </h3>
+<h3 id="convert">3.5 Convert </h3>
 
 To evaluate the IR it needs to be converted into a `CodeInfo` struct.
 Zygote.jl uses `IRTools.Inner.update!` to modify the existing struct in `meta_T.code`.
@@ -758,8 +764,8 @@ It also works for the trigonometry example from [part 1](/machine-learning/2024/
 
 {% highlight julia %}
 f(x) = sin(cos(x))
-z, back = pullback(f, 0.5) # (0.7691, Pullback{...})
-back(1.0) # (nothing, -0.3063) 
+z, back = pullback(f, 0.9) # (0.5823, Pullback{...})
+back(1.0) # (nothing, -0.6368) 
 {% endhighlight %}
 
 However it will fail for the polynomial model:
@@ -791,3 +797,5 @@ These and other extensions will be the goal of [part 4][micrograd_ext].
 ---
 
 [^generated_reflection]: Presumably the reason the Julia team tried to prevent reflection in generated functions is that it interferes with the compliers ability to properly predict, trigger and/or optimise compilations.
+
+[^has_chain_rule]: Zygote.jl has more [complex rules](https://github.com/FluxML/Zygote.jl/blob/master/src/compiler/chainrules.jl) which also consider other fallbacks, key word arguments and a possible opt out through a `no_rrule`.
