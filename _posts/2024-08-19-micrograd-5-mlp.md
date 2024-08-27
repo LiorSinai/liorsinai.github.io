@@ -331,7 +331,7 @@ back(ones(2, 4)) # (nothing, (layers=((weight=...), (weight=...), (weight=...)))
 <h2 id="loss">4 Loss</h2>
 <h3 id="Cross-entropy">4.1 Cross entropy</h3>
 
-The output of the machine learning model will be a probability $p_j$ for a sample $j$ being in certain class. This will be compared to a probability for a known label $y_j$, which is either 1 if that sample is in the class or 0 if it is not.
+The output of the machine learning model will be a probability $p_j$ for a sample $j$ being in a certain class. This will be compared to a probability for a known label $y_j$, which is either 1 if that sample is in the class or 0 if it is not.
 An obvious value to maximise is their product:
 
 $$
@@ -340,6 +340,15 @@ $$
 $$
 
 with range $[0, 1]$.
+
+<figure class="post-figure">
+<img class="img-30"
+    src="/assets/posts/micrograd/logx.png"
+	alt="-log(x)"
+    align="right"
+	>
+<figcaption></figcaption>
+</figure>
 
 However most machine learning optimisation algorithms aim to minimise a loss.
 So instead $p_j$ is scaled as $-\log(p_j)$, so that the loss ranges from $[0, \infty)$ with the goal to minimise it at 0.
@@ -406,11 +415,11 @@ $$
 \label{eq:back_logitcrossentropy}
 $$
 
-where $\delta_{ij}$ is the Kronecker delta. Assuming that $y_{ij}$ is 1, this simplifies to:
+where $\delta_{ij}$ is the Kronecker delta. Assuming that $y_{kj}$ is 1 for one value of $k$ and 0 otherwise, this simplifies too:
 
 $$
 \begin{align}
-\frac{\partial L}{\partial x_{ij}} &= -\frac{\Delta}{n}(1 - s(x_j)_{i})
+\frac{\partial L}{\partial x_{ij}} &= -\frac{\Delta}{n}(y_{ij} - s(x_j)_{i})
  \end{align}
 \tag{4.7}
 \label{eq:back_logitcrossentropy_2}
@@ -434,7 +443,7 @@ function rrule(::typeof(logit_cross_entropy),  x::AbstractVecOrMat, y::AbstractV
         size_ls = size(ls)
         n = length(size_ls) > 1 ? prod(size(ls)[2:end]) : 1
         ∂x = logsoftmax_back(-y * Δ/n)[2]
-        ∂y = Δ/n .* (-ls)
+        ∂y = -Δ/n .* ls
         return nothing, ∂x , ∂y
     end
     mean(-sum(y .* ls, dims = 1)), logit_cross_entropy_back
@@ -553,7 +562,7 @@ The result:
     src="/assets/posts/micrograd/moons_decision_boundary.png"
 	alt="Decision boundary"
 	>
-<figcaption>The probability boundaries of a multi-layer perceptron trained on the moon's dataset.</figcaption>
+<figcaption>The probability boundaries of a multi-layer perceptron trained on the moons dataset.</figcaption>
 </figure>
 
 <h2 id="conclusion">6 Conclusion</h2>

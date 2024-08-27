@@ -360,7 +360,7 @@ The more interesting task is to inspect `f` and apply the equations of section 2
 The first step is to create a Wengert list for `f` in Intermediate Representation (IR) form.
 Julia already does this as part of the compilation process.
 IRTools.jl mimics this internal IR form with its own custom IR struct.
-This can be generated for code as follows:
+It can be generated as follows:
 
 {% highlight julia %}
 using IRTools: IR, meta
@@ -448,8 +448,8 @@ For each statement if it is an expression `:call` and not part of a special igno
     end
 {% endhighlight %}
 
-After working through all the statements, a final statement is added which returns a tuple with the final output of the function and a `Pullback` struct which stores all the pullbacks.
-In the final step the pipe is converted back into an IR.
+After working through all the statements, a final statement is added which returns a tuple with the output of the function and a `Pullback` struct which stores all the pullbacks.
+In the last step the pipe is converted back into an IR.
 
 {% highlight julia %}
     pb = Expr(:call, Pullback{T}, xcall(:tuple, pullbacks...))

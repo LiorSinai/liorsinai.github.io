@@ -51,7 +51,7 @@ With modern machine learning frameworks, such as [PyTorch][PyTorch] or [Flux.jl]
     src="/assets/posts/micrograd/moons_decision_boundary.png"
 	alt="Decision boundary"
 	>
-<figcaption>The probability boundaries of a multi-layer perceptron trained on the moon's dataset with MicroGrad.jl.</figcaption>
+<figcaption>The probability boundaries of a multi-layer perceptron trained on the moons dataset with MicroGrad.jl.</figcaption>
 </figure>
 
 [micograd]: https://github.com/karpathy/micrograd
@@ -65,8 +65,7 @@ I highly recommend it for anyone who wants to understand backpropagation.
 
 The aim of this series is to create a minimal automatic differentiation package in Julia.
 It is based on [Zygote.jl](https://fluxml.ai/Zygote.jl/stable/) and works very differently to the Python AD packages.
-The latter are based on objects which implement custom implementations of mathematical operations.
-These custom implementations calculate both the forward pass and a derivative for the backward pass.
+The latter are based on objects with their own custom implementations of mathematical operations that calculate both the forward and backward passes.
 All operations are only done with these objects.[^micrograd]
 Zygote.jl is instead based on the principle that Julia is a functional programming language. 
 It utilises Julia's multiple dispatch feature and its comprehensive metaprogramming abilities to generate new code for the backward pass.
@@ -140,7 +139,8 @@ y, grad = Flux.withgradient(m->sum(m(x)), model) # 1.5056f0, ((weight=[4.9142 6.
 
 The aim of the rest of the series is to recreate this functionality.
 This first part will focus solely on ChainRules.jl and recreating the `rrule` function.
-Part 2 will focus on recreating the `Zygote._pullback` function. 
+Part 2 will focus on recreating the `Zygote._pullback` function.
+Part 3 repeats part 2 in a more robust manner.
 Part 4 extends part 3's solution to handle maps, anonymous functions and structs.
 Finally part 5 shows how this AD code can be used by a machine learning framework.
 
@@ -171,7 +171,7 @@ J = \begin{bmatrix}
 \end{bmatrix}
 $$
 
-To maintain the correct order, we need to use the [conjugate transpose (adjoint) of the Jacobian](https://juliadiff.org/ChainRulesCore.jl/stable/maths/propagators.html). So the output of $\mathcal{B}_i$ can use be written as:
+To maintain the correct order, we need to use the [conjugate transpose (adjoint) of the Jacobian](https://juliadiff.org/ChainRulesCore.jl/stable/maths/propagators.html). So each gradient is calculated as:
 
 $$
 \mathcal{B_i}(\Delta) = J_i^{\dagger} \Delta
@@ -200,11 +200,30 @@ $$
 \frac{\partial}{\partial x}(x+y) = 1 + 0; \frac{\partial}{\partial y}(x+y) = 0 + 1
 $$
 
+<p>
+  <a class="btn" data-toggle="collapse" href="#proof-derivative-addition" role="button" aria-expanded="false" aria-controls="collapse-derivative-addition">
+    Proof &#8681;
+  </a>
+</p>
+<div class="collapse" id="proof-derivative-addition">
+  <div class="card card-body ">
+		<p>
+    $$
+    \begin{align}
+    \Delta f_x &= (x+\Delta x+ y) - (x+y) \\
+    \therefore \lim_{\Delta x \to 0}\frac{\Delta f_x}{\Delta x} &=\frac{\partial f}{\partial x}= 1 \\
+    \therefore \lim_{\Delta y \to 0}\frac{\Delta f_y}{\Delta y} &=\frac{\partial f}{\partial y}= 1
+    \end{align}
+    $$
+    </p>
+  </div>
+</div>
+
 There are no internal fields so $\frac{\partial l}{\partial \text{self}}$ is `nothing`.
 $\mathcal{B}$ can be returned as an anonymous function, but giving it the name `add_back`  helps with debugging ([source](https://github.com/JuliaDiff/ChainRules.jl/blob/dba6cb57d73ba837c5ab6fd1f968f3a5d301ca9c/src/rulesets/Base/fastmath_able.jl#L167)).
 
 {% highlight julia %}
-function rrule(::typeof(+), x::Number, y::Number)
+function rrule(::typeof(+), x::Real, y::Real)
     add_back(Δ) = (nothing, true * Δ, true * Δ) # ∂self, ∂x, ∂y
     x + y, add_back # also (Δ) -> (nothing, true * Δ, true * Δ)
 end
@@ -218,7 +237,7 @@ back(1.2) # (nothing, 1.2, 1.2)
 
 Subtraction is almost identical:
 {% highlight julia %}
-function rrule(::typeof(-), x::Number, y::Number)
+function rrule(::typeof(-), x::Real, y::Real)
     minus_back(Δ) = (nothing, true * Δ, -1 * Δ) # ∂f, ∂x, ∂y
     x - y, minus_back
 end
@@ -230,10 +249,29 @@ $$
 \frac{\partial}{\partial x}(xy) = y; \frac{\partial}{\partial y}(xy) = x
 $$
 
+<p>
+  <a class="btn" data-toggle="collapse" href="#proof-derivative-multiplication" role="button" aria-expanded="false" aria-controls="collapse-derivative-multiplication">
+    Proof &#8681;
+  </a>
+</p>
+<div class="collapse" id="proof-derivative-multiplication">
+  <div class="card card-body ">
+		<p>
+    $$
+    \begin{align}
+    \Delta f_x &= (x+\Delta x)y - xy \\
+    \therefore \lim_{\Delta x \to 0}\frac{\Delta f_x}{\Delta x} &=\frac{\partial f}{\partial x}= y \\
+    \therefore \lim_{\Delta y \to 0}\frac{\Delta f_y}{\Delta y} &=\frac{\partial f}{\partial y}= x
+    \end{align}
+    $$
+    </p>
+  </div>
+</div>
+
 In code ([source](https://github.com/JuliaDiff/ChainRules.jl/blob/dba6cb57d73ba837c5ab6fd1f968f3a5d301ca9c/src/rulesets/Base/fastmath_able.jl#L254)):
 
 {% highlight julia %}
-function rrule(::typeof(*), x::Number, y::Number)
+function rrule(::typeof(*), x::Real, y::Real)
     times_back(Δ) = (nothing, y * Δ, x * Δ) # ∂self, ∂x, ∂y
     x * y, times_back
 end
@@ -267,15 +305,15 @@ $$
 </p>
 <div class="collapse" id="proof-derivative-division">
   <div class="card card-body ">
-		<p> As a quick refresher, here is a proof for these partial derivatives:
+		<p>
     $$
     \begin{align}
     \Delta f_x &= \frac{x+\Delta x}{y} - \frac{x}{y} \\
-    \therefore \lim_{x \to 0}\frac{\Delta f_x}{\Delta x} &=\frac{\partial f}{\partial x}= \frac{1}{y} \\
+    \therefore \lim_{\Delta x \to 0}\frac{\Delta f_x}{\Delta x} &=\frac{\partial f}{\partial x}= \frac{1}{y} \\
     \Delta f_y &= \frac{x}{y+\Delta y} - \frac{x}{y} \\
              &= \frac{xy}{y(y+\Delta y)} - \frac{x(y+\Delta y)}{y(y+\Delta y)} \\
              &= -\frac{x \Delta y}{y(y+\Delta y)} \\
-   \therefore \lim_{y \to 0}\frac{\Delta f_y}{\Delta y} &=\frac{\partial f}{\partial y} = -\frac{x}{y^2}         
+   \therefore \lim_{\Delta y \to 0}\frac{\Delta f_y}{\Delta y} &=\frac{\partial f}{\partial y} = -\frac{x}{y^2}         
     \end{align}
     $$
     </p>
@@ -284,7 +322,7 @@ $$
 
 Here we can calculate an internal variable `Ω` to close over, and use it for the $\frac{\partial}{\partial y}$ derivative ([source](https://github.com/JuliaDiff/ChainRules.jl/blob/dba6cb57d73ba837c5ab6fd1f968f3a5d301ca9c/src/rulesets/Base/fastmath_able.jl#L169)):
 {% highlight julia %}
-function rrule(::typeof(/), x::Number, y::Number)
+function rrule(::typeof(/), x::Real, y::Real)
     Ω = x / y
     divide_back(Δ) = (nothing, 1 / y * Δ, -Ω/y * Δ) # ∂self, ∂x, ∂y
     Ω, divide_back
@@ -378,7 +416,7 @@ $$
 \end{align}
 $$
 
-For the most efficiency implementation, the powers of $x$ can be calculated for both the forward and backwards pass at the same time.
+For the most efficient implementation, the powers of $x$ can be calculated for both the forward and backwards pass at the same time.
 For simplicity, I'm not going to do that ([source](https://github.com/JuliaDiff/ChainRules.jl/blob/dba6cb57d73ba837c5ab6fd1f968f3a5d301ca9c/src/rulesets/Base/evalpoly.jl)):
 
 {% highlight julia %}
@@ -419,14 +457,14 @@ $$
 \end{align}
 $$
 
-Note that the Jacobians $\frac{\partial Y}{\partial A}$ and $\frac{\partial Y}{\partial B}$ are not explicitly calculated here; only the product is. (These Jacobians would have many zeros because each output element depends only a small subset of the input elements.)
+Note that the Jacobians $\frac{\partial Y}{\partial A}$ and $\frac{\partial Y}{\partial B}$ are not explicitly calculated here; only the product is. (These Jacobians would have many zeros because each output element depends only on a small subset of the input elements.)
 
 <div class="message-container info-message">
 	<div class="message-icon fa fa-fw fa-2x fa-exclamation-circle"></div>
   <div class="content-container">
     <div class="message-body">
       The most common use case in machine learning is $Y=WX$, where $W$ is a set of weights and $X$ is the data.
-      Most machine learning algorithms only alter the weights, not the data. Hence only $\frac{\partial l}{\partial W}$ is required.
+      Machine learning algorithms only alter the weights, not the data. Hence only $\frac{\partial l}{\partial W}$ is required.
       This means computation is wasted on $\frac{\partial l}{\partial X}$.
       For large matrices, this can be significant.
       To avoid this ChainRules.jl uses the <code>ChainRulesCore.@thunk</code> macro to wrap code in a <code>ChainRulesCore.Thunk</code> struct. This struct defers computation until it is used. 
@@ -752,7 +790,7 @@ This is code is slightly more complex than the previous version.
 The behaviour and performance is practically identical.
 However, it is one step closer to being more generic.
 
-In machine learning models usually execute on multiple inputs at once.
+In machine learning, models usually execute on multiple inputs at once.
 We could make a polynomial model that does that:
 {% highlight julia %}
 struct Polynomial{V<:AbstractVector}
@@ -770,10 +808,12 @@ zs, back = pullback(m -> m(xs), model)
 {% endhighlight %}
 
 In the next sections we will write code that will inspect the model function call, recognise that it calls `map`, and call a `pullback` for map.[^pullback_vs_rrule]
+This in turn will call the `pullback` for `evalpoly`, which will pass the arguments to the `rrule` defined above.
 
 <h2 id="conclusion">5 Conclusion</h2>
 
-The next two sections will develop `pullback` for inspecting and decomposing code in order to pass each piece to `rrule`. 
+The next two sections will develop the `pullback` function.
+It will inspect and decompose code with the goal of passing arguments to `rrule` and accumulating gradients via the chain rule. 
 
 [Part 2][micrograd_expr] will introduce metaprogamming Julia and generate expressions for the backpropagation code. 
 However the code is unstable and prone to errors - it is recursive metaprogramming - so [part 3][micrograd_ir] will introduce more robust code making use of the [IRTools.jl][IRTools.jl] package. 
@@ -783,6 +823,6 @@ It is possible to jump straight to [part 3][micrograd_ir] if desired.
 
 ---
 
-[^micrograd]: For example, Micrograd defines a `Value` class that has a custom definition for `__add__`. The same is true of the `Tensor` objects in PyTorch.
+[^micrograd]: For example, Micrograd defines a `Value` class that has a custom definition for `__add__`. This custom definition then calculates the forward pass and prepares the backwards pass. The same is true of the `Tensor` objects in PyTorch.
 
 [^pullback_vs_rrule]: It is a design choice to use `pullback` and nit `rrule` for map. Both `rrule` and `pullback` have the same outputs. However `rrule` is intended for stand alone gradients, whereas `pullback` will potentially involve recursive calls to itself.
