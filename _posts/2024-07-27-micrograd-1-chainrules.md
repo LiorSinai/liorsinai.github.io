@@ -825,4 +825,4 @@ It is possible to jump straight to [part 3][micrograd_ir] if desired.
 
 [^micrograd]: For example, Micrograd defines a `Value` class that has a custom definition for `__add__`. This custom definition then calculates the forward pass and prepares the backwards pass. The same is true of the `Tensor` objects in PyTorch.
 
-[^pullback_vs_rrule]: It is a design choice to use `pullback` and nit `rrule` for map. Both `rrule` and `pullback` have the same outputs. However `rrule` is intended for stand alone gradients, whereas `pullback` will potentially involve recursive calls to itself.
+[^pullback_vs_rrule]: It is a design choice to use `pullback` and not `rrule` for map. Both `rrule` and `pullback` have the same outputs. However `rrule` is intended for stand alone gradients, whereas `pullback` will potentially involve recursive calls to itself.
