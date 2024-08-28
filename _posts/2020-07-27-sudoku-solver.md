@@ -2,6 +2,7 @@
 layout: post
 title:  "Sudoku Solver in Python"
 date:   2020-07-27
+last_modified_at: 2024-08-28
 author: Lior Sinai
 categories: coding
 tags:	coding backtracking sudoku
@@ -14,8 +15,34 @@ As an example of the UI, here is the solution for the 13 March 2021 NY Time's Ha
 
 [Erfan_blog]: https://letscode.erfanpaslar.ir/post.php?pId=16
 
+### Table of contents
 
-## 1. Introduction
+<nav id="toc">
+  <ol>
+    <li><a href="#introduction">Introduction</a></li>
+    <li><a href="#difficulty-levels">Difficulty levels</a>
+        <ol type="i">
+        <li><a href="#easy-to-hard-puzzles">Easy to hard puzzles</a></li>
+        <li><a href="#very-hard-puzzles">Very hard puzzles</a></li>
+        <li><a href="#ultra-hard-puzzles">Ultra-hard puzzles</a></li>
+        <li><a href="#impossible-puzzles">Impossible puzzles</a></li>
+      </ol>
+    </li>
+    <li><a href="#code">Code</a>
+      <ol type="i">
+        <li><a href="#general-algorithm">General algorithm</a></li>
+        <li><a href="#sudoku-class">Sudoku class</a></li>
+        <li><a href="#candidate-functions">Candidate functions</a></li>
+        <li><a href="#solver">Solver</a></li>
+        <li><a href="#auxiliary-functions">Auxiliary functions</a></li>
+      </ol>
+    </li>
+    <li><a href="#analysis">Analysis</a></li>
+    <li><a href="#conclusion">Conclusion</a></li>
+    </ol>
+</nav>
+
+<h2 id="introduction">1. Introduction</h2>
 
 <figure class="post-figure">
 <img class="img-50"
@@ -52,7 +79,7 @@ There are many solvers which refrain from search or any other trial and error st
 One of the more complex of these is Andrew Stuart's [solver][stuart] which implements 38 different strategies for solving Sudokus.
 A major drawback of this type of solver is, despite the complexity, it cannot solve every type of Sudoku puzzle.
 
-## 2. Difficulty levels
+<h2 id="difficulty-levels">2. Difficulty levels</h2>
 
 Before describing my solver, I'd like to give a quick overview of difficulty levels in Sudoku. 
 I've gained an appreciation of them over the last few weeks.
@@ -172,8 +199,8 @@ Very amusingly, Norvig passed the puzzle on the right to his solver, and it took
 His solver otherwise takes less than a second to solve ultra-hard Sudokus. 
 As an amateur Sudoku player, it took me less than a minute to verify that it was impossible.[^1]
 
+<h2 id="code">3. Code</h2>
 
-## 3. Code
 ### General algorithm
 To solve even the most challenging of these puzzles, our Sudoku solver only needs to follow three strategies:
 
@@ -200,10 +227,10 @@ SIZE = 9
 BOX_SIZE = 3
 
 class Sudoku():
-    def __init__(self, grid: List[List[int]]):
+    def __init__(self, grid: List):
         n = len(grid)
         self.grid = grid
-        self.n = n
+        self.grid_size = n
         # create a grid of viable candidates for each position
         candidates = []
         for i in range(n):
@@ -242,7 +269,18 @@ class Sudoku():
         for i, j in self.get_box_inds(r, c):
             box.append(self.grid[i][j])
         return box
-		
+    
+    def get_neighbour_blocks(self, r: int, c: int):
+        inds_row = [(r, j) for j in range(self.grid_size)]
+        inds_col = [(i, c) for i in range(self.grid_size)]
+        inds_box = self.get_box_inds(r, c)
+        inds = [inds_row, inds_col, inds_box]
+        return inds
+    
+    def get_neighbour_inds(self, r: int, c: int):
+        blocks = self.get_neighbour_blocks(r, c)
+        inds = list(set().union(*blocks))
+        return inds
 {% endhighlight %}
 
 
@@ -273,32 +311,21 @@ it is sufficient to use only the simplest strategy, hidden singles.
 
 {% highlight python %}
 def place_and_erase(self, r: int, c: int, x: int, constraint_prop=True):
-	""" remove x as a candidate in the grid in this row, column and box"""
-	# place candidate x
-	self.grid[r][c] = x
-	self.candidates[r][c] = set()
-	# remove candidate x in neighbours
-	inds_row = [(r, j) for j in range(self.n)]
-	inds_col = [(i, c) for i in range(self.n)]
-	inds_box = self.get_box_inds(r, c)
-	erased = [(r, c)]  # set of indices for constraint propagation
-	erased += self.erase([x], inds_row + inds_col + inds_box, [])
-	# constraint propagation, through every index that was changed
-	while erased and constraint_prop:
-		i, j = erased.pop()
-		inds_row = [(i, j) for j in range(self.n)]
-		inds_col = [(i, j) for i in range(self.n)]
-		inds_box = self.get_box_inds(i, j)
-		for inds in [inds_row, inds_col, inds_box]:
-			# apply strategies
-			# 1. hidden singles
-			uniques = self.get_unique(inds)
-			for inds_unique, num in uniques:
-				i_u, j_u = inds_unique[0]
-				self.candidates[i_u][j_u] = set(num) 
-				erased += self.erase(num, inds, inds_unique)
+    """ remove x as a candidate in the grid in this row, column and box"""
+    # place candidate x
+    self.grid[r][c] = x
+    self.candidates[r][c] = set()
+    # remove candidate x in neighbours
+    inds = self.get_neighbour_inds(r, c)
+    erased = [(r, c)]  # set of indices for constraint propogration
+    erased += self.erase([x], inds, [])
+    # constraint propogation, through every index that was changed
+    while erased and constraint_prop:
+        i, j = erased.pop()
+        for inds in self.get_neighbour_blocks(i, j):
+            erased += self.set_uniques(inds)
 
-def erase(self, nums, indices, keep):
+def erase(self, nums: List[int], indices: List[Tuple], keep: List[Tuple]):
 	""" erase nums as candidates in indices, but not in keep"""
 	erased = []
 	for i, j in indices:
@@ -313,20 +340,30 @@ def erase(self, nums, indices, keep):
 			erased.append((i,j))            
 	return erased
 		
-def count_candidates(self, indices):
+def count_candidates(self, indices: List[Tuple]):
 	count = [[] for _ in range(self.n + 1)]
 	for i, j in indices:
 		for num in self.candidates[i][j]:
 			count[num].append((i, j))
 	return count
 
-def get_unique(self, indices):
-	groups = self.count_candidates(indices)
-	uniques = []  # final set of unique candidates to return
-	for num, group_inds in enumerate(groups):
-		if len(group_inds) == 1:
-			uniques.append((group_inds, [num]))
-	return uniques
+def set_uniques(self, indices: List[Tuple]):
+        uniques = self.get_unique(indices)
+        erased = []
+        for inds_unique, num in uniques:
+            i_u, j_u = inds_unique[0]
+            self.candidates[i_u][j_u] = set(num) 
+            erased += self.erase(num, indices, inds_unique)
+        return erased
+
+def get_unique(self, indices: List[Tuple]):
+    # See documentation at https://www.sudokuwiki.org/Hidden_Candidates
+    groups = self.count_candidates(indices)
+    uniques = []  # final set of unique candidates to return
+    for num, group_inds in enumerate(groups):
+        if len(group_inds) == 1:
+            uniques.append((group_inds, [num]))
+    return uniques
 {% endhighlight %}
 
 ### Solver
@@ -339,7 +376,7 @@ It then starts with step 1 again.
 If at any time a block has no candidates, it means a mistake was made, and the code backtracks.
 
 {% highlight python %}
-def solve_sudoku(grid, num_boxes=SIZE, all_solutions=False):
+def solve_sudoku(grid, all_solutions=False):
     def solve(puzzle, depth=0):
         nonlocal calls, depth_max
         calls += 1
@@ -348,8 +385,8 @@ def solve_sudoku(grid, num_boxes=SIZE, all_solutions=False):
         while not solved:
             solved = True 
             edited = False  # if no edits, either done or stuck
-            for i in range(n):
-                for j in range(n):
+            for i in range(grid_size):
+                for j in range(grid_size):
                     if puzzle.grid[i][j] == 0:
                         solved = False
                         options = puzzle.candidates[i][j] 
@@ -360,20 +397,15 @@ def solve_sudoku(grid, num_boxes=SIZE, all_solutions=False):
                             edited = True
             if not edited: # changed nothing in this round -> either done or stuck
                 if solved:
-                    solution_set.append(grid2str(puzzle.grid))
+                    solution_set.append(puzzle.grid)
                     return True
-                else: # Find the square with the least number of options
-                    min_guesses = (n + 1, -1)
-                    for i in range(n):
-                        for j in range(n):
-                            options = puzzle.candidates[i][j] 
-                            if len(options) > 1:
-                                min_guesses = min((len(options), (i, j)), min_guesses)
-                    i, j = min_guesses[1]
-                    options = puzzle.candidates[i][j] 
-                    for y in options: # step 3. backtracking check point:
+                else:
+                    least_candidates = find_least_candidates(puzzle)
+                    i, j = least_candidates[1]
+                    options = puzzle.candidates[i][j]
+                    for guess in options: # step 3. backtracking check point:
                         puzzle_next = deepcopy(puzzle)
-                        puzzle_next.place_and_erase(i, j, y)
+                        puzzle_next.place_and_erase(i, j, guess)
                         solved = solve(puzzle_next, depth=depth+1)
                         if solved and not all_solutions:
                             break # return 1 solution
@@ -383,7 +415,7 @@ def solve_sudoku(grid, num_boxes=SIZE, all_solutions=False):
     calls, depth_max = 0, 0
     solution_set = []
     puzzle = Sudoku(grid)   
-    n = puzzle.n
+    grid_size = puzzle.grid_size
 
     solved = solve(puzzle, depth=0)
     info = {'calls': calls,  
@@ -392,6 +424,17 @@ def solve_sudoku(grid, num_boxes=SIZE, all_solutions=False):
             }
 
     return solution_set, solved, info
+
+
+def find_least_candidates(puzzle: Sudoku):
+    n = puzzle.grid_size
+    least_candidates = (n + 1, (0, 0))
+    for i in range(n):
+        for j in range(n):
+            if len(puzzle.candidates[i][j])> 0:
+                options = puzzle.candidates[i][j] 
+                least_candidates = min((len(options), (i, j)), least_candidates)
+    return least_candidates
 {% endhighlight %}
 
 ### Auxiliary functions
