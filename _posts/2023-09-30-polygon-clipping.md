@@ -10,6 +10,9 @@ tags:  polygons
 
 _Description of the Weiler-Atherton polygon clipping algorithm._
 
+_Update 11 January 2025: my PolygonAlgorithms.jl package no longer uses this algorithm as the default. Instead it uses the Martinez-Rueda algorithm, as detailed at https://sean.fun/a/polygon-clipping-pt2/. The main reason is because this algorithm can also do unions, differences and XORs of polygons._
+
+
 ### Table of Contents
 
 <nav id="toc"></nav>
@@ -78,7 +81,7 @@ For the general case of concave polygons with multiple regions of intersection I
 [weiler_atherton_paper]: http://www.cs.drexel.edu/~david/Classes/CS430/HWs/p214-weiler.pdf
 [ORourke_paper]: https://www.cs.jhu.edu/~misha/Spring16/ORourke82.pdf
 [martinez_rueda_paper]: https://www.researchgate.net/publication/220163820_A_new_algorithm_for_computing_Boolean_operations_on_polygons
-[martinez_rueda_sean]: https://sean.cm/a/polygon-clipping-pt2
+[martinez_rueda_sean]: https://sean.fun/a/polygon-clipping-pt2/
 
 <figure class="post-figure" id="fig-test-cases">
 <img class="img-95"
@@ -141,10 +144,10 @@ It is based on the concept of a vertical line sweep, which gives us more informa
     src="/assets/posts/polygon-clipping/martinez-rueda-sweep.png"
 	alt="Martinez-Reuda conceptual framework"
 	>
-<figcaption>Vertical line sweep in the Martinez-Reuda algorithm. Source: <a href="https://sean.cm/a/polygon-clipping-pt2">sean.cm/a/polygon-clipping-pt2</a>.</figcaption>
+<figcaption>Vertical line sweep in the Martinez-Reuda algorithm. Source: <a href="https://sean.fun/a/polygon-clipping-pt2/">sean.fun/a/polygon-clipping-pt2</a>.</figcaption>
 </figure>
 
-For a full explanation of the Martinez-Rueda Algorithm, see this blog post: <a href="https://sean.cm/a/polygon-clipping-pt2">sean.cm/a/polygon-clipping-pt2</a>.
+For a full explanation of the Martinez-Rueda Algorithm, see this blog post: <a href="https://sean.fun/a/polygon-clipping-pt2/">sean.fun/a/polygon-clipping-pt2</a>.
 I chose to go with the Weiler-Atherton algorithm because it is simpler.
 
 #### Limitations 
