@@ -182,7 +182,7 @@ In the figure above, both projections are below the other line.
 Hence `is_above` will return false for both segments. Yet one must be above the other.
 Therefore to maintain symmetry, the function will always only consider the right segment. 
 If it is the segment of interest, we check if its starting point is above its projection on the left line.
-Otherwise if we are checking if the left segment is above, we check if the right segment's starting point's projection is below.
+Otherwise if we are checking if the left segment is above, we check if the right segment's starting point's is below its projection on the left segment.
 
 There are two other special cases. The first is if the starting point is colinear or coincident with the other line:
 
