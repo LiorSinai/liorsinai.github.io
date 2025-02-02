@@ -3,7 +3,7 @@ layout: post
 title:  "Transformers from first principles in Julia"
 date:   2022-05-18
 author: Lior Sinai
-last_modified_at: 2024-04-01
+last_modified_at: 2025-02-02
 background: '/assets/posts/transformers/transformer.png'
 sidenav: true
 categories: machine-learning
@@ -18,7 +18,11 @@ _Update 19 August 2023: code refactoring and update to Flux 0.13.11 explicit syn
 
 _Update 23 March 2024: code refactoring._
 
+_Update 2 February 2025: update to Flux 0.16._
+
 See also: [Generative transformer from first principles in Julia][generator].
+
+All code available at [github.com/LiorSinai/TransformersLite.jl](https://github.com/LiorSinai/TransformersLite.jl).
 
 [generator]: {{ "machine-learning/2024/03/23/transformers-gpt" | relative_url }}
 
@@ -341,28 +345,30 @@ We'll be making use of the Flux framework along with the NNlib and ChainRulesCor
 An example output will be:
 {%highlight julia %}
 TransformerClassifier(
-  Embed((32, 7455)),                    # 238_560 parameters
+  Embedding(32 => 7455),                # 238_560 parameters
   PositionEncoding(32),
   Dropout(0.1),
-  TransformerBlock(
-    MultiHeadAttention(num_heads=4, head_size=8, 32=>32)(
-      denseQ = Dense(32 => 32; bias=false),  # 1_024 parameters
-      denseK = Dense(32 => 32; bias=false),  # 1_024 parameters
-      denseV = Dense(32 => 32; bias=false),  # 1_024 parameters
-      denseO = Dense(32 => 32),         # 1_056 parameters
+  [
+    TransformerBlock(
+      MultiHeadAttention(
+        nhead=4,
+        denseQ = Dense(32 => 32; bias=false),  # 1_024 parameters
+        denseK = Dense(32 => 32; bias=false),  # 1_024 parameters
+        denseV = Dense(32 => 32; bias=false),  # 1_024 parameters
+        denseO = Dense(32 => 32),       # 1_056 parameters
+      ),
+      LayerNorm(32),                    # 64 parameters
+      Dense(32 => 128, relu),           # 4_224 parameters
+      Dense(128 => 32),                 # 4_128 parameters
+      LayerNorm(32),                    # 64 parameters
+      Dropout(0.1),
     ),
-    Dropout(0.1),
-    LayerNorm(32),                      # 64 parameters
-    Dense(32 => 128, relu),             # 4_224 parameters
-    Dense(128 => 32),                   # 4_128 parameters
-    Dropout(0.1),
-    LayerNorm(32),                      # 64 parameters
-  ),
+  ],
   Dense(32 => 1),                       # 33 parameters
   FlattenLayer(),
   Dense(50 => 5),                       # 255 parameters
-)        # Total: 18 trainable arrays, 251_456 parameters,
-          # plus 1 non-trainable, 32_000 parameters, summarysize 1.083 MiB.
+)         # Total: 18 trainable arrays, 251_456 parameters,
+          # plus 1 non-trainable, 32_000 parameters, summarysize 1.082 MiB.
 {% endhighlight %}
 
 The `Dropout`, `LayerNorm` and `Dense` layers are already part of the Flux package.
@@ -591,22 +597,29 @@ This is somewhat unfortunate as it forms a massive part of our training.
 For the model we will use later it will be 95% of the trainable parameters.
 
 The embedding layer is a struct that holds a matrix:
+
+<div class="message-container info-message">
+	<div class="message-icon fa fa-fw fa-2x fa-exclamation-circle">
+	</div>
+	<div class="content-container">
+		<div class="message-body">
+		This layer is a slightly simpler version of <code>Flux.Embedding</code>.
+		</div>
+	</div>
+</div>
+
 {%highlight julia %}
 struct Embed{W <: AbstractArray}
     weight::W
 end
 
-Flux.@functor Embed # tell Flux that this struct is trainable
+Flux.@layer Embed # tell Flux that this struct is trainable
 
 Embed(output_dim::Int, vocab_size::Int) = Embed(randn(Float32, output_dim, vocab_size))
 
 Base.size(e::Embed) = size(e.weight)
 
 Base.show(io::IO, e::Embed) = print(io, "Embed($(size(e.weight)))")
-
-function Base.show(io::IO, m::MIME"text/plain", e::Embed)
-    Flux._layer_show(io, e)
-end
 {% endhighlight %}
 The `Float32` type is used to reduce the size of the model and for performance benefits. We don't need the extra accuracy provided by `Float64`.
 We have a second show function for multimedia (MIME) types when we went prettier printing e.g. in the REPL and Jupyter notebooks.
@@ -744,8 +757,8 @@ struct PositionEncoding{W <: AbstractArray}
     weight::W
 end
 
-Flux.@functor PositionEncoding # make this layer discoverable by Flux
-Flux.trainable(m::PositionEncoding) = (;) # but specify no weights are trainable
+#= make this layer discoverable by Flux but specify no weights are trainable =#
+Flux.@layer PositionEncoding trainable=()
 
 function PositionEncoding(dim_embedding::Int, max_length::Int=1000)
     W = make_position_encoding(dim_embedding, max_length)
@@ -962,13 +975,25 @@ We don't need to write a `rrule` for it because rules already exists for `reshap
 
 We are finally at the heart of the transformer: multi-head attention.
 At the end of this step we will have a `MultiheadAttention` layer:
+
+<div class="message-container info-message">
+	<div class="message-icon fa fa-fw fa-2x fa-exclamation-circle">
+	</div>
+	<div class="content-container">
+		<div class="message-body">
+		Flux 0.12 adds a <code>MultiHeadAttention</code> layer, so this layer is called <code>MultiheadAttention</code> to avoid name conflicts.
+		</div>
+	</div>
+</div>
+
 {% highlight julia %}
-MultiHeadAttention(num_heads=4, head_size=8, 32=>32)(
-    denseQ = Dense(32 => 32; bias=false),  # 1_024 parameters
-    denseK = Dense(32 => 32; bias=false),  # 1_024 parameters
-    denseV = Dense(32 => 32; bias=false),  # 1_024 parameters
-    denseO = Dense(32 => 32),              # 1_056 parameters
-)                  # Total: 5 arrays, 4_128 parameters, 16.453 KiB
+MultiheadAttention(
+  nhead=4,
+  denseQ = Dense(32 => 32; bias=false),  # 1_024 parameters
+  denseK = Dense(32 => 32; bias=false),  # 1_024 parameters
+  denseV = Dense(32 => 32; bias=false),  # 1_024 parameters
+  denseO = Dense(32 => 32),             # 1_056 parameters
+)                  # Total: 5 arrays, 4_128 parameters, 16.422 KiB.
 {% endhighlight %}
 
 The multi-head attention layer splits up the embedding matrix into multiple heads.
@@ -977,7 +1002,7 @@ If we have $H$ heads then $d_m=Hd_h$.
 
 First define a struct to hold all the dense layers and a parameter for $H$ called `nhead`:
 {% highlight julia %}
-struct MultiHeadAttention{Q<:Dense, K<:Dense, V<:Dense, O<:Dense}
+struct MultiheadAttention{Q<:Dense, K<:Dense, V<:Dense, O<:Dense}
     nhead::Int
     denseQ::Q
     denseK::K
@@ -985,15 +1010,15 @@ struct MultiHeadAttention{Q<:Dense, K<:Dense, V<:Dense, O<:Dense}
     denseO::O
 end
 
-Flux.@functor MultiHeadAttention
-Flux.trainable(m::MultiHeadAttention) = (; m.denseQ, m.denseK, m.denseV, m.denseO) # tell Flux which parameters are trainable
+#= # tell Flux which parameters are trainable =#
+Flux.@layer :ignore MultiheadAttention trainable=(denseQ, denseK, denseV, denseO)
 {% endhighlight %}
 
 We would like $d_m$ to be divisible by $H$ but the maths will work if it is not.
 So if the user supplies $d_h$ accept it as valid: 
 {% highlight julia %}
-function MultiHeadAttention(nhead::Int, dim_model::Int, dim_head::Int, dim_out::Int)
-    MultiHeadAttention(
+function MultiheadAttention(nhead::Int, dim_model::Int, dim_head::Int, dim_out::Int)
+    MultiheadAttention(
         nhead,
         Dense(dim_model, dim_head*nhead; bias=false),
         Dense(dim_model, dim_head*nhead; bias=false),
@@ -1002,36 +1027,33 @@ function MultiHeadAttention(nhead::Int, dim_model::Int, dim_head::Int, dim_out::
     )
 end
 
-function MultiHeadAttention(
+function MultiheadAttention(
     nhead::Int, dim_model::Int, dim_out::Int
     )
     if dim_model % nhead != 0 
         error("embedding dimension=$dim_model is not divisible by number of heads=$nhead")
     end
-    MultiHeadAttention(nhead, dim_model, div(dim_model, nhead), dim_out)
+    MultiheadAttention(nhead, dim_model, div(dim_model, nhead), dim_out)
 end
 {% endhighlight %}
 
 Define printing functions:
 {% highlight julia %}
-function Base.show(io::IO, mha::MultiHeadAttention)
+function Base.show(io::IO, mha::MultiheadAttention)
     dh = div(size(mha.denseQ.weight)[1], mha.nhead)
     dm = size(mha.denseQ.weight)[2]
     dout = size(mha.denseO.weight)[1]
-    print(io, "MultiHeadAttention(")
-    print(io, "num_heads=$(mha.nhead), ")
+    print(io, "MultiheadAttention(")
+    print(io, "nhead=$(mha.nhead), ")
     print(io, "head_size=$(dh), ")
     print(io, "$(dm)=>$(dout)")
     print(io, ")")
 end
 
-function Base.show(io::IO, m::MIME"text/plain", mha::MultiHeadAttention)
-    _show_multiheadattention(io, mha)
-end
-
-function _show_multiheadattention(io::IO, mha::MultiHeadAttention, indent=0)
+function Flux._big_show(io::IO, mha::MultiheadAttention, indent::Int=0)
     inner_indent = indent + 2
-    print(io, " "^indent, mha, "(\n") 
+    print(io, " "^indent, "MultiheadAttention(\n") 
+    println(io, " "^inner_indent, "nhead=$(mha.nhead),")
     Flux._layer_show(io, mha.denseQ, inner_indent, "denseQ")
     Flux._layer_show(io, mha.denseK, inner_indent, "denseK")
     Flux._layer_show(io, mha.denseV, inner_indent, "denseV")
@@ -1060,7 +1082,7 @@ The query, key and value are each calculated using the dense matrices we stored 
 Then we calculate the attention for all the heads at once with `multi_head_scaled_dot_attention`.
 The final result is passed to the dense output layer:
 {% highlight julia %}
-function (mha::MultiHeadAttention)(query::A3, key::A3, value::A3) where {
+function (mha::MultiheadAttention)(query::A3, key::A3, value::A3) where {
     T, A3 <: AbstractArray{T, 3}}
     # batch multiplication version. Input is dm × N × B
     Q = mha.denseQ(query)
@@ -1092,7 +1114,7 @@ This is done in two steps:
     V = permutedims(reshape(V, dh, nhead, vs[2], vs[3]), [1, 3, 2, 4])
 {% endhighlight %}
 
-Then we calculate the scaled dot attention for each head, combine results and return it:
+Then we calculate the scaled dot attention for each head, combine results (undo the splitting) and return it:
 {% highlight julia %}
     A = scaled_dot_attention(Q, K, V)
     A = permutedims(A, [1, 3, 2, 4])
@@ -1151,13 +1173,20 @@ function (mha::MultiheadAttention)(query::A1, key::A2, value::A3) where {
 end
 {% endhighlight %}
 
+Testing:
+{% highlight julia %}
+mha = MultiheadAttention(4, 32, 32)
+q, k, v = rand32(32, 10, 4), rand32(32, 10, 4), rand32(32, 10, 4)
+a = mha(q, k, v) # 32×10×4 Array{Float32, 3}
+{% endhighlight %}
+
 ### Encoder blocks
 
 We still need to complete the rest of the equations in the [table](#equations_table).
 Thankfully the rest of the layers are provided by Flux. We wrap them in an `TransformerEncoderBlock`:
 {% highlight julia %}
 struct TransformerBlock{
-    MHA<:MultiHeadAttention,
+    MHA<:MultiheadAttention,
     N1<:LayerNorm,
     D1<:Dense,
     D2<:Dense,
@@ -1170,7 +1199,7 @@ struct TransformerBlock{
     norm_feedforward::N2
     dropout::DO
 end
-Flux.@functor TransformerBlock # make whole block trainable
+Flux.@layer TransformerBlock # make whole block trainable
 {% endhighlight %}
 
 This layer includes drop out regularization which wasn't in the table but it is part of the original paper.
@@ -1208,7 +1237,7 @@ Because the inputs and outputs are similar we only need four parameters to defin
 {% highlight julia %}
 TransformerBlock(nhead::Int, dm::Int, dhid::Int; pdrop::Float64=0.1) = 
     TransformerBlock(
-        MultiHeadAttention(nhead, dm, dm),
+        MultiheadAttention(nhead, dm, dm),
         LayerNorm(dm),
         Dense(dm, dhid, relu),
         Dense(dhid, dm),
@@ -1227,32 +1256,6 @@ function Base.show(io::IO, block::TransformerBlock)
     print(io, ", ", block.dense2)
     print(io, ", ", block.norm_feedforward)
     print(io, ")")
-end
-
-function Base.show(io::IO, m::MIME"text/plain", block::TransformerBlock)
-    if get(io, :typeinfo, nothing) === nothing  # e.g. top level in REPL
-        _show_transformer_block(io, block)
-    elseif !get(io, :compact, false)  # e.g. printed inside a Vector, but not a Matrix
-      Flux._layer_show(io, block)
-    else
-      show(io, block)
-    end
-end
-function _show_transformer_block(io::IO, t::TransformerBlock, indent=0)
-    inner_indent = indent + 2
-    print(io, " "^indent, "TransformerBlock(\n")
-    _show_multiheadattention(io, t.multihead_attention, inner_indent)
-    for layer in [
-        t.dropout, t.norm_attention, t.dense1, t.dense2, t.dropout, t.norm_feedforward
-        ]
-        Flux._layer_show(io, layer, inner_indent)
-    end
-    print(io, " "^indent, ")")
-    if indent == 0
-        Flux._big_finale(io, t)
-    else
-        println(io, ",")
-    end
 end
 {% endhighlight %}
 
@@ -1277,6 +1280,13 @@ They look like they are undoing all the hard work of the previous layer.
 However these have proved very useful for neural networks with many layers
 because they carry a strong signal both on the forward pass and with the gradient on the backwards pass.
 
+Testing:
+{% highlight julia %}
+block = TransformerBlock(4, 32, 64)
+X = rand32(32, 10, 4)
+Y = block(X) # 32×10×4 Array{Float32, 3}:
+{% endhighlight %}
+
 ### Classifier
 
 At last, our model is almost ready for use.
@@ -1291,16 +1301,12 @@ Here is a flatten layer which we will need to use to reduce the dimension: $1\ti
 {% highlight julia %}
 struct FlattenLayer end
 
-Flux.@functor FlattenLayer
-
 function (f::FlattenLayer)(x::AbstractArray{T, 3}) where T
   reshape(x, :, size(x, 3)) # same as Flux.flatten
 end
 
-(f::FlattenLayer)(x::AbstractArray{T, 2}) where T = x
-
-function Base.show(io::IO, f::FlattenLayer)
-  print(io, "FlattenLayer()")
+function (f::FlattenLayer)(x::AbstractArray{T, 2}) where T
+    reshape(x, :, 1) # returns a column vector
 end
 {% endhighlight %}
 
@@ -1320,10 +1326,16 @@ model = Chain(
     )
 {% endhighlight %}
 
-Alternatively see [classifier.jl](https://github.com/LiorSinai/TransformersLite.jl/blob/main/src/classifier.jl) in the repository for a version of the same model wrapped in a struct with nicer printing and names. Making a model with this:
+Test:
+{% highlight julia %}
+X = rand(1:7455, 50, 8)
+Y = model(X) # 5×8 Matrix{Float32}
+{% endhighlight %}
+
+Alternatively see [classifier.jl](https://github.com/LiorSinai/TransformersLite.jl/blob/main/src/models/TransformerClassifier.jl) in the repository for a version of the same model wrapped in a struct with nicer printing and names. Making a model with this:
 {% highlight julia %}
 model = TransformersLite.TransformerClassifier(
-    Embed(32, 7455), 
+    Embedding(7455 => 32), 
     PositionEncoding(32), 
     Dropout(0.1),
     TransformerBlock[
@@ -1335,31 +1347,10 @@ model = TransformersLite.TransformerClassifier(
     )
 {% endhighlight %}
 
-Output:
+Test:
 {% highlight julia %}
-TransformerClassifier(
-  Embed((32, 7455)),                    # 238_560 parameters
-  PositionEncoding(32),
-  Dropout(0.1),
-  TransformerEncoderBlock(
-    MultiheadAttention(num_heads=4, head_size=8, 32=>32)(
-      denseQ = Dense(32 => 32),         # 1_056 parameters
-      denseK = Dense(32 => 32),         # 1_056 parameters
-      denseV = Dense(32 => 32),         # 1_056 parameters
-      denseO = Dense(32 => 32),         # 1_056 parameters
-    ),
-    Dropout(0.1),
-    LayerNorm(32),                      # 64 parameters
-    Dense(32 => 128, relu),             # 4_224 parameters
-    Dense(128 => 32),                   # 4_128 parameters
-    Dropout(0.1),
-    LayerNorm(32),                      # 64 parameters
-  ),
-  Dense(32 => 1),                       # 33 parameters
-  FlattenLayer(),
-  Dense(50 => 5),                       # 255 parameters
-)        # Total: 21 trainable arrays, 251_552 parameters,
-          # plus 1 non-trainable, 32_000 parameters, summarysize 1.083 MiB
+X = rand(1:7455, 50, 8)
+Y = model(X) # 5×8 Matrix{Float32}
 {% endhighlight %}
 
 Finally, we have a working transformer!

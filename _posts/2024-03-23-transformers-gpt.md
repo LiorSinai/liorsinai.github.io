@@ -3,7 +3,7 @@ layout: post
 title:  "Generative transformer from first principles in Julia"
 date:   2024-03-23
 author: Lior Sinai
-last_modified_at: 2024-04-13
+last_modified_at: 2025-02-02
 background: '/assets/posts/transformers/transformer.png'
 sidenav: true
 categories: machine-learning
@@ -14,10 +14,14 @@ redirect_from:
 
 _A transformer for generating text in Julia, trained on Shakespeare's plays. This model can be used as a Generative Pre-trained Transformer (GPT) with further work. This post was inspired by Andrej Karpathy's Zero to Hero course._ 
 
+_Update 2 February 2025: update to Flux 0.16._
+
 See also a previous post: [Transformers from first principles in Julia][firstPrinciples].
 
 [firstPrinciples]: {{ "machine-learning/2022/05/18/transformers" | relative_url }}
 [generator]: {{ "machine-learning/2024/03/23/transformers-part2-gpt" | relative_url }}
+
+All code available at [github.com/LiorSinai/TransformersLite.jl](https://github.com/LiorSinai/TransformersLite.jl).
 
 ### Table of Contents
 
@@ -387,23 +391,27 @@ Flux.jl comes with an embedding layer which can be used directly:
 {% highlight julia %}
 embedding = Flux.Embedding(72 => 32)
 x = rand(1:72, 10) # [40, 49, 55, 65, 27, 50, 35, 69, 40, 29]
-embedding(x) # 32 × 10
+embedding(x) # 32×10 Matrix{Float32}
 {% endhighlight %}
 
-Here is the [source code](https://github.com/FluxML/Flux.jl/blob/f4b47611cb731b41879a0af10439026a67c942e1/src/layers/basic.jl#L700-L718):
+Here is the [source code](https://github.com/FluxML/Flux.jl/blob/009d9841960ac15d9a02499ac6e341e777dedf34/src/layers/basic.jl#L762):
 
 {% highlight julia %}
 struct Embedding{W<:AbstractMatrix}
   weight::W
 end
 
-@functor Embedding
+Flux.@layer Embedding
 
 Embedding((in, out)::Pair{<:Integer, <:Integer}; init = randn32) = Embedding(init(out, in))
 
 (m::Embedding)(x::Integer) = m.weight[:, x]
 (m::Embedding)(x::AbstractVector) = NNlib.gather(m.weight, x)
 (m::Embedding)(x::AbstractArray) = reshape(m(vec(x)), :, size(x)...)
+
+function Base.show(io::IO, m::Embedding)
+  print(io, "Embedding(", size(m.weight, 2), " => ", size(m.weight, 1), ")")
+end
 {% endhighlight %}
 
 This struct stores a weight, by default the smaller datatype of `Float32` rather than the usual Julia default of `Float64`.
@@ -470,7 +478,7 @@ We can use an `Embedding` matrix as before, except with a different input:
 position_encoding = Embedding(16 => 32)
 x = rand(32, 10) # the output of the first embedding layer
 indices = 1:size(x, 2) # 1:10
-embedding(indices) # 32 × 10
+embedding(indices) # 32×10 Matrix{Float32}
 {% endhighlight %}
 
 <div class="card">
@@ -665,7 +673,7 @@ Usage:
 {% highlight julia %}
 mask = make_causal_mask(ones(5, 5))
 x = randn(Float32, 5, 5)
-apply_mask(x, mask)
+apply_mask(x, mask) # 5×5 Matrix{Float32}:
 {% endhighlight %}
 
 Backpropagation:
@@ -697,10 +705,10 @@ $$ C_{ijk} = \sum_r A_{irk} B_{rjk} $$
 An optimised version is available through the NNlib.jl library, a dependency of Flux.jl:
 
 {%highlight julia %}
-Using NNlib
+using NNlib
 A = rand(6, 8, 4);
 B = rand(8, 5, 4);
-NNlib.batched_mul(A, B); # 6×5×4
+NNlib.batched_mul(A, B) # 6×5×4 Array{Float64, 3}
 {% endhighlight %}
 
 The 4D batched multiplication is defined as:
@@ -714,7 +722,7 @@ This is exactly what the implementation does behind the [scenes](https://github.
 Using NNlib
 A = rand(6, 8, 4, 3);
 B = rand(8, 5, 4, 3);
-NNlib.batched_mul(A, B); # 6×5×4
+NNlib.batched_mul(A, B) # 6×5×4×3 Array{Float64, 4}
 {% endhighlight %}
 
 The Flux `Dense` layer does something [similar](https://github.com/FluxML/Flux.jl/blob/348c56f6172c6ce838790b0ba23c5f4c58d93b83/src/layers/basic.jl#L177).
@@ -723,14 +731,14 @@ The Flux `Dense` layer does something [similar](https://github.com/FluxML/Flux.j
 <h4 id="attention-multiheadattention-layer">3.5.4 MultiHeadAttention layer</h4>
 
 Flux.jl now comes with a `Flux.MultiHeadAttention` layer.
-However for continuity with my [first post](/machine-learning/2022/05/18/transformers#multi-head-attention), I will present my own `MultiHeadAttention` layer except now with masking.
+However for continuity with my [first post](/machine-learning/2022/05/18/transformers#multi-head-attention), I will present my own `MultiheadAttention` layer except now with masking.
 It is very similar to the code in [Flux.jl](https://github.com/FluxML/Flux.jl/blob/master/src/layers/attention.jl) and [NNlib.jl](https://github.com/FluxML/NNlib.jl/blob/master/src/attention.jl).
 The differences are in design choices for the inputs and Flux.jl's implementations are slightly more generic.
 
 First define a struct to hold all the dense layers and a parameter for $H$ called `nhead`:
 
 {% highlight julia %}
-struct MultiHeadAttention{Q<:Dense, K<:Dense, V<:Dense, O<:Dense}
+struct MultiheadAttention{Q<:Dense, K<:Dense, V<:Dense, O<:Dense}
     nhead::Int
     denseQ::Q
     denseK::K
@@ -738,18 +746,17 @@ struct MultiHeadAttention{Q<:Dense, K<:Dense, V<:Dense, O<:Dense}
     denseO::O
 end
 
-Flux.@functor MultiHeadAttention # make parameters visible to Flux
 #= tell Flux which parameters are trainable =#
-Flux.trainable(m::MultiHeadAttention) = (; m.denseQ, m.denseK, m.denseV, m.denseO) 
+Flux.@layer MultiHeadAttention trainable=(denseQ, denseK, denseV, denseO)
 {% endhighlight %}
 
 The model is defined by 4 values: the number of heads $H$, the input dimension $d_\text{in}$, the output dimension $d_\text{out}$ and the head dimension $d_h$. The default for $d_h$ is $d_\text{in}/H$.
 
 {% highlight julia %}
-function MultiHeadAttention(
+function MultiheadAttention(
     nhead::Int, dim_in::Int, dim_head::Int, dim_out::Int
     )
-    MultiHeadAttention(
+    MultiheadAttention(
         nhead,
         Dense(dim_in, dim_head*nhead; bias=false),
         Dense(dim_in, dim_head*nhead; bias=false),
@@ -758,13 +765,13 @@ function MultiHeadAttention(
     )
 end
 
-function MultiHeadAttention(
+function MultiheadAttention(
     nhead::Int, dim_in::Int, dim_out::Int
     )
     if dim_in % nhead != 0 
         error("input dimension=$dim_in is not divisible by number of heads=$nhead")
     end
-    MultiHeadAttention(nhead, dim_in, div(dim_in, nhead), dim_out)
+    MultiheadAttention(nhead, dim_in, div(dim_in, nhead), dim_out)
 end
 {% endhighlight %}
 
@@ -774,7 +781,7 @@ Later we will pass the same value `x` for all of them.
 From these we can calculate $Q$, $K$ and $V$ and pass them to the `multi_head_scaled_dot_attention` function:
 
 {% highlight julia %}
-function (mha::MultiHeadAttention)(query::A3, key::A3, value::A3
+function (mha::MultiheadAttention)(query::A3, key::A3, value::A3
     ; kwargs...) where {T, A3 <: AbstractArray{T, 3}}
     Q = mha.denseQ(query)
     K = mha.denseK(key)
@@ -784,7 +791,7 @@ function (mha::MultiHeadAttention)(query::A3, key::A3, value::A3
 end
 {% endhighlight %}
 
-This layer returns the scores as well, like Flux.jl's `MultiHeadAttention` layer.
+This layer returns the scores as well, like Flux.jl's `MultiheadAttention` layer.
 These are useful for inspecting the model.
 
 <h4 id="attention-multi-head-attention">3.5.5 Multi-Head Attention</h4>
@@ -854,15 +861,16 @@ end
 
 Model:
 {% highlight julia %}
-mha = MultiHeadAttention(4, 32, 32)
+mha = MultiheadAttention(4, 32, 32)
 Flux._big_show(stdout, mha)
 #=
-MultiHeadAttention(
+MultiheadAttention(
+  4,
   Dense(32 => 32; bias=false),          # 1_024 parameters
   Dense(32 => 32; bias=false),          # 1_024 parameters
   Dense(32 => 32; bias=false),          # 1_024 parameters
   Dense(32 => 32),                      # 1_056 parameters
-)                   # Total: 5 arrays, 4_128 parameters, 16.453 KiB.
+)                   # Total: 5 arrays, 4_128 parameters, 16.422 KiB.
 =#
 {% endhighlight %}
 
@@ -870,7 +878,7 @@ Forward pass:
 {% highlight julia %}
 x = randn(Float32, 32, 20, 2) # d×n×B
 mask = make_causal_mask(ones(32, 20))
-y, scores = mha(x, x, x; mask=mask) # 32×20×2, 20×20×4×2
+y, scores = mha(x, x, x; mask=mask) # 32×20×2 Array{Float32, 3}, 20×20×4×2 Array{Float32, 4}
 {% endhighlight %}
 
 Backpropagation:
@@ -897,7 +905,7 @@ We can use the Flux.jl implementations for these.
 This means we can now create a transformer block:
 {% highlight julia %}
 struct TransformerBlock{
-    MHA<:MultiHeadAttention,
+    MHA<:MultiheadAttention,
     N1<:LayerNorm,
     D1<:Dense,
     D2<:Dense,
@@ -911,7 +919,7 @@ struct TransformerBlock{
     dropout::DO
 end
 
-Flux.@functor TransformerBlock # make whole layer trainable
+Flux.@layer TransformerBlock # make whole layer trainable
 {% endhighlight %}
 
 This whole block can be defined with only 5 parameters:
@@ -930,7 +938,7 @@ TransformerBlock(
     act=relu,
     pdrop::Float64=0.1,
     ) = TransformerBlock(
-    MultiHeadAttention(nhead, dim_model, dim_model),
+    MultiheadAttention(nhead, dim_model, dim_model),
     LayerNorm(dim_model),
     Dense(dim_model, dim_hidden, act),
     Dense(dim_hidden, dim_model),
@@ -970,8 +978,8 @@ TransformerBlock(
 Forward pass:
 {% highlight julia %}
 x = randn(Float32, 32, 20, 2) # d×n×B
-mask = make_causal_mask(ones(32, 20))
-y = block(x; mask=mask) # 32×20×2
+mask = make_causal_mask(ones(32, 20)) # 20×20 Matrix{Bool}
+y = block(x; mask=mask) # 32×20×2 Array{Float32, 3}
 {% endhighlight %}
 
 Backpropagation:
@@ -1010,8 +1018,7 @@ struct TransformerGenerator{
     mask::M # optional buffer
 end
 
-Flux.@functor TransformerGenerator
-Flux.trainable(m::TransformerGenerator) = (; m.embedding, m.position_encoding, m.blocks, m.dropout, m.head)
+Flux.@layer TransformerGenerator trainable=(embedding, position_encoding, blocks, dropout, head)
 {% endhighlight %}
 
 By default the forward pass will use the model's mask, else the user can pass a mask to it:
@@ -1062,7 +1069,7 @@ We can test it with a random vector of indices:
 {% highlight julia %}
 x = reshape(rand(1:vocab_size, 34), :, 1) # make it a batch of 1
 mask = make_causal_mask(ones(dim, length(x)))
-y = model(x; mask=mask) # 71×34×1
+y = model(x; mask=mask) # 71×34×1 Array{Float32, 3}
 {% endhighlight %}
 
 Or a random batch:
@@ -1495,7 +1502,7 @@ I hope you now have a working transformer and have much better insight into how 
     ```
 
 [^block_scores]: The design decision is to purposely drop the attention scores in the `TransformerBlock`'s forward pass. This is to simplify the code and to not place a bias on the attention.
-    In a typical block the `MultiHeadAttention` layer will make up 1/3rd of parameters while the dense layers will make up 2/3rds, so the dense layers are potentially more important.
-    To return the scores it is enough to edit the forward pass for the block and model, or to create two new functions entirely.
+    In a typical block the `MultiheadAttention` layer will make up 1/3rd of parameters while the dense layers will make up 2/3rds, so the dense layers are potentially more important.
+    To return the scores you can edit the forward pass for the block and model, or create two new functions entirely.
 
 [^split]: A smarter strategy is to randomly sample passages throughout the text until the desired proportions are reached.
