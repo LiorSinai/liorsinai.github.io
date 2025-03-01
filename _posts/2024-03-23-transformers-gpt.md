@@ -19,7 +19,7 @@ _Update 2 February 2025: update to Flux 0.16._
 See also a previous post: [Transformers from first principles in Julia][firstPrinciples].
 
 [firstPrinciples]: {{ "machine-learning/2022/05/18/transformers" | relative_url }}
-[generator]: {{ "machine-learning/2024/03/23/transformers-part2-gpt" | relative_url }}
+[generator]: {{ "machine-learning/2024/03/23/transformers-gpt" | relative_url }}
 
 All code available at [github.com/LiorSinai/TransformersLite.jl](https://github.com/LiorSinai/TransformersLite.jl).
 
