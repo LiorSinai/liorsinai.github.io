@@ -17,9 +17,11 @@ _A transformer for generating text in Julia, trained on Shakespeare's plays. Thi
 _Update 2 February 2025: update to Flux 0.16._
 
 See also a previous post: [Transformers from first principles in Julia][firstPrinciples].
+And a later post: [DeepSeek's Multi-Head Latent Attention][mla].
 
 [firstPrinciples]: {{ "machine-learning/2022/05/18/transformers" | relative_url }}
 [generator]: {{ "machine-learning/2024/03/23/transformers-gpt" | relative_url }}
+[mla]: {{ "machine-learning/2025/02/22/mla" | relative_url }}
 
 All code available at [github.com/LiorSinai/TransformersLite.jl](https://github.com/LiorSinai/TransformersLite.jl).
 
@@ -118,6 +120,7 @@ However at inference time we are only interested in the last ($n$th) character, 
 Therefore we will discard the first $n-1$ predictions. (They would have already been used internally in the model.)
 
 This is an inherent inefficiency in the transformer model architecture. 
+(KV Caching can be used to overcome it. See [João Lages' visusal explanation](https://medium.com/@joaolages/kv-caching-explained-276520203249) or a later [blog post](/machine-learning/2025/02/22/mla#kv-caching).)
 
 Generation will repeat inference many times, each time adding the last generated token to the context and generating a new token. The result is something like:
 
