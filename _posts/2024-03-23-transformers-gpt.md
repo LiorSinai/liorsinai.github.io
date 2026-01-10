@@ -3,7 +3,7 @@ layout: post
 title:  "Generative transformer from first principles in Julia"
 date:   2024-03-23
 author: Lior Sinai
-last_modified_at: 2025-02-02
+last_modified_at: 2026-01-10
 background: '/assets/posts/transformers/transformer.png'
 sidenav: true
 categories: machine-learning
@@ -74,28 +74,28 @@ This model can then be used as the pre-trained foundation for further supervised
 The goal is to create a model which implements the architecture in the [GPT paper](#fig-gpt1):
 ```text
 TransformerGenerator(
-  Embedding(71 => 32),                  # 2_272 parameters
+  Embedding(72 => 32),                  # 2_304 parameters
   Embedding(64 => 32),                  # 2_048 parameters
   Dropout(0.1),
   TransformerBlock(
-    MultiHeadAttention(num_heads=4, head_size=8, 32=>32)(
+    MultiHeadAttention(
+      nhead=4,
       denseQ = Dense(32 => 32; bias=false),  # 1_024 parameters
       denseK = Dense(32 => 32; bias=false),  # 1_024 parameters
       denseV = Dense(32 => 32; bias=false),  # 1_024 parameters
       denseO = Dense(32 => 32),         # 1_056 parameters
     ),
-    Dropout(0.1),
     LayerNorm(32),                      # 64 parameters
     Dense(32 => 128, relu),             # 4_224 parameters
     Dense(128 => 32),                   # 4_128 parameters
-    Dropout(0.1),
     LayerNorm(32),                      # 64 parameters
+    Dropout(0.1),
   ),
   ..., # 2x more TransformerBlocks
-  Dense(32 => 71),                      # 2_343 parameters
-  mask = Bool[1 1 … 1 1; 0 1 … 1 1; … ; 0 0 … 1 1; 0 0 … 0 1],  # 1_156 parameters
-)        # Total: 43 trainable arrays, 44_487 parameters,
-          # plus 1 non-trainable, 1_156 parameters, summarysize 178.219 KiB.
+  Dense(32 => 72),                      # 2_376 parameters
+  mask = 64×64 Matrix{Bool},
+)        # Total: 43 trainable arrays, 44_552 parameters,
+          # plus 1 non-trainable, 4_096 parameters, summarysize 180.641 KiB.
 ```
 
 It will map tokens to indices and will operate on those :
@@ -120,7 +120,7 @@ However at inference time we are only interested in the last ($n$th) character, 
 Therefore we will discard the first $n-1$ predictions. (They would have already been used internally in the model.)
 
 This is an inherent inefficiency in the transformer model architecture. 
-(KV Caching can be used to overcome it. See [João Lages' visusal explanation](https://medium.com/@joaolages/kv-caching-explained-276520203249) or a later [blog post](/machine-learning/2025/02/22/mla#kv-caching).)
+(KV Caching can be used to overcome it. See [João Lages' visual explanation](https://medium.com/@joaolages/kv-caching-explained-276520203249) or a later [blog post](/machine-learning/2025/02/22/mla#kv-caching).)
 
 Generation will repeat inference many times, each time adding the last generated token to the context and generating a new token. The result is something like:
 
@@ -286,7 +286,7 @@ julia> using TransformersLite
 The following packages need to be loaded/added for this tutorial:
 
 {%highlight julia-repl %}
-julia> using Flux, LinearAlgebra, NNlib, Random, StatsBase
+julia> using Flux, LinearAlgebra, NNlib, ProgressMeter, Random, StatsBase
 {% endhighlight %}  
 
 <h3 id="tokenization">3.2 Tokenization</h3>
@@ -722,7 +722,7 @@ We can calculate this array with the same `batched_mul` by reshaping any 4D $m\t
 This is exactly what the implementation does behind the [scenes](https://github.com/FluxML/NNlib.jl/blob/07833637dec96d12d0614308d3145b432fdb320a/src/batched/batchedmul.jl#L47):
 
 {%highlight julia %}
-Using NNlib
+using NNlib
 A = rand(6, 8, 4, 3);
 B = rand(8, 5, 4, 3);
 NNlib.batched_mul(A, B) # 6×5×4×3 Array{Float64, 4}
@@ -957,12 +957,12 @@ function (t::TransformerBlock)(x::A; mask::M=nothing) where {
     h, scores = t.multihead_attention(x, x, x; mask=mask) # (dm, N, B)
     h = t.dropout(h) 
     h = x + h
-    h = t.norm_attention(h)            # (dm, N, B)
-    hff = t.dense1(h)                  # (dh, N, B)
-    hff = t.dense2(hff)                # (dm, N, B)
+    h = t.norm_attention(h)     # (dm, N, B)
+    hff = t.dense1(h)           # (dh, N, B)
+    hff = t.dense2(hff)         # (dm, N, B)
     hff = t.dropout(hff)
     h = h + hff
-    h = t.norm_feedforward(h)          # (dm, N, B)
+    h = t.norm_feedforward(h)   # (dm, N, B)
     h
 end
 {% endhighlight %}
@@ -1064,7 +1064,7 @@ Flux._big_show(stdout, model)
 TransformerGenerator(
   ...
 )         # Total: 43 trainable arrays, 44_487 parameters,
-          # plus 1 non-trainable, 1_156 parameters, summarysize 178.219 KiB.
+          # plus 1 non-trainable, 4_096 parameters, summarysize 180.410 KiB.
 =#
 {% endhighlight %}
 
@@ -1158,7 +1158,20 @@ This is nonsense. The model does no better than drawing each character randomly.
 We need to train the model to get something sensible out of it.
 
 <h2 id="training">4 Training</h2>
-<h3 id="batch-generation">4.1 Batch generation</h3>
+<h3 id="train-validation-split">4.1 Train/validation split</h3>
+
+It is always good practice to split the data into train, validation and test splits.
+For simplicity, we'll only use a train and validation split. 
+We'll put the first 95% of data in the train split and the remainder in the validation split.[^split]
+
+{%highlight julia %}
+tokens = indexer(collect(text))
+n_val = floor(Int, (0.95) * length(tokens))
+train_data = tokens[1:n_val]
+val_data = tokens[(n_val + 1):end]
+{%endhighlight%}
+
+<h3 id="batch-generation">4.2 Batch generation</h3>
 
 The model will be trained on segments of the text which match the context length $n$.
 For a text of length $L$ there are $L-n+1$ characters we can select to be the first character of the segments, excluding the last $n-1$ characters.
@@ -1209,7 +1222,7 @@ The outputs look like:
 Lastly, it can be convenient to wrap this functionality in a struct similar to Flux.jl's `DataLoader`.
 For an example of this, please see the `BatchGenerator` object in my [generate_batches.jl](https://github.com/LiorSinai/TransformersLite-Examples/blob/main/examples/GPT/generate_batches.jl) file.
 
-<h3 id="loss">4.2 Loss</h3>
+<h3 id="loss">4.3 Loss</h3>
 
 What is our goal?
 
@@ -1221,7 +1234,7 @@ We can then pick out the next true characters by converting the reference array 
 {%highlight julia %}
 Z = model(X, mask=mask) # V×n×B
 probs = softmax(Z, dims=1)
-Y_onehot = Flux.onehotbatch(Y, 1:V) # V×n×B
+Y_onehot = Flux.onehotbatch(Y, 1:vocab_size) # V×n×B
 Y_onehot .* probs # V×n×B
 {%endhighlight %}
 
@@ -1268,7 +1281,7 @@ end
 
 I've called it the full loss to indicate that it is over all $nB$ token predictions and not only the last ($B$) tokens. 
 
-<h3 id="perplexity">4.3 Perplexity</h3>
+<h3 id="perplexity">4.4 Perplexity</h3>
 
 Another common measure of the ability of the model is perplexity, which is the inverse of the average probability for each character.
 It is defined as:
@@ -1280,7 +1293,7 @@ $$
 where $l(y, p)$ is the cross entropy loss.
 
 The perplexity for random sampling with $p_i=1/V$ is simply $V$.
-In other words, the perplexity for randomly sampling 71 characters is a 1 in 71 chance for each character.
+In other words, the perplexity for randomly sampling 72 characters is a 1 in 72 chance for each character.
 A trained model should achieve a value closer to 1 in 1, because the context and known distributions allow the model to select characters with greater than random chance.
 
 Like other types of averages, perplexity does not describe the shape of the distribution and outliers can have an outsized effect on it.
@@ -1300,22 +1313,11 @@ mean_loss /= num_steps
 perplexity = exp(mean_loss)
 {%endhighlight%}
 
-<h3 id="train-validation-split">4.4 Train/validation split</h3>
-
-It is always good practice to split the data into train, validation and test splits.
-For simplicity, we'll only use a train and validation split. 
-We'll put the first 95% of data in the train split and the remainder in the validation split.[^split]
-
-{%highlight julia %}
-tokens = indexer(collect(text))
-n_val = floor(Int, (0.95) * length(tokens))
-train_data = tokens[1:n_val]
-val_data = tokens[(n_val + 1):end]
-{%endhighlight%}
+Running this with an untrained model gave me a mean loss of 4.518 and perplexity of 91.7, which is even worse than the theoretical values.
 
 <h3 id="training-loop">4.5 Training loop</h3>
 
-We can now setup a training loop:
+We can now setup a training loop. It will use gradient descent with an [Adam optimizer](https://arxiv.org/abs/1412.6980) to adjust learning rates during the process:
 {%highlight julia %}
 using Flux, ProgressMeter
 batch_size = 32
@@ -1330,7 +1332,7 @@ end
 {%endhighlight%}
 
 This works well enough, but will require many more steps to train. I recommend at least 10 epochs, where one epoch is defined as $0.95L/(nB)$ steps. 
-(Based on the logic in [Batch Generation](#batch-generation) each character at each position in the text should appear approximately once per epoch.)
+Then based on the logic in [Batch Generation](#batch-generation) each character at each position in the text should appear approximately once per epoch.
 For $L=4.9\times10^6$, $n=64$ and $B=32$, this is 2,300 steps per epoch.
 
 Please see my [training.jl](https://github.com/LiorSinai/TransformersLite-Examples/blob/main/common/training.jl) file for a `train!` function which also does the following:
@@ -1338,8 +1340,80 @@ Please see my [training.jl](https://github.com/LiorSinai/TransformersLite-Exampl
 - Calculates the total loss and accuracy at the end of each epoch.
 - Returns a history `Dictionary` which saves these values for each epoch for each metric.
 
-<h2 id="Inspection">5 Inspection</h2>
-<h3 id="inspect-embeddings">5.1 Embeddings</h3>
+<h2 id="evaluation">5 Evaluation</h2>
+<h3 id="evaluation-qualitive">5.1 Qualitative</h3>
+
+After the model has been properly trained, we can test how well it generates text:
+
+{% highlight julia %}
+context = reshape([1], 1, 1) # start with the new line symbol
+out = generate(model, context; context_size=64, max_tokens=300)
+decoded_text = join(decode(indexer, out[:, 1]))
+{% endhighlight %}
+
+<blockquote><pre>
+Enter which at con to pratele-timen, man,
+Nus maxchant newall the strainans, spauks wring-all likell come bein?
+
+PAGLERANIA.
+I not all sakompty hanet are the our
+parry adme is waith
+On shalt, full, in mety infor to thee I pater: let fathing
+you, do taks you mail was the mascain
+Am.
+Him fore our waka
+</pre></blockquote>
+
+The output is not fully cohesive and is not proper English.
+However, there are many true English words and the made-up words follow general English patterns.
+The general structure of the output matches the [input structure](#preparation). 
+Characters (Actors) are introduced in all capitals.
+
+We could also use a prompt, for example a famous line from the input:
+{% highlight julia %}
+tokens = indexer(collect("To be, or not to be, that is the question:\n"));
+context = reshape(tokens, :, 1)
+out = generate(model, context; context_size=64, max_tokens=300)
+decoded_text = join(decode(indexer, out[:, 1]))
+{% endhighlight %}
+
+<blockquote><pre>
+To be, or not to be, that is the question:
+Of them I conful usall but as dull will henow
+I wold you stay shaked marce, I witth all mine Ren, to siven,
+Thoumbeines.
+
+GUERD.
+Swetr with they bloctain now tires’d do stord’s my leed.
+
+NAWIPAR.
+And then tillf’s broky! house stoop lord
+you lay’d beater of Ettion say.
+
+DUKEnge what by to and King an
+</pre></blockquote>
+
+It does not reproduce the actual line in the text ("Whether 'tis nobler in the mind to suffer
+"). However, as before, the output is not entirely nonsense and at least has the correct strcture.
+
+<h3 id="evaluation-quantitative">5.2. Quantitative</h3>
+
+Calculate the mean loss and perplexity again:
+{% highlight julia %}
+mean_loss = 0.0f0
+@showprogress for step in 1:1000
+    X, Y = get_shifted_batch(val_data, 64, 32)
+    mean_loss += full_loss(model(X), Y)
+end
+mean_loss /= 1000
+perplexity = exp(mean_loss)
+{% endhighlight %}
+
+The mean loss is 1.853 and the perplexity is 6.379.
+This is a significant improvement from the initialisation values of 4.277 and 72.0 respectively.
+
+<h2 id="inspection">6 Inspection</h2>
+<h3 id="inspect-embeddings">6.1 Embeddings</h3>
 
 For the most part the model we have created is black box. There are however various techniques to inspect the model. For example, cosine similarities which was showcased in the [Position Encoding](#position-encoding) section.
 
@@ -1390,10 +1464,10 @@ For the embedding matrix we can see that the model groups all the vowels (a, e, 
 
 Perhaps with further training more meaning would be encoded into these vectors.
 
-<h3 id="inspect-attention">5.2 Attention scores</h3>
+<h3 id="inspect-attention">6.2 Attention scores</h3>
 
 We can pass an input to the model and visually inspect the attention scores.
-To do this we need to alter the [attention functions](#attention) to return the score as well (including reshaping it as needed).
+To do this we need to alter the [transformer functions](#transformer-blocks) to return the score as well (including reshaping it as needed).
 At the top level - the forward pass of the model - these scores should be saved in a vector.
 Then we can plot them:
 
@@ -1441,7 +1515,7 @@ This suggests we could have used a much smaller context length, for example 16 a
 
 Ideally the model should be learning long range relationships and it is worrying that it is not.
 
-That said, the model does confidently predict that the next letter is an "e" at the end of "chance":
+That said, the model does confidently predict that after "How chanc" is an "e":
 <p>
   <a class="btn" data-toggle="collapse" href="#code-probs-plot" role="button" aria-expanded="false" aria-controls="collapseExample">
     Code for probability plot &#8681;
