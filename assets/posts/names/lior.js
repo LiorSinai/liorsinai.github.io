@@ -1,4 +1,5 @@
 import data from './lior.json' with { type: 'json' };
+import nameData from './name_rank_quantiles.json' with { type: 'json' };
 import { genderColors, colors } from './constants.js';
 // const data = require('./output/lior.json');
 
@@ -7,6 +8,17 @@ const CANVAS = document.getElementById('canvas-my-name');
 let i = -1;
 let countData = []
 let rankData = []
+for (const gender of ['M', 'F']){
+    let dash = gender == 'M' ? 'solid' : 'dash'
+    rankData.push({
+        x: nameData.years,
+        y: nameData[gender]['max dense rank'],
+        type: 'line',
+        name: `Lowest dense rank (${gender})`,
+        line: {dash: dash, color: 'rgba(0, 0, 0, 0.6)'},
+        xaxis: 'x2', yaxis: 'y2',
+    })
+}
 for (const gender of ['M', 'F']) {
     let names = Object.keys(data[gender]);
     for (const name of names) {
