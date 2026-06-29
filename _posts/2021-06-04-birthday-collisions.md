@@ -107,7 +107,7 @@ This is close to 23/365 which is about 6%. So far, the numbers are close to our 
 
 ## The probability that at least some people share a birthday
 
-Your friend is sitting next to you in this circle. You now want to know the probability that either you or him share a birthday with someone. Intuitively this probability should be higher.
+Your friend is sitting next to you in this circle. You now want to know the probability that either you or he share a birthday with someone. Intuitively this probability should be higher.
 
 <figure class="post-figure" id="pairs2">
 <img class="img-80" 
@@ -180,7 +180,7 @@ Here is the distribution of birthdays per month:
 
 There are approximately 30 birthdays a month. Some months have more and some less. It can be considered a rough approximation of a uniform distribution of birthdays.
 
-65% of my friends share a birthday with at least one other unrelated person. On one day there are as much as seven people sharing a birthday. This is the distribution of people with shared birthdays: 
+65% of my friends share a birthday with at least one other unrelated person. On one day there are as many as seven people sharing a birthday. This is the distribution of people with shared birthdays: 
 
 <figure class="post-figure" id="shared_birthdays">
 <img class="img-80" 

@@ -35,7 +35,7 @@ A background in counting methods with combinations and permutations is required.
 In the previous post I assumed independence between sharing birthdays. 
 But sharing is dependent. If person A and person B share a birthday, then sharing a birthday with person B depends on sharing a birthday with person A. Counting methods can account for this dependence.
 
-As in my the previous post, it is easiest to work backwards. 
+As in the previous post, it is easiest to work backwards. 
 First find the probability that no people share a birthday
 and then subtract this from 1. For $n$ people, we can imagine shuffling $k=n$ unique birthdays in $k$ slots yet for each one we have a choice of 365 birthdays:
 
@@ -216,7 +216,7 @@ But how does one calculate the theoretical curve? Let's start with simpler, very
 
 We start with 30 friends of which none share birthdays and further, they do not share birthdays with people outside of group.
 - There are $\binom{374}{30}$ ways in total to choose 30 people. 
-- All the 30 most come from the set of $n_1=132$ singletons: $\binom{132}{30}$.
+- All the 30 must come from the set of $n_1=132$ singletons: $\binom{132}{30}$.
 - The distribution is characterised by $D$.
 
 $$ \begin{align} 
@@ -268,7 +268,7 @@ This can be done with an integer partition algorithm with a maximum on the value
 For examples of such code, see the [next post][integer_partitions].
 All in all, there will be 16,632 different partitions for this particular set of maximums for 30 people. 
 The sum will be the theoretical value of selecting friends who do not share birthdays.
-Subtract from 1 to get the probability of least 2 sharing a birthday.
+Subtract from 1 to get the probability of at least 2 sharing a birthday.
 
 In two equations:
 

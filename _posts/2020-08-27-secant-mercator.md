@@ -10,7 +10,7 @@ categories: mathematics
 tags:	cartography mathematics 
 ---
 
-_The integral of sec(x) is well known to any beginners calculus student. Yet this integral was once a major outstanding maths problem. It was first introduced by Geradus Mercator who needed it to make his famous map in 1569. He couldn't find it and used an approximation instead. The exact solution was found accidentally 86 years later without calculus in 1645. It then took another two decades until a formal proof was given in 1668, 99 years after Mercator first proposed the problem._ 
+_The integral of sec(x) is well known to any beginners calculus student. Yet this integral was once a major outstanding maths problem. It was first introduced by Gerardus Mercator who needed it to make his famous map in 1569. He couldn't find it and used an approximation instead. The exact solution was found accidentally 86 years later without calculus in 1645. It then took another two decades until a formal proof was given in 1668, 99 years after Mercator first proposed the problem._ 
 
 _Update 13 March 2021: added a note on how Napier calculated logarithm trigonometry tables. This was prompted by a correction raised in a discussion of this post on [HackerNews][hackernews]._
 
@@ -106,8 +106,7 @@ Here are the graphs of the secant and cosine for the angles from $-2\pi$ (-360&d
 	>
 </figure>
 
-The integral of the secant can be interpreted as the area under the graph.[^2] This is illustrated by the shaded region
-
+The integral of the secant can be interpreted as the area under the graph.[^2] This is illustrated by the shaded region.
 
 ## An introduction to cartography
 
@@ -118,7 +117,7 @@ Lists of these projections can be found [here][map_projections] or [here][wiki_p
 I will explain two of the simplest here, which will help with understanding the Mercator map in the next section.
 
 All map projections can be represented as equations that transform spherical co-ordinates to flat map co-ordinates.[^3]
-The co-ordinates on the sphere are the angles $\varphi$ and $\lambda$. These correspond to lines of latitude (parallels) and longitude (meridans) respectively. 
+The co-ordinates on the sphere are the angles $\varphi$ and $\lambda$. These correspond to lines of latitude (parallels) and longitude (meridians) respectively. 
 The co-ordinates on the flat map are $x$ and $y$. A map projection is therefore a transformation from $\varphi$ and $\lambda$ to $x$ and $y$.
 
 One of the simplest and oldest known projections is the equirectangular projection:
@@ -132,7 +131,7 @@ One of the simplest and oldest known projections is the equirectangular projecti
 </figure>
 
 It is made by mapping meridians and parallels to vertical and horizontal straight lines of constant spacing.
-This has the affect of stretching out objects along the parallels.
+This has the effect of stretching out objects along the parallels.
 The equations for this projection are:
 
 $$ \begin{align} y &= R\varphi\\ x &= R\lambda \end{align}$$
@@ -189,11 +188,11 @@ The relative scale of Greenland to Africa is therefore accurately represented in
 
 ## The Mercator map
 
-In 1569mGerardus Mercator wanted to make a global world map that would be useful for navigation. 
+In 1569, Gerardus Mercator wanted to make a global world map that would be useful for navigation. 
 He lived in a time when sailing across vast ocean distances was the norm. (In 1492 Christopher Columbus had discovered America by sailing all the way from Spain.)
 The maps shown above are fine for artistic impressions and applications but not for navigation.
 The distortions prevent doing any accurate distance and bearing measurements on the map. 
-At a local level lines (eg. roads) which in reality intersect perpendicularly to each other would be appear to be slanted with respect to each other. 
+At a local level lines (eg. roads) which in reality intersect perpendicularly to each other would appear to be slanted with respect to each other. 
 
 In particular Mercator wanted to make a map where rhumb lines would be straight. Rhumb lines are curves of constant bearing relative to meridians. 
 To follow a rhumb line a navigator only needs to maintain the same bearing on their compass for the whole journey.
@@ -211,7 +210,7 @@ At each point along the rhumb line the angle $\theta$ with the meridian is 48.56
 I've also shown the great circle which is a circle whose centre lies on the centre of the sphere. 
 Traveling along the great circle is always shorter. In this case the distance is 12550 km instead of 12600 km along the rhumb line.
 With modern technology it is easy for ships and aeroplanes to stick to the great circles. But back in Mercator's day this was rather difficult. 
-So sailors preferred to stick to rhumb lines. They would rather get to their destination by traveling a little longer then get lost and travel a lot more.
+So sailors preferred to stick to rhumb lines. They would rather get to their destination by traveling a little longer than get lost and travel a lot more.
 
 Mercator's idea was to stretch out a cylindrical projection map in the North-South direction to preserve shapes and angles.
 Looking at the Lambert projection,[^4] it can be seen that a different stretch factor is required for each latitude. At the equator no stretch is required.
@@ -229,7 +228,7 @@ This stretch factor can be calculated as follows:
 First Mercator divided the globe into graticules of equal spacing $\delta\varphi$ and $\delta\lambda$. 
 Along the meridians the arc length of each graticule is $R\delta\varphi$.
 Along the parallels the radius of the circle is $R\cos(\varphi)$ so that the arc length is $(R\cos(\varphi))\delta\lambda$.
-The tangent can be then approximated as:
+The tangent can then be approximated as:
 
 $$ \tan(\alpha) \approx \frac{R\cos(\varphi)\delta\lambda}{R\delta\varphi}$$
 
@@ -264,7 +263,7 @@ This is a modern rendering of the final result:
 </figure>
 
 This map is very heavily distorted. Greenland now looks larger than Africa. The great circles lie along strange curves. But the rhumb lines are straight!
-Calculating the bearing can be done simply with a ruler and a projector. 
+Calculating the bearing can be done simply with a ruler and a protractor. 
 No thinking or maths required! (And no fancy instruments on globes either.) In modern day terms we would say, it was a big hit with sailors.
 
 For online maps the local projection is very important. If you are looking for directions in a city what matters most to you is that the roads look correct.
@@ -325,7 +324,7 @@ A  user could use such a table to look up a logarithm with the added benefit tha
 These proved to be very popular - people clearly did not like doing multiplication and division in the past.
 Using addition and subtraction in their place also made calculations less error prone, especially with successive calculations.
 
-Next, mathematicians extended these tables to other trigonometric function:
+Next, mathematicians extended these tables to other trigonometric functions:
 <figure class="post-figure">
 <img class="img-95"
     src="/assets/posts/secant-mercator/APN2002-table3-30deg.png"
@@ -371,7 +370,7 @@ There is a lot of controversy surrounding the Mercator map.
 It is an extremely common projection. When I was younger I had a map of the world on my wall in the Mercator projection.
 However I hope you now fully appreciate its main purpose is navigation.
 Outside of that, it unnecessarily distorts shapes and in particular makes the Americas and Europe look much larger than they actually are.
-This has been linked, not without rational, to colonialism and racism. 
+This has been linked, not without rationale, to colonialism and racism. 
 For decades cartographers have bemoaned its use in applications where it really has no right to be.[^6]
 Here is even an amusing clip from a 90's TV show: [www.youtube.com/watch?v=vVX-PrBRtTY](https://www.youtube.com/watch?v=vVX-PrBRtTY).
 
@@ -409,7 +408,7 @@ It was designed with an "artistic approach". Unlike the other projections, inste
 	\end{align}
 	$$
 
-	This uses the chain rule and the assumes the following have been proved:
+	This uses the chain rule and assumes the following have been proved:
 	- $\frac{d}{dz}\ln(z) = \frac{1}{z}$
 	- $\frac{d}{dx} \tan(x) = \sec ^2(x)$
 	- $\frac{d}{dx} \sec(x) = \sec(x)\tan(x)$

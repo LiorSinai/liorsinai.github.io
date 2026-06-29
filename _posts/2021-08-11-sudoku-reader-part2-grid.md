@@ -146,7 +146,7 @@ Firstly there is a lot of noise - it would be better if we could remove all thos
 Secondly, for the contour detection we need the contours to be white (have a value of 1) and the background to be black (have a value of 0).
 
 To reduce noise, we can apply an image filter with a Gaussian Kernel from [ImageFiltering.jl][ImageFiltering.jl].
-After this, every pixel will be weighted sum of it and its neighbours based on a kernel we give it.
+After this, every pixel will be a weighted sum of it and its neighbours based on a kernel we give it.
 The net effect is a blurring of the image.
 
 [ImageFiltering.jl]: https://juliaimages.org/ImageFiltering.jl/stable/
@@ -169,7 +169,7 @@ gray = imfilter(gray, kernel)
 <figcaption>Left: Original image. Middle: blurred. Right: Gaussian kernel</figcaption>
 </figure>
 
-As can be seen in the image, the blurring affect is slight. Of course if we changed the parameters, say `σ = 5` and 
+As can be seen in the image, the blurring effect is slight. Of course if we changed the parameters, say `σ = 5` and 
 `window_size=21`, the effects could be more dramatic:
 
 

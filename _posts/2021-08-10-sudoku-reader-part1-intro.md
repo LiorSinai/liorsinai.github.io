@@ -38,7 +38,7 @@ It is quite neat if I do say so myself. It can solve any Sudoku puzzle in under 
 <figcaption>An example output of this program.</figcaption>
 </figure>
 
-I had already seen people take this concept one step further, such as Raghav Virmani's awesome [LinkedIn post][raghav] on a optical character recognition (OCR) reader and solver. In his post he places a print-out of a Sudoku puzzle in front of his camera, solves it in real time and projects the solution back on to the grid. Naturally I thought this was awesome and implemented it myself in Python. I did not write a blog post on it because there are many great blog posts already: see [PyImageSearch's article][PyImage] or the series of articles at [AI Shack][AiShack].
+I had already seen people take this concept one step further, such as Raghav Virmani's awesome [LinkedIn post][raghav] on an optical character recognition (OCR) reader and solver. In his post he places a print-out of a Sudoku puzzle in front of his camera, solves it in real time and projects the solution back on to the grid. Naturally I thought this was awesome and implemented it myself in Python. I did not write a blog post on it because there are many great blog posts already: see [PyImageSearch's article][PyImage] or the series of articles at [AI Shack][AiShack].
 
 Then 2 weeks back it was the [Julia conference] [JuliaCon] which I really enjoyed. I am a big fan of Julia.
 While I still like Python, I much prefer Julia. I find it to be a much more robust, stable and clean programming language.
@@ -85,13 +85,13 @@ The algorithm is as follows:
 <figcaption>LeNet5, illustrated by Barnabás Póczos.</figcaption>
 </figure>
 
-The machine learning algorithm should not be seen as a black box. It uses [LeNet5][LeNet5] and is trained on the [Char74K][Char74K] dataset. Importantly, it is not trained on the popular MNIST dataset and it not does not use newer architectures. I explain my reasons for this and the difficulties I had in [part 4][machine_learning].
+The machine learning algorithm should not be seen as a black box. It uses [LeNet5][LeNet5] and is trained on the [Char74K][Char74K] dataset. Importantly, it is not trained on the popular MNIST dataset and it does not use newer architectures. I explain my reasons for this and the difficulties I had in [part 4][machine_learning].
 
 [LeNet5]: http://yann.lecun.com/exdb/publis/pdf/lecun-98.pdf
 [Char74K]: http://www.ee.surrey.ac.uk/CVSSP/demos/chars74k/
 [MathWorks]: https://blogs.mathworks.com/deep-learning/2018/11/15/sudoku-solver-image-processing-and-deep-learning/
 
-You could perhaps use machine learning for the more parts of the pipeline. 
+You could perhaps use machine learning for more parts of the pipeline. 
 See for examples [MathWorks'][MathWorks] posts.
 Personally I think machine learning can be tricky to implement and expensive to train, and should only be reserved for the hardest task. That is, digit classification.
 

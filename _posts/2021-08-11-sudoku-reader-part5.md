@@ -77,8 +77,8 @@ BSON.@load "DigitDetection\\outputs\\LeNet5\\LeNet5_both_e20.bson" model
 function predictor(digit_image::AbstractArray)
     logits = digit_image |> prepare_digit_for_model |> model
     idx = argmax(logits)
-    probabilites = softmax(logits)
-    idx[1] - 1, probabilites[idx]
+    probabilities = softmax(logits)
+    idx[1] - 1, probabilities[idx]
 end
 
 MODEL_SIZE = (28, 28)
@@ -230,7 +230,7 @@ Here is a table with an overview of all fixed and free parameters:[^LeNet5]
     <td>1</td>
   </tr>
   <tr>
-    <td>Guassian Blur</td>
+    <td>Gaussian Blur</td>
     <td>2</td>
     <td>2</td>
   </tr>

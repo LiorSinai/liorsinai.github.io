@@ -71,8 +71,8 @@ See the above example and the table below for a brief comparison between the alg
 </tbody>
 </table>
 
-The Martinez-Rueda algorithm is more versatile because it fundamentally operates at a segment level whereas Weiler-Atherton which operates a point level, and so it has a "bigger picture" view of the polygons.
-A disadvantage of the Martinez-Rueda algorithm is that it is more sensitive to numerical inaccuracies - for reasons that will be described shortly - such as a line that is almost vertical or tiny regions of intersection. In practice I found their runtimes similar, with Martinez-Rueda running faster in some situations and slower in others. For the spiral-star example, it is about 1.5 slower.
+The Martinez-Rueda algorithm is more versatile because it fundamentally operates at a segment level whereas Weiler-Atherton which operates at a point level, and so it has a "bigger picture" view of the polygons.
+A disadvantage of the Martinez-Rueda algorithm is that it is more sensitive to numerical inaccuracies - for reasons that will be described shortly - such as a line that is almost vertical or tiny regions of intersection. In practice I found their runtimes similar, with Martinez-Rueda running faster in some situations and slower in others. For the spiral-star example, it is about 1.5&times; slower.
 
 The original paper can be found [here][martinez_rueda_paper], but I followed the guide at [https://sean.fun/a/polygon-clipping-pt2/](https://sean.fun/a/polygon-clipping-pt2/).
 
@@ -107,7 +107,7 @@ Once these are known, it is easy to select the relevant segments to the given op
 
 The genius of the Martinez-Rueda algorithm is to extend upon the [Bentley-Ottmann algorithm][bentley-ottmann] for segment intersections to do this.
 It does a vertical line sweep from left to right, bottom to top.
-At any any given moment, we can imagine having a stack of all the lines that intersect the vertical line, ordered from top to bottom.
+At any given moment, we can imagine having a stack of all the lines that intersect the vertical line, ordered from top to bottom.
 According to the Bentley-Ottmann algorithm, to find intersections through a segment, we only need to check for intersections with the segments immediately above and immediately below it in stack.
 At the same time, we can propagate the fill annotations from the segment below, or empty space if nothing is below it.
 Hence, finding the exact segments that are above and below a segment is paramount to this algorithm, and 
@@ -182,7 +182,7 @@ In the figure above, both projections are below the other line.
 Hence `is_above` will return false for both segments. Yet one must be above the other.
 Therefore to maintain symmetry, the function will always only consider the right segment. 
 If it is the segment of interest, we check if its starting point is above its projection on the left line.
-Otherwise if we are checking if the left segment is above, we check if the right segment's starting point's is below its projection on the left segment.
+Otherwise if we are checking if the left segment is above, we check if the right segment's starting point is below its projection on the left segment.
 
 There are two other special cases. The first is if the starting point is colinear or coincident with the other line:
 
@@ -207,7 +207,7 @@ The second and final case is a vertical line:
 </figure>
 
 As implied by equation $\ref{eq:projection}$, if the line is vertical the projection equation is indeterminant.
-In fact, if the line were slight sloped towards the left or towards the right, the answer would differ.
+In fact, if the line were slightly sloped towards the left or towards the right, the answer would differ.
 Here instead we will simply compare y-values. That is, fallback to $\ref{eq:greater}$.
 (The original [statusCompare][statusCompare] did not account for this case.) 
 

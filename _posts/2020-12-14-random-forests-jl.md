@@ -30,7 +30,7 @@ They are often included in major machine learning software and libraries, includ
 
 [Breiman_2001]:https://link.springer.com/article/10.1023/A:1010933404324
 
-There are many article describing the theory behind random forests. See for example [1][kdnuggets] or [2][towardsdatascience]. 
+There are many articles describing the theory behind random forests. See for example [1][kdnuggets] or [2][towardsdatascience]. 
 By far the best and most detailed explanation I have seen is given by Jeremy Howard in his [FastAI course][fastai].
 A few sources describe how to implement them from scratch, such as [3][from_scratch_carbonati] or [4][from_scratch_mlm].
 
@@ -304,7 +304,7 @@ Base.showerror(io::IO, e::NotFittedError) = print(io, e.var, " has not been fitt
 
 ### RandomForestClassifier 
 
-The next step is create the `RandomForestClassifier`. Initialising an instance of the struct only sets the internal parameters and does not fit the data.
+The next step is to create the `RandomForestClassifier`. Initialising an instance of the struct only sets the internal parameters and does not fit the data.
 All parameters have to be in the initial struct, so some of these are set to `nothing` until a dataset is fitted.[^underscores] 
 
 {% highlight julia %}

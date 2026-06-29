@@ -168,7 +168,7 @@ end
 glorot_uniform(fan_in::Int, fan_out::Int) = glorot_uniform(Random.default_rng(), fan_in, fan_out)
 {% endhighlight %}
 
-Also add a method to `paramaters`:
+Also add a method to `parameters`:
 {% highlight julia %}
 parameters(a::Dense) = (;weight=a.weight, bias=a.bias)
 {% endhighlight %}

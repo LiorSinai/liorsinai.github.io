@@ -365,7 +365,7 @@ Let's test it out on both the 2D patterns and the number generation.
 ## 2D patterns
 ### Generate data 
 
-In part 1 we only worked with a spiral dataset. However we can work other patterns too.
+In part 1 we only worked with a spiral dataset. However we can work with other patterns too.
 Here is a Julia implementation of the [Scikit-learn moon dataset](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.make_moons.html):
 {% highlight julia %}
 function make_moons(rng::AbstractRNG, n_samples::Int=1000)
@@ -666,7 +666,7 @@ Here is an image showing that:
 It seems that lower guidance scale values don't affect the output much but higher values interfere too much.
 
 We can also go through the same exercise of calculating the Frechet LeNet Distance (FLD) from [part 2-Fretchet LeNet Distance](/machine-learning/2022/12/29/denoising-diffusion-2-unet#frechet-lenet-distance).
-Except this time we can ask the model to generated 1000 samples of each label. 
+Except this time we can ask the model to generate 1000 samples of each label. 
 This gives us very uniform label counts:
 <figure class="post-figure">
 <img class="img-95"

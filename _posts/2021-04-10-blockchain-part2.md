@@ -11,7 +11,7 @@ tags:	'blockchain'
 _Technical details of the blockchain file system._ 
 
 This series is split into two parts. 
-[Part 1][part1] describes the high levels details of the program I made and what it can do.
+[Part 1][part1] describes the high level details of the program I made and what it can do.
 Part 2 goes into the technical details of the C# program.
 
 Please see my [GitHub repository][repo] for the full code. This post only gives an overview of the classes.
@@ -37,7 +37,7 @@ The actual program uses more classes, including several frontend classes and a f
 I'm not going to describe those here.
 
 I wrote the code from the bottom up: first PseudoTokens, then Tokens, then Blocks and finally Blockchains.
-However I am going to described it from the top down, as I think that is better for understanding.
+However I am going to describe it from the top down, as I think that is better for understanding.
 
 # Classes
 
@@ -289,7 +289,7 @@ This byte array has a variable length and is formed as follows:
 </table>
 
 The plain text information is converted to bytes according to ASCII codes, and the FileHash is converted from hexadecimal.
-As I mentioned before, it's important to not this mix these two conversions.
+As I mentioned before, it's important to not mix these two conversions.
 
 ## PseudoToken
 A PseudoToken is a struct which holds all the data for creating a Token. This is the whole struct:

@@ -92,7 +92,7 @@ As an experiment, I trained the LeNet5 model (detailed below) on the MNIST datas
 <figcaption>Confusion matrix for a model trained on MNIST and evaluated on Char74k.</figcaption>
 </figure>
 
-As expected, 7, 1 and 2 are often confused. So was 6s with 5s and - to a less a extent - 6s with 0s. 
+As expected, 7, 1 and 2 are often confused. So was 6s with 5s and - to a less extent - 6s with 0s. 
 This sort of confusion also appeared with the few Sudoku images I tried.
 Training the model on the Char74k data removed this problem.
 
@@ -131,8 +131,8 @@ model = Chain(
 
 
 This was not the first model I encountered. 
-Instead that was huge a 1.2 million parameter model on a blog post.
-It worked, but it is unnecessary large and slow. It is built as follows:
+Instead that was a huge 1.2 million parameter model on a blog post.
+It worked, but it is unnecessarily large and slow. It is built as follows:
 {% highlight Julia %}
 model = Chain(
 	Conv((3, 3), 1=>32, stride=1, pad=0, relu),
@@ -513,7 +513,7 @@ test_acc = accuracy(model(test_data[1]), test_data[2])
 
 ## Next section
 
-This was long section with unexpected detours. I hope you enjoyed it.
+This was a long section with unexpected detours. I hope you enjoyed it.
 We can now go to the final section where we can see the results of our model: [part_5][conclusion].
 
 ---

@@ -86,7 +86,7 @@ This answer offers no explanation, but it need not be so obtuse.
 
 On a high level, it is important to realise that the host knows more than you, and by opening the door, he leaks this information to you. If he were to shuffle the goat and the car behind the remaining doors, then no information would be leaked and the 50/50 assumption would be valid. 
 
-You can get a good feel of this information leakage by increasing the number of doors. The host will open all but two doors in the second step. Go back and try the again game but with 100 doors and 99 goats.
+You can get a good feel of this information leakage by increasing the number of doors. The host will open all but two doors in the second step. Go back and try the game again but with 100 doors and 99 goats.
 
 With the number of doors set to 100, I hope you follow this line of thinking:
 1. There are 100 doors, and my chance of guessing correctly is very low (1/100). I probably got a goat with my first guess (99/100).
@@ -99,7 +99,7 @@ With our first guess there is a 1% chance the car is behind that door, and a 99%
 
 # The solution
 
-The strange thing is, is this is the exact same logic you should be following with the three door problem. 
+The strange thing is, this is the exact same logic you should be following with the three door problem. 
 Here is what I call the pessimist strategy:
 1. There are 2 goats and 1 car. This game is stacked against me. My first guess is more likely to be a goat than not. So I'm going to assume it's a goat.
 2. The host opens a door and reveals a goat. Great, he's just shown me where the second goat is.
@@ -127,7 +127,7 @@ Do you agree? Why do you think this is the case?
 
 [^blackjack]:
     The film's portrayal of [card counting][wiki_counting] is wildly unrealistic. It focus solely on keeping the count, and completely neglects the different strategies that must be followed based on the count and the cards in play. 
-    It also presents this method as almost full proof, whereas in reality the edge gained by practitioners is 1% at most.
+    It also presents this method as almost foolproof, whereas in reality the edge gained by practitioners is 1% at most.
     Personally I think this low margin would have injected suspense into the film, not taken away from it.
     I suggest reading "A Man for All Markets" by the person who invented card counting, Edward Thorp, for a real explanation of card counting.
 

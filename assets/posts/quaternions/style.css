@@ -50,7 +50,7 @@ input {
     text-align: right;
 }
 
-.uxMessege {
+.uxMessage {
     font-size: smaller;
     visibility: hidden;
     display: none;
@@ -79,7 +79,7 @@ input {
         grid-column-gap: 0.3em;
       }
 
-    .uxMessege {
+    .uxMessage {
         visibility: visible;
         display: block;
     }

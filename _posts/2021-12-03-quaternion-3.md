@@ -122,7 +122,7 @@ But on 16 October 1843, as he was walking past a canal in Dublin, Hamilton had t
 Three independent axes and a fourth to describe the size of the scaling.
 Overcome with euphoria, Hamilton carved the fundamental equation $ijk=-1$ into the Broom bridge (also called Brougham Bridge). The engraving faded but a plaque has been put in its place.
 
-For a version of this in Hamilton's own words, see this letter to he wrote to John T. Graves the following day: [www.maths.tcd.ie/pub/HistMath/People/Hamilton/QLetter/QLetter.pdf](https://www.maths.tcd.ie/pub/HistMath/People/Hamilton/QLetter/QLetter.pdf). 
+For a version of this in Hamilton's own words, see this letter he wrote to John T. Graves the following day: [www.maths.tcd.ie/pub/HistMath/People/Hamilton/QLetter/QLetter.pdf](https://www.maths.tcd.ie/pub/HistMath/People/Hamilton/QLetter/QLetter.pdf). 
 
 Here is a definition of these quaternions:
 
@@ -380,9 +380,9 @@ Here is a more formal proof. This is a nice proof because working through it giv
 			\therefore \; a &= -\sin(\alpha) \;, \; b = \cos(\alpha)
 			\end{align}
 			$$
-			Then using the definiton of a quaternion, $j'=k'i'$:
+			Then using the definition of a quaternion, $j'=k'i'$:
 			$$ j' = -\sin(\beta)\cos(\alpha)i - \sin(\beta)\sin(\alpha)j + \cos(\beta)k$$
-			As verfication, $i'j'=k'$. The transformation is then:
+			As verification, $i'j'=k'$. The transformation is then:
 			$$
 			\begin{bmatrix}
 			i' \\
@@ -469,7 +469,7 @@ For the curious minded, the algebraic group that includes the real numbers, comp
 They are made with the [Cayley-Dickson construction][CayleyDickson].
 The next algebra in the group are the octonions.
 These have eight basis units, made of one real part and seven imaginary parts. 
-They are non-cummutative ($ab \neq ba $) and non-associative ($(ab)c \neq a(bc)$). 
+They are non-commutative ($ab \neq ba $) and non-associative ($(ab)c \neq a(bc)$). 
 For more detail, a good starting point is the Wikipedia page: [Octonions](https://en.wikipedia.org/wiki/Octonion). 
 It is an open question whether any of these higher order algebras like octonions have a physical connection with reality.
 

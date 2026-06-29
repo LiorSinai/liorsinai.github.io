@@ -667,7 +667,7 @@ Thank you for following along. I hope you found this useful.
 
 ---
 
-[^inverted_index]: For an example of a radix tree used for an inverted index, see this post from [Algolia](https://www.algolia.com/blog/engineering/inside-the-algolia-engine-part-2-the-indexing-challenge-of-instant-search). Although as far as inverted indexes go, [Lucene](https://lucene.apache.org/core/) is the industry standard with the most optimised implementation. Its complicated inverted index is based on skip lists and finite state tranducers. Lucene forms the basis of the popular [ElasticSearch](https://www.elastic.co/elasticsearch) search engine.
+[^inverted_index]: For an example of a radix tree used for an inverted index, see this post from [Algolia](https://www.algolia.com/blog/engineering/inside-the-algolia-engine-part-2-the-indexing-challenge-of-instant-search). Although as far as inverted indexes go, [Lucene](https://lucene.apache.org/core/) is the industry standard with the most optimised implementation. Its complicated inverted index is based on skip lists and finite state transducers. Lucene forms the basis of the popular [ElasticSearch](https://www.elastic.co/elasticsearch) search engine.
 
 [^Dictionary]: Another option is to make the tree a kind of dictionary by using the string at each node as a key and storing another value. This is the design choice made by [DataStructures.jl][DataStructures] in their `Trie` data structure. The values we could store are the term frequency of the word or a list of documents where that word occurs (inverted index).
 

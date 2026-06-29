@@ -162,7 +162,7 @@ There is a slight problem with making the U-Net model in Julia.
 The reference models are based in PyTorch and the code unfortunately cannot be directly translated because of restrictions in the Julia language.
 The PyTorch implementations use an array for the skip connections.
 They [append][lucidrains-append] to it on the down side and then [pop][lucidrains-pop] values out on the up side.
-The Julia machine libary Flux however does not support these mutating array operations in backward passes.
+The Julia machine library Flux however does not support these mutating array operations in backward passes.
 
 [lucidrains-append]: https://github.com/lucidrains/denoising-diffusion-pytorch/blob/a772416afa6940f5e306a8cc2ebbb7c9e2a8dd43/denoising_diffusion_pytorch/denoising_diffusion_pytorch.py#L369
 [lucidrains-pop]: https://github.com/lucidrains/denoising-diffusion-pytorch/blob/a772416afa6940f5e306a8cc2ebbb7c9e2a8dd43/denoising_diffusion_pytorch/denoising_diffusion_pytorch.py#L382
@@ -1196,7 +1196,7 @@ norm_data = normalize_neg_one_to_one(reshape(trainset.features, 28, 28, 1, :))
 We can mostly reuse the code from [part 1][first_principles].
 
 The one difference is that we'll be using a cosine schedule for the $\beta_t$'s instead of a linear schedule.
-This was proposed in the 2021 paper [Improved Denoising Diffusion Probabilistic Models by Alex Nichol snd Prafulla Dhariwal][Nichol-2021]. The authors found that this schedule more evenly distributes noise over the whole time range for images.
+This was proposed in the 2021 paper [Improved Denoising Diffusion Probabilistic Models by Alex Nichol and Prafulla Dhariwal][Nichol-2021]. The authors found that this schedule more evenly distributes noise over the whole time range for images.
 
 [Nichol-2021]: https://arxiv.org/abs/2102.09672
 

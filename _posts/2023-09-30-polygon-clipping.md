@@ -196,7 +196,7 @@ The Weiler-Atherton algorithm is as follows:
     <ol type="i">
         <li>Each time an unvisited ENTRY point is encountered, start recording a region of intersection.</li>
         <li>Follow the vertices until an EXIT vertex is encountered, then move to the corresponding vertex on polygon 1.</li>
-        <li>Continue following the vertices on polygon 1 until an ENTRY vertex is encounted, then move back to the corresponding vertex on polygon 2.</li>
+        <li>Continue following the vertices on polygon 1 until an ENTRY vertex is encountered, then move back to the corresponding vertex on polygon 2.</li>
         <li>Repeat steps ii and iii until the starting point is encountered. All visited points lie on the region of intersection. Continue along polygon 2.</li>
     </ol>
   </li>

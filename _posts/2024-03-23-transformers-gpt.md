@@ -34,7 +34,7 @@ All code available at [github.com/LiorSinai/TransformersLite.jl](https://github.
 
 The transformer architecture was introduced by Google AI in their famous [Attention is all you need (2017)][Attention_2017] paper.
 They have dominated the natural language processing (NLP) landscape since then.
-Nearly all of the state of the NLP models today are transformer models.
+Nearly all of the state-of-the-art NLP models today are transformer models.
 Most of them have an incredibly similar architecture to the original and differ only on training regimes, datasets and sizes. 
 
 <figure class="post-figure">
@@ -296,7 +296,7 @@ There is a choice as to what constitutes a token.
 One extreme is one token for each word in the dataset.
 Here there are far too many unique words so it will explode the parameter count while providing too few training samples per token.
 The other extreme is character level tokens. This compresses the learning space too much to get fully realistic outputs, but otherwise it works surprisingly well.
-In between is sub-word tokenization such as Byte Pair Pair encoding.
+In between is sub-word tokenization such as Byte Pair encoding.
 This allows configurable vocabulary lengths.
 See my [TokenizersLite.jl][TokenizersLite.jl] package, the [BytePairEncoding.jl][BytePairEncoding.jl] package or Karpathy's latest [video][ZeroToHero_BPE].
 
@@ -490,7 +490,7 @@ embedding(indices) # 32×10 Matrix{Float32}
     <p class="card-text">
     Transformers are an active area of research and many position encodings have been proposed.
     <ul>
-        <li> Sinusodial Position Encodings: The original paper gave equations to calculate a fixed embedding matrix.
+        <li> Sinusoidal Position Encodings: The original paper gave equations to calculate a fixed embedding matrix.
         For an explanation and implementation see my <a href="/machine-learning/2022/05/18/transformers#position-encodings">first post</a>.
         </li>
         <li> <a href="https://arxiv.org/abs/1803.02155">Relative Position Embeddings (RPE) (2018)</a>: add embeddings in the attention step where each entry relates $r=j_k-i_q$.
@@ -582,8 +582,8 @@ Its calculation scales with $\mathcal{O}(n^2d_h)$ where $n$ is the input token l
     </p>
     <p>
     Another line of research is to improve the computation.
-    This include
-    <a href="https://arxiv.org/abs/2205.14135">Flash attention (2022)</a> which improves computational efficiency on a single GPU while <a href="https://arxiv.org/abs/2310.01889">Ring attention (2023)</a> aims to distribute the work efficiently across multiple devices.
+    Examples include
+    <a href="https://arxiv.org/abs/2205.14135">Flash attention (2022)</a> which improves computational efficiency on a single GPU and <a href="https://arxiv.org/abs/2310.01889">Ring attention (2023)</a> which aims to distribute the work efficiently across multiple devices.
     </p>
   </div>
 </div>
@@ -611,7 +611,7 @@ $$
     K^T Q = (W_KX)^T(W_QX) = X^T W_K^T W_Q X
 $$
 
-This is then following by scaling ($1/\sqrt{d_h}$) and normalisation ($\text{softmax}$).
+This is then followed by scaling ($1/\sqrt{d_h}$) and normalisation ($\text{softmax}$).
 Lastly this matrix is used as a weight for $V$. The output is $d_h \times n$.
 
 [WikiDotProduct]: https://en.wikipedia.org/wiki/Dot_product
@@ -718,7 +718,8 @@ The 4D batched multiplication is defined as:
 
 $$ C_{ijkl} = \sum_r A_{irkl} B_{rjkl} $$
 
-We can calculate this array with the same `batched_mul` by reshaping any 4D $m\times n \times p \times q$ arrays into 3D $m\times n \times pq$ arrays, do the multiplication, and reshape back.
+We can calculate this with the same `batched_mul` as before by reshaping the 4D $m\times n \times p \times q$ arrays into 3D $m\times n \times pq$ arrays.
+Then apply the function and then reshape back.
 This is exactly what the implementation does behind the [scenes](https://github.com/FluxML/NNlib.jl/blob/07833637dec96d12d0614308d3145b432fdb320a/src/batched/batchedmul.jl#L47):
 
 {%highlight julia %}
@@ -1394,7 +1395,7 @@ DUKEnge what by to and King an
 </pre></blockquote>
 
 It does not reproduce the actual line in the text ("Whether 'tis nobler in the mind to suffer
-"). However, as before, the output is not entirely nonsense and at least has the correct strcture.
+"). However, as before, the output is not entirely nonsense and at least has the correct structure.
 
 <h3 id="evaluation-quantitative">5.2. Quantitative</h3>
 

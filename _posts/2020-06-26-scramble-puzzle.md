@@ -25,8 +25,8 @@ When I was a child, I used to spend many hours trying to solve a scramble square
 The puzzle consists of nine square pieces and four images spread across the squares. 
 On each side on each square is half of one of the four images. For example the top half of an elephant.
 Some of the other pieces have the corresponding half, like the bottom half of the elephant.
-The aim to is arrange the pieces in a 3x3 grid such that all inner images are aligned - all halves are matched.
-This is actually very difficult, and I was not able solve it.
+The aim is to arrange the pieces in a 3x3 grid such that all inner images are aligned - all halves are matched.
+This is actually very difficult, and I was not able to solve it.
 
 
 Much later, when I was in university, I returned to this puzzle. I wondered if there was a procedural method to solve it. Such methods exist for Rubik's cubes.

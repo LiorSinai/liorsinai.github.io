@@ -51,7 +51,7 @@ The goal here is to replicate the results of Part 2 except in a more robust mann
     </div>
     <div class="content-container">
         <div class="message-body">
-        Metaprogramming is a powerful tool, but it introduces complexity that can make code more difficult to understand. It can easily introduces critical bugs that can crash a program.
+        Metaprogramming is a powerful tool, but it introduces complexity that can make code more difficult to understand. It can easily introduce critical bugs that can crash a program.
         Care should be taken when using it.
         </div>
     </div>
@@ -796,6 +796,6 @@ These and other extensions will be the goal of [part 4][micrograd_ext].
 
 ---
 
-[^generated_reflection]: Presumably the reason the Julia team tried to prevent reflection in generated functions is that it interferes with the compliers ability to properly predict, trigger and/or optimise compilations.
+[^generated_reflection]: Presumably the reason the Julia team tried to prevent reflection in generated functions is that it interferes with the compilers ability to properly predict, trigger and/or optimise compilations.
 
 [^has_chain_rule]: Zygote.jl has more [complex rules](https://github.com/FluxML/Zygote.jl/blob/master/src/compiler/chainrules.jl) which also consider other fallbacks, key word arguments and a possible opt out through a `no_rrule`.

@@ -79,7 +79,7 @@ Tests were run from the Anaconda CMD and Julia REPL.
   </tr>
 </tbody>
 </table>
-Scikit-learn (written in Cython) is still the fastest, but that code is more heavily optimised than mine, and also it use parallel processing.
+Scikit-learn (written in Cython) is still the fastest, but that code is more heavily optimised than mine, and also it uses parallel processing.
 
 [UniversalBank]: https://www.kaggle.com/sriharipramod/bank-loan-classification/
 [Python_post]: /machine-learning/2020/09/29/random-forests.html
@@ -208,7 +208,7 @@ But another version will accept two vectors, use these to create a confusion mat
 The syntax of Julia is very nice. I think the keywords are well chosen and make the language very flexible.
 I specifically like the module and namespace control keywords: `module`, `export`, `import` and `using`. 
 The keyword `export` allows you to define which variable names and functions in a module you want to expose to another namespace with `using`. 
-Furthermore, with `using`, the functions will not be extensible - the new namespace will not be able to edit them or accidently overwrite them.
+Furthermore, with `using`, the functions will not be extensible - the new namespace will not be able to edit them or accidentally overwrite them.
 This can be overridden with `import`, but that requires directly importing each identifier.
 
 On this topic, a minor annoyance is that during debugging it is nicer to `import` so you can update the functions without restarting the code.

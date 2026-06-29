@@ -262,13 +262,13 @@ For a single warp however this loss in information is small and not serious.
 ## Digit detection and extraction
 
 Now that the grid is a rectangle we can divide it into 9&times;9 cells - regions of interest - and check whether a digit is present in each cell.
-I've added some padding so that there is overlap between each cells.
+I've added some padding so that there is overlap between each cell.
 This provides a margin of error for the straightening.
 I've separated the check for a digit into two questions:
 1. Is there a component in the centre of the region of interest? 
 2. If yes, what are the bounds and centre of this component?
 
-Answering the second questions allows us to extract the digit which we can then send off to our machine learning algorithm. That is explained in the [next section][machine_learning].
+Answering the second question allows us to extract the digit which we can then send off to our machine learning algorithm. That is explained in the [next section][machine_learning].
 For now, here is the digit extraction loop in full:
 {%highlight julia %}
 GRID_SIZE = (9, 9)

@@ -54,7 +54,7 @@ As an example of the UI, here is the solution for the 13 March 2021 NY Time's Ha
 
 Recently the Sudoku bug bit me.
 According to [Wikipedia][wiki], this popular brain teaser puzzle rose to prominence in 2004. "Sudoku" is Japanese for "single number".
-The goal of Sudoku is to full a 9x9 grid where each row, column and 3x3 region contains each of the numbers from 1 to 9. 
+The goal of Sudoku is to fill a 9x9 grid where each row, column and 3x3 region contains each of the numbers from 1 to 9.
 These puzzles range in difficulty, and some can be surprisingly hard to solve by hand. But all are remarkably easy to solve with computers.
 
 [McGuire_paper]: https://www.math.ie/McGuire_V2.pdf
@@ -317,9 +317,9 @@ def place_and_erase(self, r: int, c: int, x: int, constraint_prop=True):
     self.candidates[r][c] = set()
     # remove candidate x in neighbours
     inds = self.get_neighbour_inds(r, c)
-    erased = [(r, c)]  # set of indices for constraint propogration
+    erased = [(r, c)]  # set of indices for constraint propagation
     erased += self.erase([x], inds, [])
-    # constraint propogation, through every index that was changed
+    # constraint propagation, through every index that was changed
     while erased and constraint_prop:
         i, j = erased.pop()
         for inds in self.get_neighbour_blocks(i, j):
@@ -489,7 +489,7 @@ def str2grid(string: str) -> List[List[int]]:
 
 ## 4. Analysis
 
-This code takes 0.15s and 39 calls to solve to solve the Inkala puzzle. The maximum call depth is 10. 
+This code takes 0.15s and 39 calls to solve the Inkala puzzle. The maximum call depth is 10.
 
 For Norvig's [95 hard puzzles][norvig_top95], the code takes a total of 11.69s, with an average time of 0.12s per puzzle. 
 The average number of calls is 93.0, while the maximum number of calls is 588. 

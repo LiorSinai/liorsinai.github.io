@@ -910,6 +910,6 @@ This is will be the goal of [part 3][micrograd_ir].
 
 ---
 
-[^generated_reflection]: Presumably the reason the Julia team tried to prevent reflection in generated functions is that it interferes with the compliers ability to properly predict, trigger and/or optimise compilations.
+[^generated_reflection]: Presumably the reason the Julia team tried to prevent reflection in generated functions is that it interferes with the compilers ability to properly predict, trigger and/or optimise compilations.
 
 [^has_chain_rule]: Zygote.jl has more [complex rules](https://github.com/FluxML/Zygote.jl/blob/master/src/compiler/chainrules.jl) which also consider other fallbacks, key word arguments and a possible opt out through a `no_rrule`.

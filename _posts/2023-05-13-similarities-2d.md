@@ -429,7 +429,7 @@ The formulas require higher level mathematics than polygons. They involve quarti
     src="/assets/posts/wasserstein/outliers_ellipses.png"
 	alt="Outliers in the ellipse method"
 	>
-<figcaption>Affect of outliers on the ellipse method.</figcaption>
+<figcaption>Effect of outliers on the ellipse method.</figcaption>
 </figure>
 
 Because the ellipse radii are based on standard deviations, they are less sensitive to outliers than convex hulls.
@@ -820,7 +820,7 @@ $$
     But this is still a difficult problem to solve. They solve it using eigen-decomposition (spectral decomposition) and Lagrange multipliers. This is well beyond the scope here. The result is that $K=(C_1^{1/2} C_2  C_1^{1/2})^{1/2}$.
     </p>
     <p>
-    Although they don't go further, because $C_1^{1/2} C_2  C_1^{1/2}=C_1^{-1/2}(C_1 C_2)C_1^{1/2}$ and $C_1 C_2$ are <a href="https://en.wikipedia.org/wiki/Matrix_similarity">similar</a>, they share the same the eigenvalues and hence their square roots have the same trace. This is because $\text{trace}(A^{1/2})=\sum \lambda_i^{1/2}$ where $\lambda_i$ are the eigenvalues of $A$. See the <a href="#wasserstein-symmetry-button">Proof of symmetry</a> card for more information.
+    Although they don't go further, because $C_1^{1/2} C_2  C_1^{1/2}=C_1^{-1/2}(C_1 C_2)C_1^{1/2}$ and $C_1 C_2$ are <a href="https://en.wikipedia.org/wiki/Matrix_similarity">similar</a>, they share the same eigenvalues and hence their square roots have the same trace. This is because $\text{trace}(A^{1/2})=\sum \lambda_i^{1/2}$ where $\lambda_i$ are the eigenvalues of $A$. See the <a href="#wasserstein-symmetry-button">Proof of symmetry</a> card for more information.
     </p>
   </div>
 </div>
@@ -886,7 +886,7 @@ Important things to note about this formula:
     $$
     </p>
     <p>
-    The main prerequisite is the cylic property of the trace: $\text{trace}(ABC)=\text{trace}(CAB)$.
+    The main prerequisite is the cyclic property of the trace: $\text{trace}(ABC)=\text{trace}(CAB)$.
     </p>
     <p>
     Then for a diagonalizable matrix (no repeated eigenvalues) with eigenvectors $W$ and eigenvalues $\gamma$ in a diagonal matrix $D$:

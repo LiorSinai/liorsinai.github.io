@@ -12,7 +12,7 @@ redirect_from:
     - /coding/2022/05/18/transformers
 ---
 
-_Transformers for natural language processing from first principles. This a long post which details a full implementation of transformers and the mathematics behind them. The use case is predicting Amazon review stars based on the review text. The language of choice is Julia utilising the Flux machine learning framework._ 
+_Transformers for natural language processing from first principles. This is a long post which details a full implementation of transformers and the mathematics behind them. The use case is predicting Amazon review stars based on the review text. The language of choice is Julia utilising the Flux machine learning framework._ 
 
 _Update 19 August 2023: code refactoring and update to Flux 0.13.11 explicit syntax._
 
@@ -67,7 +67,7 @@ But this is tiny in comparison to OpenAI's [GPT-3][GPT3] with 175 billion parame
 It is licensed over an [API][GPT3_api] and is responsible for generating text that has made its way around the internet and popular science articles. 
 These large models are even shaping hardware.
 The CEO of chip manufacturer Nvidia, Jensen Huang, focused a segment of his [2022 keynote][NvideaGTC] speech on transformers and their impact on his industry.
-Nvidia have also released their own large transformer model with [530 billon parameters][NvidiaMegatron] and have conducted tests with a [1 trillion parameter model][NvidiaLM].
+Nvidia have also released their own large transformer model with [530 billion parameters][NvidiaMegatron] and have conducted tests with a [1 trillion parameter model][NvidiaLM].
 
 Despite being originally developed for NLP, they have come for computer vision too. 
 This [2020 paper][Image16words] showed that they can compete with top convolutional neural networks (CNNs). 
@@ -86,7 +86,7 @@ All this development in transformers has been over the past 5 years.
 Recurrent neural networks (RNNs) used to be the favourite for NLP in academia and industry yet transformers have almost replaced them in this short time frame.
 However it has not been long enough for pedagogy to adapt.
 As of today, machine learning courses still teach RNNs for NLP.
-This has created a gap and many blogs have sprung up to full it.
+This has created a gap and many blogs have sprung up to fill it.
 This blog post aims to be one of those.
 
 I have two goals here:
@@ -213,7 +213,7 @@ The output of the transformer is another set of weights usually of the same size
 <figcaption></figcaption>
 </figure>
 But now these weights have a different meaning. They are how each word relates to each other in the sentence and to the task at hand.
-Where as the previous weights were unique to each word, these are particular to a sentence.
+Whereas the previous weights were unique to each word, these are particular to a sentence.
 Change one word in the sentence and we might get a completely different matrix, depending on how important that word is.
 The name transformer comes from the fact that it _transforms_ a set of word embeddings to another set of embeddings.
 
@@ -294,7 +294,7 @@ Multiplication simply isn't defined for them. So we'll have to write our own fun
 ### Attention
 
 The most important steps in the above table are the steps 3 to 5.
-Combing them into one and working with only 2D matrices, we get the definition for the scaled dot product attention:
+Combining them into one and working with only 2D matrices, we get the definition for the scaled dot product attention:
 
 $$
     A = V\text{softmax}\left(\frac{1}{\sqrt{d_h}}K^T Q\right)
@@ -334,7 +334,7 @@ Here "camera" thinks "great" is the most important word in the sentence.
 Because of the weights this matrix is not symmetrical.
 So "great" actually places less importance on "camera" than "camera" places on it.
 
-This matrix is at the heart of transformer.
+This matrix is at the heart of the transformer.
 All the other layers work towards it or aim to use weights output by it. 
 
 ## Julia implementation
@@ -581,7 +581,7 @@ which turns this struct into a function:
 Word embeddings were already introduced in the [Inputs and Outputs](#inputs-and-outputs) section.
 Here we'll make a simple layer to store and retrieve them.
 
-It it worth highlighting that the word embedding is unique to each model 
+It is worth highlighting that the word embedding is unique to each model 
 and will be trained from random values for each model.
 This is not how humans work. 
 Part of what makes language so useful is that we have generic connotations and meanings for words and then derive more specific meaning from them in a given context. For example, the word "good" always has the same "embedding" in any context.
@@ -622,7 +622,7 @@ Base.size(e::Embed) = size(e.weight)
 Base.show(io::IO, e::Embed) = print(io, "Embed($(size(e.weight)))")
 {% endhighlight %}
 The `Float32` type is used to reduce the size of the model and for performance benefits. We don't need the extra accuracy provided by `Float64`.
-We have a second show function for multimedia (MIME) types when we went prettier printing e.g. in the REPL and Jupyter notebooks.
+We have a second show function for multimedia (MIME) types when we want prettier printing e.g. in the REPL and Jupyter notebooks.
 The `Flux.@functor Embed` line is essential for Flux to be able to perform backpropagation.
 
 For the forward pass we will use `NNlib.gather`:
@@ -672,7 +672,7 @@ NNlib.scatter(+, rand(8, 4), [1, 5, 11, 1]; dstsize=(8, 15))
 
 As mentioned before, the matrix operations on the embedding matrix are parallel operations.
 They do not take order into account.
-One of the proposed methods proposed in the [Attention is all you need][Attention] paper to counteract this is to add constant value "position encodings" to the matrix.
+One of the proposed methods in the [Attention is all you need][Attention] paper to counteract this is to add constant value "position encodings" to the matrix.
 The hope is that the model will learn these constant values and hence the relative and absolute positions.
 For example a simple choice for each column $j$ is $\frac{j}{n_{max}}$: 
 
@@ -726,7 +726,7 @@ and on the right are the sine waves used for the odd numbered rows:
 </script>
 
 Each column has a unique pattern so the encoding does accomplish its task.
-To understand how, lets focus on the first row with $i=0$. 
+To understand how, let's focus on the first row with $i=0$. 
 This sine wave has a wavelength of $2\pi \approx 6.28$ and we sample it every $1$ time step so it repeats every 6 blocks.
 This leads to the 6 alternating colours in the top row: 3 light, then 3 dark, then repeat. 
 So this sine wave can distinguish between sequences of length 6 or less.
@@ -1183,7 +1183,7 @@ a = mha(q, k, v) # 32×10×4 Array{Float32, 3}
 ### Encoder blocks
 
 We still need to complete the rest of the equations in the [table](#equations_table).
-Thankfully the rest of the layers are provided by Flux. We wrap them in an `TransformerEncoderBlock`:
+Thankfully the rest of the layers are provided by Flux. We wrap them in a `TransformerEncoderBlock`:
 {% highlight julia %}
 struct TransformerBlock{
     MHA<:MultiheadAttention,
@@ -1378,7 +1378,7 @@ curl https://amazon-reviews-ml.s3-us-west-2.amazonaws.com/json/test/dataset_en_t
 ```
 However the HuggingFace API is nicer because it converts the array of JSONs to the more efficient and compact Arrow format.
 
-The [Amazon Reviews][AmazonReviews] English dataset consists of 200,000 test samples and 5,000 training samples.
+The [Amazon Reviews][AmazonReviews] English dataset consists of 200,000 training samples and 5,000 test samples.
 The reviews are equally divided into 5 stars where 1 is a low score and 5 is best.
 There are eight features:
 1. review_id

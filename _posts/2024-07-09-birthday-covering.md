@@ -214,7 +214,7 @@ Here are the results:
 <figcaption>Monte Carlo simulation of ratio of birthdays covered per $n$</figcaption>
 </figure>
 
-The probability is almost zero below 1500, but rise rapidly afterwards and by 4000 is almost one.
+The probability is almost zero below 1500, but rises rapidly afterwards and by 4000 is almost one.
 At the expected value of $n=2364$, the ratio covered is 0.5739. 
 
 <h3 id="covering-birthdays-theory">3.2 Theory</h3>

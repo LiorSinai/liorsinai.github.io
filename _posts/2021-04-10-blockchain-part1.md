@@ -12,7 +12,7 @@ _A program for storing files in your own personal blockchain (because you can)._
 
 
 This series is split into two parts. 
-Part 1 describes the high levels details of the program I made and what it can do.
+Part 1 describes the high level details of the program I made and what it can do.
 [Part 2][part2] goes into the technical details of the C# program.
 
 [repo]: https://github.com/LiorSinai/BlockchainFileSystemCs
@@ -335,7 +335,7 @@ Join me in [part 2][part2].
 	So I am going to write a new cheque for you for \\$70, which says you are owed \\$70 of my \\$100 cheque (when I cash it in) and I'll make a note for myself to say I can't spend those \\$70.
 	That friend then has to pay for car repairs of \\$50. He says to the mechanic, I have a cheque for \\$70 of a \\$100 cheque.
 	We can't tear it up, but I can make a new cheque which says you are owed \\$50 of that cheque (when I cash it in) and I'll make a note for myself to say I can't spend those \\$50.
-	And this is essentially how cryptos works except they uses "blocks" instead of "cheques" and the original amount is "found" by a "miner".
+	And this is essentially how cryptos work except they uses "blocks" instead of "cheques" and the original amount is "found" by a "miner".
 	Note that unlike a normal, sane bank the blockchain doesn't store account balances. 
  
 [^PoW]: If you know a better strategy, please let me know. Never mind improving my program, we could make lots of money with Bitcoin.

@@ -248,7 +248,7 @@ Now we need to define `literal_getfield` and `__new__` and their pullbacks.
 
 <h3 id="pullback-getfield">2.3 getfield</h3>
 
-Calls to `getproperty` default to `getfield`, where a field is is declared in a struct's declaration.
+Calls to `getproperty` default to `getfield`, where a field is declared in a struct's declaration.
 The `getfield` function is substituted with `literal_getfield` ([source](https://github.com/FluxML/ZygoteRules.jl/blob/f9bf0e367fa259c5aa68f0e14ccbf2125d734bd6/src/ZygoteRules.jl#L19)):
 
 {% highlight julia %}
@@ -268,7 +268,7 @@ function pullback(::typeof(literal_getfield), x, ::Val{f}) where f
       dx = (; nt_nothing(x)..., pair(Val(f), Δ)...)
       (nothing, dx, nothing)
     else
-      error("multable stucts not supported")
+      error("multable structs not supported")
     end
   end
   val, literal_getfield_back

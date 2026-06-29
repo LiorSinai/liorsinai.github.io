@@ -178,7 +178,7 @@ $$
 $$
 
 Note the Jacobian does not need to be explicitly calculated; only the product needs to be. 
-This is can be useful when coding the `rrule` for matrix functions.
+This is useful when coding the `rrule` for matrix functions.
 See the section on the chain rule for [matrix multiplication](#chainrules-matrix-multiplication) later.
 
 To start, define a default fallback for `rrule` that returns `nothing` for any function with any number of arguments ([source](https://github.com/JuliaDiff/ChainRulesCore.jl/blob/a95c181c662ead23aaf9904b8a560bebeb9022a3/src/rules.jl#L131)):
@@ -815,7 +815,7 @@ This in turn will call the `pullback` for `evalpoly`, which will pass the argume
 The next two sections will develop the `pullback` function.
 It will inspect and decompose code with the goal of passing arguments to `rrule` and accumulating gradients via the chain rule. 
 
-[Part 2][micrograd_expr] will introduce metaprogamming Julia and generate expressions for the backpropagation code. 
+[Part 2][micrograd_expr] will introduce metaprogramming Julia and generate expressions for the backpropagation code. 
 However the code is unstable and prone to errors - it is recursive metaprogramming - so [part 3][micrograd_ir] will introduce more robust code making use of the [IRTools.jl][IRTools.jl] package. 
 This code really pushes Julia's metaprogramming to its limits.
 

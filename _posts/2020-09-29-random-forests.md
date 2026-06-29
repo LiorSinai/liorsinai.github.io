@@ -98,7 +98,7 @@ Based on these, a simple baseline model can be developed:
 		 </li>
 	  </ul>
    </li>
-   <li>If score1&nbsp;>&nbsp;score2, classify as Veriscolor. If score1&nbsp;<&nbsp;score2, classify as Virginica. If score1&nbsp;=&nbsp;score2, leave unknown, or classify at random. </li>
+   <li>If score1&nbsp;>&nbsp;score2, classify as Versicolor. If score1&nbsp;<&nbsp;score2, classify as Virginica. If score1&nbsp;=&nbsp;score2, leave unknown, or classify at random. </li>
 </ol>
 This simple strategy guarantees that 140 samples, which is 93.3% of the samples, will be correctly classified.
 
@@ -247,7 +247,7 @@ More detail on these calculations will be given later.
 ## Code
 ### RandomForestClassifier 
 
-The first step is create the `RandomForestClassifier`. Initialising an instance of the class only sets the internal parameters and does not fit the data, 
+The first step is to create the `RandomForestClassifier`. Initialising an instance of the class only sets the internal parameters and does not fit the data, 
 as with the equivalent Scikit-learn class. I've included the most important parameters from Scikit-learn, and added one of my own, `sample_size`.[^3] 
 This parameter sets the sample size used to make each tree. If `bootstrap=False`, it will randomly select a subset of unique samples for the training dataset. 
 If `bootstrap=True`, it will randomly draw samples with replacement from the dataset, which will most likely result in duplicate samples.
@@ -626,7 +626,7 @@ def impurity_feature_importance(self):
 {% endhighlight %} 	
 
 There is another simpler method to calculate feature importance: shuffle (permutate) a feature column, and record how well the model performs.
-Shuffling a column makes the values for each sample random, but at the same time keeps the overal distribution for the feature constant.
+Shuffling a column makes the values for each sample random, but at the same time keeps the overall distribution for the feature constant.
 Scikit-learn has a great [article][scikit_perm_fi] on the advantages of this over impurity based feature importance.
 (A `perm_feature_importance()` function is in the utilities.py module.)
 

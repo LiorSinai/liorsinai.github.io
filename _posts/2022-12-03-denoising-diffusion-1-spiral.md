@@ -50,7 +50,7 @@ Companies have had to respond officially, whether it be Deviant Art's [DreamUp][
 
 Google got people talking with their impressive [Imagen][Imagen] text to image model but it was OpenAI's beta rollout for [DALLE 2][dalle2-beta] that opened it up to the world, giving people a chance to experiment with this new technology for the first time.
 Then came [Midjourney][Midjourney] offering an impressive model for a small monthly subscription fee.
-Then [Stable Diffusion][stable-diffusion] came and made everyone's draw drop by offering everything - the model included - for free.
+Then [Stable Diffusion][stable-diffusion] came and made everyone's jaw drop by offering everything - the model included - for free.
 Anyone with the equivalent of a high-end gaming computer and 10GB of video RAM could download it and run it themselves. 
 While these requirements are steep for the average person, it is a very low bar for a model that compresses huge amounts of human creativity into a tiny digital space and that can create art beyond the ability of most people (except for trained artists of course).
 
@@ -558,7 +558,7 @@ The result:
 
 Now to calculate the reverse process $p_\theta(x_{t-1} | x_{t})$.
 The trick here is that while we do not have a direct expression for $p_\theta(x_{t-1} | x_{t})$, 
-we can calculate an expression for the posterior probability $q(x_{t-1} | x_{t}, x_0)$ using Bayes' theroem.
+we can calculate an expression for the posterior probability $q(x_{t-1} | x_{t}, x_0)$ using Bayes' theorem.
 This is the red arrow in the original [denoising image](#ddpm).
 That is, given the current time step and the start image, we can with a high probability deduce what the previous time step was based on the known probability distributions.
 Of course this statement is nonsensical in that we don't have the start image - if we did we wouldn't need to go through this process. 
@@ -1623,12 +1623,12 @@ If we interpolate linearly over the whole time period such that that each points
     Optimal diffusion of a spiral.
 </figure>
 
-Regretably we will not however be able to apply these optimal techniques to the harder problem of image generation. 
+Regrettably we will not however be able to apply these optimal techniques to the harder problem of image generation. 
 There is indeed no optimal solution for creativity.
 
 ## Conclusion
 
-This post has layed the groundwork for denoising diffusion probabilistic models.
+This post has laid the groundwork for denoising diffusion probabilistic models.
 We'll be able to reuse nearly all of the functions in this post for the next post on image generation.
 The only difference is we'll be making a much more complex model for the `denoise_fn`.
 See [part 2][image_diffusion].

@@ -39,7 +39,7 @@ Puzzles have the added bonus that they are designed to result in a picture. For 
 
 I wrote solvers for these puzzles in both [C++][github_cpp] and [Python][github_python]. Of course, such a problem is already well investigated. 
 See Jan Wolter's [survey][Wolter_survey] of online solvers.
-My solvers are actually rather slow compared to some of those. It takes more than a minute for some puzzles, where as Jan claims his own solver took a second.
+My solvers are actually rather slow compared to some of those. It takes more than a minute for some puzzles, whereas Jan claims his own solver took a second.
 See also [Rosetta code][rosetta_code]'s collection of brute force solvers in many different languages. These solvers are slow but will always solve the puzzle.
 
 [github_python]: https://github.com/LiorSinai/NonogramSolver
@@ -88,7 +88,7 @@ Before continuing, I would like to showcase examples where this fails. The first
 
 In the left image, the left-right matcher algorithm has got stuck.
 But this puzzle can still be solved with other logic. 
-Notably, two white blocks in the middle are always white regardless of which sequence the single blacks in the corresponding rows belong too.
+Notably, two white blocks in the middle are always white regardless of which sequence the single blacks in the corresponding rows belong to.
 This unlocks the rest of the puzzle.
 It is not obvious - in fact in the source video, the guy resorts to guessing.
 
@@ -138,7 +138,7 @@ It describes Ken Thompson's $\mathcal{O}(n^2)$ [matching algorithm][Thompson_pap
 The important insight was that this nonogram problem, like the regex problem, is mostly dependent on the active state.
 Multiple different paths can converge to the same state and once they do they are collapsed into one.
 This significantly reduces the amount of possibilities and the complexity of the algorithm.
-For example, here at column 8 both these two paths are white after two black runs and hence they are in the same state. After this point, these two will be indistinguishable from each each other. 
+For example, here at column 8 both these two paths are white after two black runs and hence they are in the same state. After this point, these two will be indistinguishable from each other. 
 (We can keep track of which path is the left-most match separately.)
 
 <figure class="post-figure">
@@ -151,7 +151,7 @@ For example, here at column 8 both these two paths are white after two black run
 </a>
 </figure>
 
-In order to the reuse Thompson's matching algorithm we first need to rephrase the nonogram problem as a regex problem. This is done as follows:
+In order to reuse Thompson's matching algorithm we first need to rephrase the nonogram problem as a regex problem. This is done as follows:
 - Take a run _(a, b, ..., z)_.
 - Use binary encoding for each of the three colours: 
 	- black cell: $01_2 = 1$
@@ -170,8 +170,8 @@ However the exponential nature of backtracking can cause them to fail, sometimes
 
 [cloudfare_outage]: https://blog.cloudflare.com/details-of-the-cloudflare-outage-on-july-2-2019/
 
-An alternative is to represent the character expression as a nondeterministic finite state automation. Let's break that name down:
-- Automation: a sort of machine/program. I find the term archaic but it does come from a time before computers.
+An alternative is to represent the character expression as a nondeterministic finite state Automaton. Let's break that name down:
+- Automaton: a sort of machine/program. I find the term archaic but it does come from a time before computers.
 - Finite state: there is a countable number of states. This is opposed to infinite or continuous states, such as measurements with gradients in nature, or states which depend on such a large combination of elements that they are for practical purposes uncountable.
 - Nondeterministic: given a state, it cannot always be determined what the previous state was. Actually, that is a minor problem here because we do want to know how many times we have passed through each state, not just the current state. But we can store this information outside of the NFA.
 
@@ -184,7 +184,7 @@ The NFA is composed of states _S_ which transition in one of the following ways:
 <figcaption> NFA graphic symbols and corresponding regex syntax </figcaption>
 </figure>
 
-We can use these components to build up a full state automation for our regex pattern:
+We can use these components to build up a full state automaton for our regex pattern:
 <figure class="post-figure">
 <img class="img-95"
     src="/assets/posts/nonograms/nfa.png"
@@ -218,7 +218,7 @@ When we finish the NFA for the first time we return the path that is associated 
 
 This is my C++ code for the NFA matcher. For the full code, see my Github [repository][github_cpp].
 
-Firstly, three types of objects are defined in the header: Match, State and NonDeterministicFiniteAutomation:[^std]
+Firstly, three types of objects are defined in the header: Match, State and NonDeterministicFiniteAutomaton:[^std]
 {% highlight c++ %}
 struct Match
 {
@@ -236,10 +236,10 @@ struct State
     vector<int> transitions; // states that this transitions to
 };
 
-class NonDeterministicFiniteAutomation
+class NonDeterministicFiniteAutomaton
 {
 public:
-    NonDeterministicFiniteAutomation(){};
+    NonDeterministicFiniteAutomaton(){};
     void compile(vector<int> pattern_); //convert a numerical pattern to a regex pattern
     Match find_match(vector<int>& array); //returns the left-most match
 
@@ -263,7 +263,7 @@ These indices are referred to as "state IDs" in the code.
 Then depending on the input symbol, a different action is taken.
 
 {% highlight c++ %}
-vector<char> NonDeterministicFiniteAutomation::convert_pattern(vector<int> pattern)
+vector<char> NonDeterministicFiniteAutomaton::convert_pattern(vector<int> pattern)
 {
     vector<char> fragments;
     fragments.push_back(BLANK); //implicit conversion to char
@@ -284,7 +284,7 @@ vector<char> NonDeterministicFiniteAutomation::convert_pattern(vector<int> patte
     return fragments;
 }
 
-void NonDeterministicFiniteAutomation::compile(vector<int> pattern_)
+void NonDeterministicFiniteAutomaton::compile(vector<int> pattern_)
 {   
     /* convert a numerical sequence such as (a, b, ..) to regex.
     e.g. (1,5,3) -> ([23]*)([13]){1}([12]+)([13]){5}([12]+)([13]){3}([12]+)([23]*) */
@@ -405,7 +405,7 @@ A second hash table is used to make sure that the new transitions are all indepe
 That is, an old state is not overwritten because it was a new state for another state that should have advanced simultaneously with it, but happened to advance one step earlier.
 
 {% highlight c++ %}
-Match NonDeterministicFiniteAutomation::find_match_(vector<int> &target)
+Match NonDeterministicFiniteAutomaton::find_match_(vector<int> &target)
 {
     if (!this->is_compiled)
     {
@@ -480,8 +480,8 @@ vector<int> string_to_vec(string line_str)
     return line;
 }
 
-unique_ptr<NonDeterministicFiniteAutomation> nfa = 
-    make_unique<NonDeterministicFiniteAutomation>();
+unique_ptr<NonDeterministicFiniteAutomaton> nfa = 
+    make_unique<NonDeterministicFiniteAutomaton>();
 vector<int> line;
 vector<int> result;
 Match m;
