@@ -3,13 +3,15 @@ layout: post
 title:  "Notes on the Martinez-Rueda Polygon Clipping algorithm"
 date:   2025-01-11
 author: Lior Sinai
-last_modified_at: 2025-01-11
+last_modified_at: 2026-10-24
 sidenav: true
 categories: mathematics
 tags:  polygons
 ---
 
 _The Martinez-Rueda algorithm computes boolean operations between polygons. It can be used for polygon intersections (polygon clipping), unions, differences and XORs. I recently implemented it by following a comprehensive guide at https://sean.fun/a/polygon-clipping-pt2/. However, it was slightly lacking in some complex scenarios, mainly resulting from the strict ordering required by the Bentley-Ottmann line intersection algorithm. This post explains my minor modifications to address this crucial part of the algorithm._
+
+Update 2026-10-24: Added the alternative interpretation of clockwise/counter-clockwise for `is_above` and removed the fallback for a vertical line.
 
 [PolygonAlgorithms.jl]: https://github.com/LiorSinai/PolygonAlgorithms.jl
 [polygon_clipping]: https://en.wikipedia.org/wiki/Clipping_(computer_graphics)
@@ -28,7 +30,7 @@ _The Martinez-Rueda algorithm computes boolean operations between polygons. It c
 <figure class="post-figure" id="fig-spiral-star">
 <img class="img-95"
     src="/assets/posts/polygon-clipping/spiral_star_martinez.png"
-	alt="Boolean operations spiral start"
+	alt="Boolean operations spiral star"
 	>
 <figcaption>Boolean operations between a spiral and a star, computed with the Martinez-Rueda algorithm.</figcaption>
 </figure>
@@ -60,8 +62,8 @@ See the above example and the table below for a brief comparison between the alg
   </tr>
   <tr>
     <td>Time complexity</td>
-    <td>$\mathcal{O}(nm)$</td>
     <td>$\mathcal{O}((n+m+k)\log(n+m))$</td>
+    <td>$\mathcal{O}(nm)$</td>
   </tr>
   <tr>
     <td>Return types</td>
@@ -71,7 +73,7 @@ See the above example and the table below for a brief comparison between the alg
 </tbody>
 </table>
 
-The Martinez-Rueda algorithm is more versatile because it fundamentally operates at a segment level whereas Weiler-Atherton which operates at a point level, and so it has a "bigger picture" view of the polygons.
+The Martinez-Rueda algorithm is more versatile because it fundamentally operates at a segment level whereas Weiler-Atherton operates at a point level, and so it has a "bigger picture" view of the polygons.
 A disadvantage of the Martinez-Rueda algorithm is that it is more sensitive to numerical inaccuracies - for reasons that will be described shortly - such as a line that is almost vertical or tiny regions of intersection. In practice I found their runtimes similar, with Martinez-Rueda running faster in some situations and slower in others. For the spiral-star example, it is about 1.5&times; slower.
 
 The original paper can be found [here][martinez_rueda_paper], but I followed the guide at [https://sean.fun/a/polygon-clipping-pt2/](https://sean.fun/a/polygon-clipping-pt2/).
@@ -108,15 +110,15 @@ Once these are known, it is easy to select the relevant segments to the given op
 The genius of the Martinez-Rueda algorithm is to extend upon the [Bentley-Ottmann algorithm][bentley-ottmann] for segment intersections to do this.
 It does a vertical line sweep from left to right, bottom to top.
 At any given moment, we can imagine having a stack of all the lines that intersect the vertical line, ordered from top to bottom.
-According to the Bentley-Ottmann algorithm, to find intersections through a segment, we only need to check for intersections with the segments immediately above and immediately below it in stack.
+According to the Bentley-Ottmann algorithm, to find intersections through a segment, we only need to check for intersections with the segments immediately above and immediately below it in the stack.
 At the same time, we can propagate the fill annotations from the segment below, or empty space if nothing is below it.
 Hence, finding the exact segments that are above and below a segment is paramount to this algorithm, and 
 even slight mistakes can cause errors that propagate to other segments.
 
 This is the gist of the algorithm.
 The practicalities of handling the event queue and many edge cases such as handling coincident lines and tricky annotation situations are described in the [article][martinez_rueda_sean].
-From now, I will focus only on the `is_above?` algorithm to determine if a segment is above another segment.
-I spent a long time debugging the whole Martinez-Martinez algorithm against a variety of test cases, and I always seemed to land back at this `is_above?` function. Getting this function right solved most of my problems.
+From now on, I will focus only on the `is_above?` algorithm to determine if a segment is above another segment.
+I spent a long time debugging the whole Martinez-Rueda algorithm against a variety of test cases, and I always seemed to land back at this `is_above?` function. Getting this function right solved most of my problems.
 
 <h2 id="is-above">2 Is above?</h2>
 
@@ -138,7 +140,7 @@ This will then give a sweep status like:
 Given line segments $AB$ and $CD$, it is tempting to sort them only by the starting point coordinate:
 
 $$
-  y_A \geq y_C
+  A_y > C_y
 \tag{2.1}
 \label{eq:greater}
 $$
@@ -148,7 +150,10 @@ However already in the figure we can see an example where it does not.
 Line 2's starting point is below line 3's, but it makes more sense to consider line 2 as "above" line 3.
 
 A better definition for "above" is needed.
-Instead, we will consider one segment above another if its starting point is above its projection on the other line:
+Instead, define a segment above another if the projection of the other segment's starting point
+on this segment lies above that starting point.
+That is, the other segment has to project up on to this segment.
+Equivalently, the starting point of the other segment lies clockwise to this segment.
 
 <figure class="post-figure" id="fig-project">
 <img class="img-60"
@@ -158,15 +163,28 @@ Instead, we will consider one segment above another if its starting point is abo
 <figcaption></figcaption>
 </figure>
 
-That is, $y_p \leq y_A$, where $y_p$ is:
+Using the projection we have $P_y > C_y $, where $P_y$ is:
 
 $$
 \begin{align}
-  y_p &= \frac{y_D - y_C}{x_D - x_C}(x_A - x_C) + y_C \\
-\implies & 0 \leq (y_A - y_C)(x_D - x_C) - (y_D - y_C)(x_A - x_C) \; ; x_D \neq x_C 
+  P_y = \frac{B_y - A_y}{B_x - A_x}(C_x - A_x) + A_y  &> C_y \\
+\implies  (B_y - A_y)(C_x - A_x) - (C_y - A_y)(B_x - A_x) &> 0
 \end{align}
 \tag{2.2}
 \label{eq:projection}
+$$
+
+This is equivalent to checking if the orientation of A-B-C is clockwise:
+
+$$
+\begin{align}
+  \text{cross}((B-A), (C-B)) &< 0 \\
+\implies (B_y - A_y)(C_x - B_x) - (C_y - B_y)(B_x - A_x) &> 0 \\
+         (B_y - A_y)(C_x - A_x + A_x - B_x ) - (C_y - A_y + A_y - B_y )(B_x - A_x) &> 0 \\
+\implies  (B_y - A_y)(C_x - A_x) - (C_y - A_y)(B_x - A_x) &> 0
+\end{align}
+\tag{2.3}
+\label{eq:cross}
 $$
 
 <figure class="post-figure" id="fig-symmetry">
@@ -177,14 +195,17 @@ $$
 <figcaption></figcaption>
 </figure>
 
-However one problem is this equation is not symmetrical. (This is the case in the original [statusCompare][statusCompare].) 
-In the figure above, both projections are below the other line.
-Hence `is_above` will return false for both segments. Yet one must be above the other.
-Therefore to maintain symmetry, the function will always only consider the right segment. 
-If it is the segment of interest, we check if its starting point is above its projection on the left line.
-Otherwise if we are checking if the left segment is above, we check if the right segment's starting point is below its projection on the left segment.
+However one problem is this equation is not symmetrical.
+In the figure above, both projections are above the other line.
+Hence `is_above` will return true for both segments. Yet one must be above the other.
+Therefore to maintain symmetry, the segment of interest must always be the left segment.
+If the first segment is instead to the right, change the criteria to match the second (left) segment's perspective:
+  1. The (right) segment is above if its own starting point lies above the left segment. That is, it must project downwards on to the left segment.
+  2. Equivalently, the orientation of the starting point of the (right) segment is counter-clockwise to the left segment.
 
-There are two other special cases. The first is if the starting point is colinear or coincident with the other line:
+For both cases in the above [figure](#fig-symmetry) the right segment will return false.
+
+If the starting point is colinear or coincident with the other, use the endpoint instead:
 
 <figure class="post-figure" id="fig-coincident">
 <img class="img-60"
@@ -194,60 +215,52 @@ There are two other special cases. The first is if the starting point is colinea
 <figcaption></figcaption>
 </figure>
 
-In this case, the endpoint is used instead.
-
-The second and final case is a vertical line:
-
-<figure class="post-figure" id="fig-vertical">
-<img class="img-60"
-    src="/assets/posts/polygon-clipping/vertical.png"
-	alt="A vertical line"
-	>
-<figcaption></figcaption>
-</figure>
-
-As implied by equation $\ref{eq:projection}$, if the line is vertical the projection equation is indeterminant.
-In fact, if the line were slightly sloped towards the left or towards the right, the answer would differ.
-Here instead we will simply compare y-values. That is, fallback to $\ref{eq:greater}$.
-(The original [statusCompare][statusCompare] did not account for this case.) 
-
-
-<div class="card">
-  <div class="card-body">
-    <h5 class="card-title">No fallback</h5>
-    <p class="card-text">
-		If there is no fallback, then when $x_C=x_D$ equation $\ref{eq:projection}$ becomes:
-    $$
-    0 \geq (y_D - y_C)(x_A - x_C)
-    $$
-    In the algorithm vertical events are always constructed from bottom to top, so $y_D > y_C$ and this becomes a test whether or not the $A$ is to the left of the vertical $CD$ segment.
-	</p>
-  </div>
-</div>
-
-Hence the `is_above` algorithm is:
+In summary, the `is_above` algorithm is:
 
 <blockquote>
 <u><b>Is segment AB above CD?</b></u> <br>
 inputs: $AB$, $CD$ <br>
-<b>if</b> colinear($A, C, D$) <br>
-$\quad$ <b>return</b> point_above_line($B, CD$) <br>
-<b>if</b> $x_C < x_A$ <br>
-$\quad$ <b>return</b> point_above_line($A, CD$) <br>
+<b>if</b> $ C_x > A_x $ <br>
+$\quad \theta$ $\leftarrow$ orientation($A, B, C$) <br>
+$\quad$ <b>if</b> $\theta$ = colinear <br>
+$\quad\quad \theta \leftarrow$ orientation($A, B, D$) <br>
+$\quad$ <b>return</b> $\theta$ = clockwise <br>
 <b>else</b> <br>
-$\quad$ <b>return not</b> point_above_line($C, AB$)
+$\quad \theta \leftarrow$ orientation($C, D, A$) <br>
+$\quad$ <b>if</b> $\theta$ = colinear <br>
+$\quad\quad \theta \leftarrow$ orientation($C, D, B$) <br>
+$\quad$ <b>return</b> $\theta$ = counter-clockwise <br>
 </blockquote>
 
-where `point_above_line` is:
+where `orientation` is:
 <blockquote>
-<u><b>point_above_line</b></u> <br>
-inputs: $P$, $CD$ <br>
-<b>if</b> $x_C = x_D$ <br>
-$\quad$ <b>return</b> $y_p \geq \text{min}(y_C, y_D)$ <br>
-<b>return</b> $ (y_P - y_C)(x_D - x_C) - (y_D - y_C)(x_P - x_C) \geq 0$
+<u><b>orientation</b></u> <br>
+inputs: $p, q, r$ <br>
+$ c \leftarrow (q_y - p_y)(r_x - q_x) - (r_y-q_y)(q_x-p_x) $ <br>
+<b>if</b> $c = 0$ <br>
+$\quad$ <b>return</b> colinear <br>
+<b>else if</b> $c > 0$ <br>
+$\quad$ <b>return</b> clockwise <br>
+<b>else </b> <br>
+$\quad$ <b>return</b> counter-clockwise <br>
 </blockquote>
 
-This final algorithm is simple, but absolutely crucial for the algorithm.
+This final algorithm is simple, but absolutely crucial for the Martinez-Rueda sweep.
+
+Lastly, it's worth noting how this behaves for a vertical line AB.
+In this case from equation $\ref{eq:cross}$ with $A_x=B_x$ we have:
+
+$$
+\begin{align}
+  (B_y - A_y)(C_x - A_x) &> 0
+\end{align}
+\tag{2.4}
+\label{eq:vertical}
+$$
+
+For Martinez-Rueda points are ordered left to right, bottom to top.
+So $B_y > A_y$, and this effectively tests that point C is to the right of the line.
+If $C_x \le A_x$ (including C on the line), the right branch is used instead, with CD as the reference segment
 
 <h2 id="compare-events">3 Compare events</h2>
 
@@ -270,7 +283,7 @@ An example ordering is:
 The algorithm is:
 1. If the points are not the same, the smaller event is to the left, or the lower one if they are on a vertical line.
 2. If the other points are also the same, this event is not smaller. (Equal segments.)
-3. If the one is a start event and the other an end event, the end event is considered smaller. (Common points.)
+3. If one is a start event and the other an end event, the end event is considered smaller. (Common points.)
 4. The smaller event is below the other one according to `not is_above`, unless the segment of interest is vertical, then the smaller event is "not above" if it is to the right.  (Common start/end points.)
 
 For example, in the picture:
