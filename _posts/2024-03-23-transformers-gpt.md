@@ -3,7 +3,7 @@ layout: post
 title:  "Generative transformer from first principles in Julia"
 date:   2024-03-23
 author: Lior Sinai
-last_modified_at: 2026-01-10
+last_modified_at: 2026-11-07
 background: '/assets/posts/transformers/transformer.png'
 sidenav: true
 categories: machine-learning
@@ -122,7 +122,17 @@ Therefore we will discard the first $n-1$ predictions. (They would have already 
 This is an inherent inefficiency in the transformer model architecture. 
 (KV Caching can be used to overcome it. See [João Lages' visual explanation](https://medium.com/@joaolages/kv-caching-explained-276520203249) or a later [blog post](/machine-learning/2025/02/22/mla#kv-caching).)
 
-Generation will repeat inference many times, each time adding the last generated token to the context and generating a new token. The result is something like:
+Generation will repeat inference many times, each time adding the last generated token to the context and generating a new token. 
+
+Initially the result will be random characters, sampled uniformly from the character set:
+<blockquote><pre>
+.fisE[alt:tw(!A:WU_]fdACynSvb,dVnhSiC-cdByEAa:a-—Z;[xCE
+CB,ntsIRW)“nj[;h
+C
+R.aMnq:HaD,Crug—])qd[qQWQ
+</pre></blockquote>
+
+After training the result will be something like:
 
 <blockquote><pre>
 CLATIO.
@@ -326,7 +336,7 @@ struct IndexTokenizer{T}
     unkidx::Int
     function IndexTokenizer(vocab::Vector{T}, unksym::T) where T
         if !(unksym ∈ vocab)
-            pushfirst!(vocab, unksym)
+            vocab = vcat(unksym, vocab)
             unkidx = 1
         else
             unkidx = findfirst(isequal(unksym), vocab)
@@ -372,7 +382,7 @@ tokens = indexer(collect("How now, my love?")) # [19, 55, 63, 2, 54, ..., 62, 45
 Decoding goes the other way:
 {%highlight julia %}
 decode(tokenizer::IndexTokenizer{T}, x::Int) where T = 
-	0 <= x <= length(tokenizer) ? tokenizer.vocabulary[x] : tokenizer.unksym
+    1 <= x <= length(tokenizer) ? tokenizer.vocabulary[x] : tokenizer.unksym
 
 function decode(tokenizer::IndexTokenizer{T}, seq::Vector{Int}) where T
     map(x->decode(tokenizer, x), seq)
@@ -816,15 +826,15 @@ This is done in two steps:
 1. $(d_h \times H)\times N \times B$ (break $d_m$ into $d_h$ and $H$)
 2. $d_h \times N \times H \times B$ (swap the 2nd and 3rd dimensions)
 {% highlight julia %}
-    Q = permutedims(reshape(Q, dh, nhead, qs[2], qs[3]), [1, 3, 2, 4])
-    K = permutedims(reshape(K, dh, nhead, ks[2], ks[3]), [1, 3, 2, 4])
-    V = permutedims(reshape(V, dh, nhead, vs[2], vs[3]), [1, 3, 2, 4])
+    Q = permutedims(reshape(Q, dh, nhead, qs[2], qs[3]), (1, 3, 2, 4))
+    K = permutedims(reshape(K, dh, nhead, ks[2], ks[3]), (1, 3, 2, 4))
+    V = permutedims(reshape(V, dh, nhead, vs[2], vs[3]), (1, 3, 2, 4))
 {% endhighlight %}
 
 Then we calculate the scaled dot attention for each head, combine results and return it:
 {% highlight julia %}
     A, scores = scaled_dot_attention(Q, K, V; kwargs...)
-    A = permutedims(A, [1, 3, 2, 4])
+    A = permutedims(A, (1, 3, 2, 4))
     A = reshape(A, dm, size(A, 3), size(A, 4))
     A, scores
 end
@@ -839,12 +849,14 @@ function scaled_dot_attention(
     query::A3, key::A3, value::A3
     ; mask::Union{Nothing, M}=nothing
     ) where {T, A3 <: AbstractArray{T, 3}, M <: AbstractArray{Bool}}
+    # Input is (dh, N, nhead)
     dh = size(query, 1)
-    keyT = permutedims(key, (2, 1, 3)) # (dkv, dh, nhead)
-    atten = one(T)/convert(T, sqrt(dh)) .* batched_mul(keyT, query) # (dkv, dh, nhead)*(dh, dq, nhead) => (dkv, dq, nhead)
-    atten = apply_mask(atten, mask) # (dkv, dq, nhead)
-    scores = softmax(atten; dims=1) # (dkv, dq, nhead)
-    batched_mul(value, scores), scores # (dh, dkv, nhead)*(dkv, dq, nhead) => (dh, dq, nhead)
+    scale = T(1 / sqrt(dh))
+    keyT = batched_transpose(key)             # (dkv, dh, nhead)
+    atten = scale .* batched_mul(keyT, query) # (dkv, dq, nhead)
+    atten = apply_mask(atten, mask)           # (dkv, dq, nhead)
+    scores = softmax(atten; dims=1)           # (dkv, dq, nhead)
+    batched_mul(value, scores), scores        # (dh, dq, nhead), (dkv, dq, nhead)
 end
 {% endhighlight %}
 
@@ -940,7 +952,7 @@ TransformerBlock(
     dim_model::Int,
     dim_hidden::Int;
     act=relu,
-    pdrop::Float64=0.1,
+    pdrop::Real=0.1,
     ) = TransformerBlock(
     MultiheadAttention(nhead, dim_model, dim_model),
     LayerNorm(dim_model),
@@ -1025,9 +1037,15 @@ end
 Flux.@layer TransformerGenerator trainable=(embedding, position_encoding, blocks, dropout, head)
 {% endhighlight %}
 
+Add a helper function to crop the mask to the input size:
+{% highlight julia %}
+crop_mask(::Nothing, ::Int) = nothing
+crop_mask(mask::AbstractMatrix, n::Int) = view(mask, 1:n, 1:n)
+{% endhighlight %}
+
 By default the forward pass will use the model's mask, else the user can pass a mask to it:
 {% highlight julia %}
-function (t::TransformerGenerator)(x::A; mask::M=t.mask) where {
+function (t::TransformerGenerator)(x::A; mask::M=crop_mask(t.mask, size(x, 1))) where {
     A<:AbstractArray, M<:Union{Nothing, AbstractMatrix{Bool}}}
     x = t.embedding(x)              # (dm, N, B)
     N = size(x, 2)
@@ -1114,13 +1132,13 @@ function generate(
     ; context_size::Int, max_tokens::Int=100,
     ) where T
     for i in 1:max_tokens
-        context_crop = tail(context, context_size)
-        n = size(context_crop, 1)
-        mask = isnothing(model.mask) ? nothing : view(model.mask, 1:n, 1:n)
-        logits = model(context_crop; mask=mask) |> cpu # (vocab_size, n, B)
-        logits = logits[:, end, :] # (vocab_size, B) 
+        context_crop = tail(context, context_size) # forget everything before the current context
+        logits = model(context_crop) # (vocab_size, n, B)
+        # only focus on the last token
+        # This means that some of the work done in the last block and in model.head is discarded
+        logits = logits[:, end, :] |> cpu # (vocab_size, B)
         context_next = multinomial_sampling(rng, logits)
-        context = cat(context, context_next; dims=1) 
+        context = cat(context, transpose(context_next); dims=1) 
     end
     context
 end
