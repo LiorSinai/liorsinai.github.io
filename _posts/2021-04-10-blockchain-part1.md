@@ -24,7 +24,7 @@ Part 1 describes the high level details of the program I made and what it can do
 [bitcoin-fees]: https://www.coindesk.com/saving-bitcoin-high-transaction-fees
 [bitcoin-energy]: https://www.statista.com/statistics/881541/bitcoin-energy-consumption-transaction-comparison-visa/
 [mining-pools]: https://www.blockchain.com/pools 
-[bitcoin-exchanges]: https://www.bitcoin.com/bitcoin-exchange-directory/
+[bitcoin-exchanges]: https://coinmarketcap.com/rankings/exchanges/
 
 [wiki-cheque]: https://en.wikipedia.org/wiki/Cheque
 
@@ -234,8 +234,12 @@ The SHA-256 algorithm  has been carefully designed to have the following propert
 2. It is chaotic. A slight change to the input results in a big change to the output. (For an interactive demonstration, go to [https://emn178.github.io/online-tools/sha256.html](https://emn178.github.io/online-tools/sha256.html).)
 3. It is computationally infeasible to reverse.
 
+[sha256-pdf]: https://files.floridados.gov/media/704729/fips-pub-180.pdf
+[sha256-high-level]: https://math.umd.edu/~immortal/ClassNotes/sha256.pdf
+
 The last property is counter intuitive. 
-The SHA-256 algorithm is opensource and anyone can follow the [instructions][sha256-pdf] to write the code (I have done such a thing).
+The SHA-256 algorithm is opensource and anyone can write code following the standard. (I have done such a thing).
+See [FIPS PUB 180-4][sha256-pdf] or [Ethereum: Descriptions of SHA-256, SHA-384 and SHA-512](https://eips.ethereum.org/assets/eip-2680/sha256-384-512.pdf) and a high level description at [University of Maryland notes][sha256-high-level].
 But even so, it is very, very hard to reverse.
 There are many steps to it and several steps flip (XOR) bits so that working backwards requires making many guesses to whether bits were 1 or 0.
 
@@ -257,8 +261,6 @@ Furthermore we can hash whole blocks, and if anything in the block changes, we w
 
 Each block also has the previous block's hash inside of it. Hence we have a chain. 
 If we break this block's hash, the next block will have the wrong `previousHash`, and then its hash will be wrong so the block afterwards will have the wrong hash, and so on.
-
-[sha256-pdf]: http://www.iwar.org.uk/comsec/resources/cipher/sha256-384-512.pdf
 
 # Proof of work
 
